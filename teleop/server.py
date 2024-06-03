@@ -10,9 +10,12 @@ from stretch_body import robot as rb
 from stretch_body.hello_utils import ThreadServiceExit
 from pydantic import BaseModel, Field, AfterValidator
 
-from fastapi import BackgroundTasks, FastAPI
+from fastapi import BackgroundTasks, FastAPI, WebSocket
 from contextlib import asynccontextmanager
 import signal
+
+from .data_classes import TargetPosition
+from .utils import _normalize_angle
 
 
 @asynccontextmanager
@@ -29,10 +32,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+
 # Function to handle graceful shutdown
 def handle_exit(sig, frame):
     print("Gracefully shutting down...")
     sys.exit(0)
+
 
 # Register the signal handler
 signal.signal(signal.SIGINT, handle_exit)
@@ -40,19 +45,6 @@ signal.signal(signal.SIGTERM, handle_exit)
 
 
 robot = None
-
-
-def _normalize_angle(angle: float) -> float:
-    """
-    Normalize an angle to the range [-pi, pi].
-
-    Args:
-        angle: The angle to normalize.
-
-    Returns:
-        The normalized angle.
-    """
-    return (angle + np.pi) % (2 * np.pi) - np.pi
 
 
 def _choose_closest_angle(
@@ -86,8 +78,12 @@ class Position(BaseModel):
 
 
 class ArmAndLiftPosition(BaseModel):
-    arm: Annotated[float, AfterValidator(lambda x: min(max(x, 0), 0.5))] = Field(..., description="The arm position.")
-    lift: Annotated[float, AfterValidator(lambda x: min(max(x, 0.1), 1.09))]  = Field(..., description="The lift position.")
+    arm: Annotated[float, AfterValidator(lambda x: min(max(x, 0), 0.5))] = Field(
+        ..., description="The arm position."
+    )
+    lift: Annotated[float, AfterValidator(lambda x: min(max(x, 0.1), 1.09))] = Field(
+        ..., description="The lift position."
+    )
 
 
 class EndOfArmPosition(BaseModel):
@@ -202,8 +198,6 @@ pid_x = PIDController(Kp_x, Ki_x, Kd_x)
 pid_y = PIDController(Kp_y, Ki_y, Kd_y)
 pid_theta = PIDController(Kp_theta, Ki_theta, Kd_theta)
 
-f = open("log.jsonl", "w")
-
 
 class ControlPolicyArguments(BaseModel):
     desired_position: Position = Field(..., description="The target position.")
@@ -279,9 +273,20 @@ wrist_move_to_position = EndOfArmPosition(
 arm_move_to_position = ArmAndLiftPosition(arm=0.25, lift=0.6)
 
 
+target_position = TargetPosition()
+control_loop_started = False
+
+
 async def control_loop(robot: rb.Robot) -> None:
-    print("Starting control loop.")
-    global move_to_position
+    global control_loop_started
+    global target_position
+
+    if control_loop_started:
+        print("Control loop already started.")
+    else:
+        print("Starting control loop.")
+        control_loop_started = True
+
     start_time = time.time()
     current_time = 0
 
@@ -303,9 +308,9 @@ async def control_loop(robot: rb.Robot) -> None:
         next_step_position = plan_trajectory(
             PlanTrajectoryArguments(
                 target_position=Position(
-                    x=move_to_position[0],
-                    y=move_to_position[1],
-                    theta=move_to_position[2],
+                    x=target_position.x,
+                    y=target_position.y,
+                    theta=target_position.theta,
                 ),
                 current_position=Position(
                     x=current_x, y=current_y, theta=current_theta
@@ -328,24 +333,19 @@ async def control_loop(robot: rb.Robot) -> None:
             )
         )
 
-
-
         try:
             robot.base.set_velocity(v, omega)
-            robot.arm.move_to(arm_move_to_position.arm, v_m=2, a_m=2)
-            robot.lift.move_to(arm_move_to_position.lift, v_m=2, a_m=2)
-            robot.end_of_arm.move_to("wrist_yaw", wrist_move_to_position.wrist_yaw)
-            robot.end_of_arm.move_to("wrist_pitch", wrist_move_to_position.wrist_pitch)
-            robot.end_of_arm.move_to("wrist_roll", wrist_move_to_position.wrist_roll)
-            robot.end_of_arm.move_to(
-                "stretch_gripper", wrist_move_to_position.stretch_gripper
-            )
+            robot.arm.move_to(target_position.arm, v_m=2, a_m=2)
+            robot.lift.move_to(target_position.lift, v_m=2, a_m=2)
+            robot.end_of_arm.move_to("wrist_yaw", target_position.wrist_yaw)
+            robot.end_of_arm.move_to("wrist_pitch", target_position.wrist_pitch)
+            robot.end_of_arm.move_to("wrist_roll", target_position.wrist_roll)
+            robot.end_of_arm.move_to("stretch_gripper", target_position.stretch_gripper)
             robot.push_command()
             await asyncio.sleep(1 / 80)
         except (ThreadServiceExit, KeyboardInterrupt):
             print("Exiting control loop.")
             handle_exit(0, 0)
-        
 
 
 @app.get("/get_base_status")
@@ -357,13 +357,16 @@ async def get_base_status():
 async def get_end_of_arm_status():
     return robot.end_of_arm.status
 
+
 @app.get("/get_arm_status")
 async def get_arm_status():
     return robot.arm.status
 
+
 @app.get("/get_lift_status")
 async def get_lift_status():
     return robot.lift.status
+
 
 @app.post("/move_to")
 async def move_to(position: Position):
@@ -374,8 +377,9 @@ async def move_to(position: Position):
 
 @app.post("/arm_move_to")
 async def arm_move_to(position: ArmAndLiftPosition):
-    global arm_move_to_position
-    arm_move_to_position = position
+    global target_position
+    target_position.arm = position.arm
+    target_position.lift = position.lift
     return {"message": "Moving arm to position."}
 
 
@@ -392,3 +396,12 @@ async def start_control_loop(background_tasks: BackgroundTasks):
         return {"message": "Control loop already started."}
     background_tasks.add_task(control_loop, robot)
     return {"message": "Control loop started."}
+
+
+@app.websocket("/move_to_ws")
+async def move_to_ws(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        data = await websocket.receive_text()
+        global target_position
+        target_position = TargetPosition(**json.loads(data))

@@ -1,0 +1,28 @@
+name: Mypy
+on: [push]
+
+jobs:
+  Static-Type-Checking:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version)"
+    - name: Install dependencies
+      run: |
+        curl -sSL https://install.python-poetry.org | python3
+        poetry install
+    - name: Type-checking package with mypy
+      run: |
+        # Run this mypy instance against our main package.
+        poetry run mypy --install-types --non-interactive teleop
+        poetry run mypy --strict .

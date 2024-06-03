@@ -1,2 +1,8 @@
 .gitcredentials
+.env
 
+__pycache__/
+
+*.jsonl
+
+.ruff_cache/
