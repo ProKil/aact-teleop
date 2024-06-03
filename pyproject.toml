@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "stretch-teleop-server"
+version = "0.0.1"
+description = "Teleoperating stretch robot"
+authors = ["Hao Zhu <prokilchu@gmail.com>"]
+license = "MIT License"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "~3.11.9"
+pydantic = "^2.7.2"
+fastapi = "^0.111.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
