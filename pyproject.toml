@@ -10,6 +10,9 @@ readme = "README.md"
 python = "~3.11.9"
 pydantic = "^2.7.2"
 fastapi = "^0.111.0"
+zmq = "^0.0.0"
+numpy = "^1.26.4"
+hello-robot-stretch-body = {path = "./body", develop = true}
 
 [tool.poetry.group.test.dependencies]
 mypy = "^1.8.0"
