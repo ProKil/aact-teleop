@@ -25,3 +25,4 @@ strict = true
 plugins = [
     "pydantic.mypy"
 ]
+exclude = "body/*"
