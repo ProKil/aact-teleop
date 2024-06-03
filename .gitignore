@@ -6,3 +6,5 @@ __pycache__/
 *.jsonl
 
 .ruff_cache/
+
+.mypy_cache/

@@ -3,11 +3,11 @@ import json
 import math
 import sys
 import time
-from typing import List, Tuple
+from typing import Any, AsyncGenerator, Dict, List, Tuple
 from typing_extensions import Annotated
 import numpy as np
-from stretch_body import robot as rb
-from stretch_body.hello_utils import ThreadServiceExit
+from stretch_body import robot as rb  # type: ignore
+from stretch_body.hello_utils import ThreadServiceExit  # type: ignore
 from pydantic import BaseModel, Field, AfterValidator
 
 from fastapi import BackgroundTasks, FastAPI, WebSocket
@@ -19,7 +19,7 @@ from .utils import _normalize_angle
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     global robot
     # Load the ML model
     print("starting robot")
@@ -34,7 +34,7 @@ app = FastAPI(lifespan=lifespan)
 
 
 # Function to handle graceful shutdown
-def handle_exit(sig, frame):
+def handle_exit(sig: Any, frame: Any) -> None:
     print("Gracefully shutting down...")
     sys.exit(0)
 
@@ -160,7 +160,13 @@ class PIDController(object):
     A simple PID controller implementation.
     """
 
-    def __init__(self, Kp: float, Ki: float, Kd: float, output_limits=(None, None)):
+    def __init__(
+        self,
+        Kp: float,
+        Ki: float,
+        Kd: float,
+        output_limits: tuple[float | None, float | None] = (None, None),
+    ) -> None:
         self.Kp = Kp
         self.Ki = Ki
         self.Kd = Kd
@@ -169,7 +175,7 @@ class PIDController(object):
         self.output_limits = output_limits
         self.integral_decay = 0.99
 
-    def update(self, error, dt):
+    def update(self, error: float, dt: float) -> float:
         self.integral = self.integral * self.integral_decay + (error * dt)
         derivative = (error - self.previous_error) / dt
         output = self.Kp * error + self.Ki * self.integral + self.Kd * derivative
@@ -239,22 +245,6 @@ def pid_control_policy(args: ControlPolicyArguments) -> Tuple[float, float]:
     control_y = pid_y.update(e_y_prime, args.dt)
     control_theta = pid_theta.update(e_theta, args.dt)
 
-    f.write(
-        json.dumps(
-            {
-                "position": args.current_position.dict(),
-                "desired_position": args.desired_position.dict(),
-                "e_x_prime": e_x_prime,
-                "e_y_prime": e_y_prime,
-                "e_theta": e_theta,
-                "control_x": control_x,
-                "control_y": control_y,
-                "control_theta": control_theta,
-            }
-        )
-        + "\n"
-    )
-
     # Combine control actions
     v = control_x
     omega = control_y + control_theta
@@ -288,7 +278,7 @@ async def control_loop(robot: rb.Robot) -> None:
         control_loop_started = True
 
     start_time = time.time()
-    current_time = 0
+    current_time: float = 0
 
     while True:
         new_current_time = time.time() - start_time
@@ -349,49 +339,27 @@ async def control_loop(robot: rb.Robot) -> None:
 
 
 @app.get("/get_base_status")
-async def get_base_status():
-    return robot.base.status
+async def get_base_status() -> Any:
+    return robot.base.status  # type: ignore
 
 
 @app.get("/get_end_of_arm_status")
-async def get_end_of_arm_status():
-    return robot.end_of_arm.status
+async def get_end_of_arm_status() -> Any:
+    return robot.end_of_arm.status  # type: ignore
 
 
 @app.get("/get_arm_status")
-async def get_arm_status():
-    return robot.arm.status
+async def get_arm_status() -> Any:
+    return robot.arm.status  # type: ignore
 
 
 @app.get("/get_lift_status")
-async def get_lift_status():
-    return robot.lift.status
-
-
-@app.post("/move_to")
-async def move_to(position: Position):
-    global move_to_position
-    move_to_position = (position.x, position.y, position.theta)
-    return {"message": "Moving to position."}
-
-
-@app.post("/arm_move_to")
-async def arm_move_to(position: ArmAndLiftPosition):
-    global target_position
-    target_position.arm = position.arm
-    target_position.lift = position.lift
-    return {"message": "Moving arm to position."}
-
-
-@app.post("/end_of_arm_move_to")
-async def end_of_arm_move_to(position: EndOfArmPosition):
-    global wrist_move_to_position
-    wrist_move_to_position = position
-    return {"message": "Moving wrist and gripper to position."}
+async def get_lift_status() -> Any:
+    return robot.lift.status  # type: ignore
 
 
 @app.post("/start_control_loop")
-async def start_control_loop(background_tasks: BackgroundTasks):
+async def start_control_loop(background_tasks: BackgroundTasks) -> Dict[str, str]:
     if background_tasks.tasks:
         return {"message": "Control loop already started."}
     background_tasks.add_task(control_loop, robot)
@@ -399,7 +367,7 @@ async def start_control_loop(background_tasks: BackgroundTasks):
 
 
 @app.websocket("/move_to_ws")
-async def move_to_ws(websocket: WebSocket):
+async def move_to_ws(websocket: WebSocket) -> None:
     await websocket.accept()
     while True:
         data = await websocket.receive_text()

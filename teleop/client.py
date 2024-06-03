@@ -2,7 +2,6 @@ import time
 from typing import Tuple
 import zmq
 import json
-import websocket
 import requests
 import numpy as np
 import dotenv
@@ -15,7 +14,7 @@ from websockets.sync.client import connect
 
 def get_2d_rotation_from_quaternion(q: Tuple[float, float, float, float]) -> float:
     x, y, z, a = q
-    return np.arctan2(2 * x * z - 2 * a * y, (1 - 2 * y * y - 2 * z * z))
+    return np.arctan2(2 * x * z - 2 * a * y, (1 - 2 * y * y - 2 * z * z))  # type: ignore
 
 
 def get_euler(q: Tuple[float, float, float, float]) -> Tuple[float, float, float]:
@@ -65,7 +64,7 @@ if __name__ == "__main__":
 
     """ Connect with move_to server"""
     websocket_url = f"ws://{stretch_ip}:8000/move_to_ws"
-    with connect(websocket_url) as websocket:
+    with connect(websocket_url) as connected_websocket:
         head_position_offset = None
         base_rotation_offset = None
         lift_height_offset = None
@@ -83,8 +82,8 @@ if __name__ == "__main__":
                 data = json.loads(message.decode())
             except json.JSONDecodeError:
                 print("Terminating the connection...")
-                websocket.send(TargetPosition().model_dump_json())
-                websocket.close()
+                connected_websocket.send(TargetPosition().model_dump_json())
+                connected_websocket.close()
                 socket.close()
                 context.term()
                 break
@@ -119,7 +118,14 @@ if __name__ == "__main__":
             head_position = (head_local_position[2], -head_local_position[0])
             xyz = list(map(float, xyz.split(",")))
             controller_position = (xyz[2], -xyz[0])
-            head_rotation = get_2d_rotation_from_quaternion(head_local_rotation)
+            head_rotation = get_2d_rotation_from_quaternion(
+                (
+                    head_local_rotation[0],
+                    head_local_rotation[1],
+                    head_local_rotation[2],
+                    head_local_rotation[3],
+                )
+            )
 
             base_rotation = np.arctan2(
                 controller_position[0] - head_position[0],
@@ -172,28 +178,17 @@ if __name__ == "__main__":
             grip_status = 95 - float(right_trigger_status) * 190
             grip_status = np.exp(0.02764 * (grip_status + 95)) - 90
 
-            if wrist_offset is None or right_button_b:
-                current_wrist_status = requests.request(
-                    "GET",
-                    f"http://{stretch_ip}:8000/get_end_of_arm_status",
-                ).json()
-                wrist_offset = (
-                    wrist[0] + current_wrist_status["wrist_pitch"]["pos"],
-                    wrist[1] + current_wrist_status["wrist_yaw"]["pos"],
-                    wrist[2] + current_wrist_status["wrist_roll"]["pos"],
-                )
-
-            # websocket.send(
-            #     TargetPosition(
-            #         arm = arm_length_projected_to_floor,
-            #         lift = arm_lift,
-            #         theta=base_rotation,
-            #         wrist_pitch = -wrist[0],
-            #         wrist_yaw = _normalize_angle(-wrist[1] - base_rotation),
-            #         wrist_roll = -wrist[2],
-            #         stretch_gripper = grip_status,
-            #     ).model_dump_json()
-            # )
+            connected_websocket.send(
+                TargetPosition(
+                    arm=arm_length_projected_to_floor,
+                    lift=arm_lift,
+                    theta=base_rotation,
+                    wrist_pitch=-wrist[0],
+                    wrist_yaw=_normalize_angle(-wrist[1] - base_rotation),
+                    wrist_roll=-wrist[2],
+                    stretch_gripper=grip_status,
+                ).model_dump_json()
+            )
 
             # requests.request(
             #     "POST",
