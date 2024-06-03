@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "stretch-teleop-server"
+name = "teleop"
 version = "0.0.1"
 description = "Teleoperating stretch robot"
 authors = ["Hao Zhu <prokilchu@gmail.com>"]

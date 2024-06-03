@@ -7,8 +7,8 @@ import numpy as np
 import dotenv
 import os
 
-from .data_classes import TargetPosition
-from .utils import _normalize_angle
+from teleop.data_classes import TargetPosition
+from teleop.utils import _normalize_angle
 from websockets.sync.client import connect
 
 
@@ -46,6 +46,10 @@ def get_euler(q: Tuple[float, float, float, float]) -> Tuple[float, float, float
     # Compute roll (z-axis rotation)
     # -atan2(-y - z, a + x) - atan2(y - z, a - x)
     roll = _normalize_angle(-np.arctan2(-y - z, w + x) - np.arctan2(y - z, w - x))
+
+    if abs(pitch) > np.pi / 2:
+        pitch = np.sign(pitch) * (np.pi - abs(pitch))
+        roll = -roll
 
     return pitch, yaw, roll
 
