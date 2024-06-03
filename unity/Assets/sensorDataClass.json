@@ -1,0 +1,24 @@
+{
+  "Left Controller": {
+    "Left X": "bool",
+    "Left Y": "bool",
+    "Left Menu": "bool",
+    "Left Thumbstick": "bool",
+    "Left Index Trigger": "float",
+    "Left Hand Trigger": "float",
+    "Left Thumbstick Axes": "Vector2",
+    "Left Local Position": "Vector3",
+    "Left Local Rotation": "Quaternion"
+  },
+  "Right Controller": {
+    "Right A": "bool",
+    "Right B": "bool",
+    "Right Menu": "bool",
+    "Right Thumbstick": "bool",
+    "Right Index Trigger": "float",
+    "Right Hand Trigger": "float",
+    "Right Thumbstick Axes": "Vector2",
+    "Right Local Position": "Vector3",
+    "Right Local Rotation": "Quaternion"
+  }
+}

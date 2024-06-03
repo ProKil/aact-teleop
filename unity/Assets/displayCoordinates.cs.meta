@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: f7acebe83e4bb4749adde5da0a219f3a
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - headset: {fileID: 4407928774905555992, guid: 46b60c6fd5ee4fb4eb2aab6fc3de5c50, type: 3}
+  - leftController: {fileID: 387326853640995385, guid: e02da7059b478f84089f6629f0eb6d6e, type: 3}
+  - rightController: {fileID: 8674114974808687520, guid: 845fbddb520bad442a15696c4518461e, type: 3}
+  executionOrder: 300
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
