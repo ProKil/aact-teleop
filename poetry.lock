@@ -992,7 +992,6 @@ opencv-contrib-python = "*"
 pandas = "*"
 pathlib = "*"
 pixel-ring = "*"
-playsound = "*"
 psutil = "*"
 pyrealsense2 = "*"
 pyrender = "*"
@@ -2957,16 +2956,6 @@ files = [
 docs = ["furo (>=2023.9.10)", "proselint (>=0.13)", "sphinx (>=7.2.6)", "sphinx-autodoc-typehints (>=1.25.2)"]
 test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=7.4.3)", "pytest-cov (>=4.1)", "pytest-mock (>=3.12)"]
 type = ["mypy (>=1.8)"]
-
-[[package]]
-name = "playsound"
-version = "1.3.0"
-description = "Pure Python, cross platform, single function module with no dependencies for playing sounds."
-optional = false
-python-versions = "*"
-files = [
-    {file = "playsound-1.3.0.tar.gz", hash = "sha256:cc6ed11d773034b0ef624e6bb4bf50f4b76b8414a59ce6d38afb89b423297ced"},
-]
 
 [[package]]
 name = "plotly"
