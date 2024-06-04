@@ -7,8 +7,8 @@ import numpy as np
 import dotenv
 import os
 
-from .data_classes import TargetPosition
-from .utils import _normalize_angle
+from teleop.data_classes import TargetPosition
+from teleop.utils import _normalize_angle
 from websockets.sync.client import connect
 
 
@@ -18,34 +18,21 @@ def get_2d_rotation_from_quaternion(q: Tuple[float, float, float, float]) -> flo
 
 
 def get_euler(q: Tuple[float, float, float, float]) -> Tuple[float, float, float]:
-    """
-    Convert a quaternion into pitch, yaw, and roll.
-
-    Args:
-    q: A numpy array of shape (4,) representing a quaternion [w, x, y, z]
-
-    Returns:
-    A tuple (pitch, yaw, roll)
-    """
     w, x, y, z = q
 
-    # Compute pitch (x-axis rotation)
-    # 2*atan2(sqrt((a + x)**2 + (-y - z)**2), sqrt((a - x)**2 + (y - z)**2)) - pi/2
+    # roll: -atan2(y - z, a + x) + atan2(y + z, a - x),
+    # pitch: 2*atan2(sqrt((a + x)**2 + (y - z)**2), sqrt((a - x)**2 + (y + z)**2)) - pi/2,
+    # yaw: atan2(y - z, a + x) + atan2(y + z, a - x)
+
+    roll = _normalize_angle(-np.arctan2(y - z, w + x) + np.arctan2(y + z, w - x))
     pitch = _normalize_angle(
         2
         * np.arctan2(
-            np.sqrt((w + x) ** 2 + (-y - z) ** 2), np.sqrt((w - x) ** 2 + (y - z) ** 2)
+            np.sqrt((w + x) ** 2 + (y - z) ** 2), np.sqrt((w - x) ** 2 + (y + z) ** 2)
         )
         - np.pi / 2
     )
-
-    # Compute yaw (y-axis rotation)
-    # -atan2(-y - z, a + x) + atan2(y - z, a - x)
-    yaw = _normalize_angle(-np.arctan2(-y - z, w + x) + np.arctan2(y - z, w - x))
-
-    # Compute roll (z-axis rotation)
-    # -atan2(-y - z, a + x) - atan2(y - z, a - x)
-    roll = _normalize_angle(-np.arctan2(-y - z, w + x) - np.arctan2(y - z, w - x))
+    yaw = _normalize_angle(np.arctan2(y - z, w + x) + np.arctan2(y + z, w - x))
 
     return pitch, yaw, roll
 
