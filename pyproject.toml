@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "stretch-teleop-server"
+name = "teleop"
 version = "0.0.1"
 description = "Teleoperating stretch robot"
 authors = ["Hao Zhu <prokilchu@gmail.com>"]
@@ -12,7 +12,7 @@ pydantic = "^2.7.2"
 fastapi = "^0.111.0"
 zmq = "^0.0.0"
 numpy = "^1.26.4"
-hello-robot-stretch-body = {path = "./body", develop = true}
+hello-robot-stretch-body = {path = "./body", develop = true, platform="linux"}
 
 [tool.poetry.group.test.dependencies]
 mypy = "^1.8.0"
