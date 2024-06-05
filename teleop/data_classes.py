@@ -21,10 +21,14 @@ class TargetPosition(BaseModel):
         default=0.6, description="The lift position."
     )
 
-    wrist_yaw: NormalizedAngle = Field(default=0, description="The wrist yaw position.")
-    wrist_pitch: NormalizedAngle = Field(
-        default=0, description="The wrist pitch position."
-    )
+    wrist_yaw: Annotated[
+        float,
+        AfterValidator(lambda x: min(max(x, -1.39), 3.14)),
+    ] = Field(default=0, description="The wrist yaw position.")
+    wrist_pitch: Annotated[
+        float,
+        AfterValidator(lambda x: min(max(x, -1.57), 0.57)),
+    ] = Field(default=0, description="The wrist pitch position.")
     wrist_roll: NormalizedAngle = Field(
         default=0, description="The wrist roll position."
     )

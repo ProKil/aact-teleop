@@ -14,8 +14,8 @@ from fastapi import BackgroundTasks, FastAPI, WebSocket
 from contextlib import asynccontextmanager
 import signal
 
-from .data_classes import TargetPosition
-from .utils import _normalize_angle
+from teleop.data_classes import TargetPosition
+from teleop.utils import _normalize_angle
 
 
 @asynccontextmanager
