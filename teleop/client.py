@@ -1,5 +1,7 @@
+import logging
+import time
 from typing import Tuple, cast
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import zmq
 import json
 import requests
@@ -56,6 +58,9 @@ class HeadsetControllerStates(BaseModel):
     controller_position: Tuple[float, float, float]
     controller_rotation: Tuple[float, float, float, float]
     controller_trigger: float
+    controller_thumbstick: Tuple[float, float] = Field(
+        ..., description="thumbstick position. X-left/right, Y-forward/backward"
+    )
     reset_button: bool
 
 
@@ -67,10 +72,12 @@ class Client(object):
     stretch_socket: ClientConnection | None
 
     # Memory
-    old_head_position: Tuple[float, float] | None
-    desired_base_position: Tuple[float, float] | None
     base_rotation_offset: float | None
     quaternion_offset: Tuple[float, float, float, float] | None
+    delta_time: float = 0.0
+
+    # Configurations
+    translation_speed: float = 5
 
     def __init__(self, dry_run: bool = False) -> None:
         self.quest_ip = os.environ["QUEST_IP"]
@@ -78,8 +85,6 @@ class Client(object):
         self.quest_socket = self._connect_quest()
         self.stretch_socket = self._connect_stretch() if not dry_run else None
 
-        self.old_head_position = None
-        self.desired_base_position = None
         self.base_rotation_offset = None
         self.quaternion_offset = None
 
@@ -91,14 +96,19 @@ class Client(object):
 
         return quest_socket
 
-    def _connect_stretch(self) -> ClientConnection:
+    def _connect_stretch(self) -> ClientConnection | None:
         websocket_url = f"ws://{self.stretch_ip}:8000/move_to_ws"
         return cast(ClientConnection, connect(websocket_url).__enter__())  # mypy bug
 
     def __del__(self) -> None:
-        if self.stretch_socket is not None:
-            self.stretch_socket.send(TargetPosition().model_dump_json())
-            self.stretch_socket.__exit__(None, None, None)
+        try:
+            if self.stretch_socket:
+                self.stretch_socket.send(TargetPosition().model_dump_json())
+                self.stretch_socket.__exit__(None, None, None)
+        except AttributeError as e:
+            logging.warning(
+                f"Partially initialized client: {e}. Skipping stretch socket cleanup."
+            )
 
     def _convert_controller_states_to_control_signals(
         self, controller_states: HeadsetControllerStates
@@ -166,19 +176,11 @@ class Client(object):
         )
 
         # 4. Calculate the desired forward/backward movement
-        if self.old_head_position is None:
-            self.old_head_position = head_position
-            desired_base_movement = 0.0
-        else:
-            head_vertical_movement = (
-                head_position[0] - self.old_head_position[0],
-                head_position[1] - self.old_head_position[1],
-            )
-            desired_base_movement = head_vertical_movement[0] * float(
-                np.cos(desired_base_rotation_in_unity_space)
-            ) + head_vertical_movement[1] * float(
-                np.sin(desired_base_rotation_in_unity_space)
-            )
+        desired_base_movement = (
+            -controller_states.controller_thumbstick[0]
+            * self.translation_speed
+            * self.delta_time
+        )
 
         # 4.a handle reset and calibration
         if controller_states.reset_button or self.base_rotation_offset is None:
@@ -193,18 +195,8 @@ class Client(object):
             else:
                 self.base_rotation_offset = 0.0
 
-        desired_base_rotation_in_stretch_space = (
+        desired_base_rotation_in_stretch_space = _normalize_angle(
             desired_base_rotation_in_unity_space - self.base_rotation_offset
-        )
-
-        if self.desired_base_position is None:
-            self.desired_base_position = (0.0, 0.0)
-
-        self.desired_base_position = (
-            self.desired_base_position[0]
-            + desired_base_movement * np.cos(desired_base_rotation_in_stretch_space),
-            self.desired_base_position[1]
-            + desired_base_movement * np.sin(desired_base_rotation_in_stretch_space),
         )
 
         # 5. Calculate the desired arm length projected to the floor
@@ -220,34 +212,47 @@ class Client(object):
 
         # 7. We need to calculate the desired wrist pitch, yaw, and roll.
         wrist_pitch = -wrist_pitch
-        wrist_yaw = _normalize_angle(-wrist_yaw - desired_base_rotation_in_unity_space)
+        wrist_yaw = _normalize_angle(
+            -wrist_yaw - desired_base_rotation_in_unity_space + np.pi / 2
+        )
         wrist_roll = -wrist_roll
 
         # 8. We need to calculate the desired gripper status.
         grip_status = 95 - float(controller_states.controller_trigger) * 190
         grip_status = np.exp(0.02764 * (grip_status + 95)) - 90
 
+        # 9. Consider the angle of the wrist
+        arm_length_gripper_subtracted = arm_length_projected_to_floor - 0.26 * np.cos(
+            wrist_pitch
+        )
+        arm_lift_gripper_subtracted = arm_lift - 0.26 * np.sin(wrist_pitch)
+
         return TargetPosition(
-            # x=self.desired_base_position[0],
-            # y=self.desired_base_position[1],
+            translation_speed=desired_base_movement,
             theta=desired_base_rotation_in_stretch_space,
-            lift=arm_lift,
-            arm=arm_length_projected_to_floor,
+            lift=arm_lift_gripper_subtracted,
+            arm=arm_length_gripper_subtracted,
             grip_status=grip_status,
             wrist_pitch=wrist_pitch,
             wrist_yaw=wrist_yaw,
-            wrist_roll=wrist_yaw,
+            wrist_roll=wrist_roll,
             stretch_gripper=grip_status,
         )
 
     def event_loop(self) -> None:
         # start control loop
 
-        _ = requests.request(
-            "POST", f"http://{self.stretch_ip}:8000/start_control_loop"
-        ).json()
+        last_time = time.time()
+
+        if self.stretch_ip:
+            _ = requests.request(
+                "POST", f"http://{self.stretch_ip}:8000/start_control_loop"
+            ).json()
         while True:
             message = self.quest_socket.recv()
+            now_time = time.time()
+            self.delta_time = now_time - last_time
+            last_time = now_time
             try:
                 data = json.loads(message.decode())
             except json.JSONDecodeError:
@@ -271,14 +276,17 @@ class Client(object):
                 ),
                 controller_trigger=float(right_controller["RightIndexTrigger"]),
                 reset_button=bool(right_controller["RightB"]),
+                controller_thumbstick=tuple(
+                    map(float, right_controller["RightThumbstickAxes"].split(","))
+                ),
+            )
+
+            control_signals = self._convert_controller_states_to_control_signals(
+                controller_states
             )
 
             if self.stretch_socket is not None:
-                self.stretch_socket.send(
-                    self._convert_controller_states_to_control_signals(
-                        controller_states
-                    ).model_dump_json()
-                )
+                self.stretch_socket.send(control_signals.model_dump_json())
 
 
 if __name__ == "__main__":

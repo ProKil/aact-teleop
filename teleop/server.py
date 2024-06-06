@@ -192,7 +192,7 @@ class PIDController(object):
 
 
 # Initial PID parameters
-Kp_x, Ki_x, Kd_x = 2.0, 0.0, 0.0
+Kp_x, Ki_x, Kd_x = 2.0, 0.0, 0.2
 Kp_y, Ki_y, Kd_y = 4.0, 0.2, 0.0
 Kp_theta, Ki_theta, Kd_theta = 2.0, 0.0, 0.0
 
@@ -223,8 +223,8 @@ def pid_control_policy(args: ControlPolicyArguments) -> Tuple[float, float]:
     """
     global f
     # Compute errors
-    e_x = args.desired_position.x - args.current_position.x
-    e_y = args.desired_position.y - args.current_position.y
+    # e_x = args.desired_position.x - args.current_position.x
+    # e_y = args.desired_position.y - args.current_position.y
     e_theta = _normalize_angle(
         args.desired_position.theta - args.current_position.theta
     )
@@ -233,21 +233,22 @@ def pid_control_policy(args: ControlPolicyArguments) -> Tuple[float, float]:
     e_theta = (e_theta + np.pi) % (2 * np.pi) - np.pi
 
     # Convert position errors to robot frame
-    e_x_prime = e_x * math.cos(args.current_position.theta) + e_y * math.sin(
-        args.current_position.theta
-    )
-    e_y_prime = -e_x * math.sin(args.current_position.theta) + e_y * math.cos(
-        args.current_position.theta
-    )
+    # e_x_prime = e_x * math.cos(args.current_position.theta) + e_y * math.sin(
+    #     args.current_position.theta
+    # )
+    # e_y_prime = -e_x * math.sin(args.current_position.theta) + e_y * math.cos(
+    #     args.current_position.theta
+    # )
 
     # Update PID controllers
-    control_x = pid_x.update(e_x_prime, args.dt)
-    control_y = pid_y.update(e_y_prime, args.dt)
+    # control_x = pid_x.update(e_x_prime, args.dt)
+    # control_y = pid_y.update(e_y_prime, args.dt)
     control_theta = pid_theta.update(e_theta, args.dt)
 
     # Combine control actions
-    v = control_x
-    omega = control_y + control_theta
+    # v = control_x
+    v = 0.0
+    omega = control_theta
 
     # Apply limits to control signals to prevent instability
     v = max(min_v, min(v, max_v))
@@ -307,7 +308,7 @@ async def control_loop(robot: rb.Robot) -> None:
                 ),
             )
         )
-        x_d, y_d, theta_d = (
+        x_d, y_d, _theta_d = (
             next_step_position.x,
             next_step_position.y,
             next_step_position.theta,
@@ -315,7 +316,7 @@ async def control_loop(robot: rb.Robot) -> None:
         # Get the control inputs
         v, omega = pid_control_policy(
             ControlPolicyArguments(
-                desired_position=Position(x=x_d, y=y_d, theta=theta_d),
+                desired_position=Position(x=x_d, y=y_d, theta=target_position.theta),
                 current_position=Position(
                     x=current_x, y=current_y, theta=current_theta
                 ),
@@ -324,7 +325,7 @@ async def control_loop(robot: rb.Robot) -> None:
         )
 
         try:
-            robot.base.set_velocity(v, omega)
+            robot.base.set_velocity(target_position.translation_speed, omega)
             robot.arm.move_to(target_position.arm, v_m=2, a_m=2)
             robot.lift.move_to(target_position.lift, v_m=2, a_m=2)
             robot.end_of_arm.move_to("wrist_yaw", target_position.wrist_yaw)
