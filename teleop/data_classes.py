@@ -6,8 +6,13 @@ NormalizedAngle = Annotated[float, AfterValidator(lambda v: _normalize_angle(v))
 
 
 class TargetPosition(BaseModel):
-    x: float = Field(default=0, description="x position.")
-    y: float = Field(default=0, description="y position.")
+    x: Annotated[float, AfterValidator(lambda x: min(max(x, -3), 3))] = Field(
+        default=0, description="x position."
+    )
+    y: Annotated[float, AfterValidator(lambda x: min(max(x, -3), 3))] = Field(
+        default=0, description="y position."
+    )
+    translation_speed: float = Field(default=0, description="translation speed.")
     theta: NormalizedAngle = Field(default=0, description="orientation.")
 
     arm: Annotated[float, AfterValidator(lambda x: min(max(x, 0), 0.5))] = Field(

@@ -12,7 +12,7 @@ pydantic = "^2.7.2"
 fastapi = "^0.111.0"
 zmq = "^0.0.0"
 numpy = "^1.26.4"
-hello-robot-stretch-body = {path = "./body", develop = true}
+hello-robot-stretch-body = {path = "./body", develop = true, platform="linux"}
 
 [tool.poetry.group.test.dependencies]
 mypy = "^1.8.0"
@@ -29,3 +29,7 @@ plugins = [
     "pydantic.mypy"
 ]
 exclude = "body/*"
+
+[tool.poetry.scripts]
+server = 'teleop.server:main'
+client = 'teleop.client:main'
