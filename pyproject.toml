@@ -29,3 +29,7 @@ plugins = [
     "pydantic.mypy"
 ]
 exclude = "body/*"
+
+[tool.poetry.scripts]
+server = 'teleop.server:main'
+client = 'teleop.client:main'

@@ -6,6 +6,7 @@ import time
 from typing import Any, AsyncGenerator, Dict, List, Tuple
 from typing_extensions import Annotated
 import numpy as np
+import uvicorn
 from stretch_body import robot as rb  # type: ignore
 from stretch_body.hello_utils import ThreadServiceExit  # type: ignore
 from pydantic import BaseModel, Field, AfterValidator
@@ -374,3 +375,9 @@ async def move_to_ws(websocket: WebSocket) -> None:
         data = await websocket.receive_text()
         global target_position
         target_position = TargetPosition(**json.loads(data))
+
+
+def main() -> None:
+    uvicorn.run(
+        "teleop.server:app", host="0.0.0.0", port=8000, reload=False, log_level="debug"
+    )

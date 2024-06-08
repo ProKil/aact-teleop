@@ -62,6 +62,7 @@ class HeadsetControllerStates(BaseModel):
         ..., description="thumbstick position. X-left/right, Y-forward/backward"
     )
     reset_button: bool
+    record_button: bool
 
 
 class Client(object):
@@ -77,7 +78,7 @@ class Client(object):
     delta_time: float = 0.0
 
     # Configurations
-    translation_speed: float = 5
+    translation_speed: float = 10
 
     def __init__(self, dry_run: bool = False) -> None:
         self.quest_ip = os.environ["QUEST_IP"]
@@ -227,7 +228,7 @@ class Client(object):
         )
         arm_lift_gripper_subtracted = arm_lift - 0.26 * np.sin(wrist_pitch)
 
-        return TargetPosition(
+        target_position = TargetPosition(
             translation_speed=desired_base_movement,
             theta=desired_base_rotation_in_stretch_space,
             lift=arm_lift_gripper_subtracted,
@@ -238,6 +239,20 @@ class Client(object):
             wrist_roll=wrist_roll,
             stretch_gripper=grip_status,
         )
+
+        if controller_states.record_button:
+            with open("log.jsonl", "a") as f:
+                f.write(
+                    json.dumps(
+                        dict(
+                            controller_states=controller_states.model_dump(),
+                            target_position=target_position.model_dump(),
+                        )
+                    )
+                    + "\n"
+                )
+
+        return target_position
 
     def event_loop(self) -> None:
         # start control loop
@@ -276,6 +291,7 @@ class Client(object):
                 ),
                 controller_trigger=float(right_controller["RightIndexTrigger"]),
                 reset_button=bool(right_controller["RightB"]),
+                record_button=bool(right_controller["RightA"]),
                 controller_thumbstick=tuple(
                     map(float, right_controller["RightThumbstickAxes"].split(","))
                 ),
@@ -289,7 +305,7 @@ class Client(object):
                 self.stretch_socket.send(control_signals.model_dump_json())
 
 
-if __name__ == "__main__":
+def main() -> None:
     dotenv.load_dotenv()
 
     client = Client()
