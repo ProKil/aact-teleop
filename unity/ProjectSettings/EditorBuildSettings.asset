@@ -8,9 +8,12 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/ControlHub.unity
     guid: 2ed4d6ca9f22344c1875a94b51b35782
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/ControlHubPassthrough.unity
     guid: f05d5b60a7dd14c2da63daec434603f1
+  - enabled: 1
+    path: Assets/head_tracking.unity
+    guid: e9ec2981fbcee49e3931309fbf9298a1
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: abe769d68455740f195eed2e67484d92, type: 2}
     com.unity.xr.arfoundation.simulation_settings: {fileID: 11400000, guid: fc775d453c47f4f1bb629aaa42daacda, type: 2}
