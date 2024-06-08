@@ -7,6 +7,8 @@ public class displayCoordinates : MonoBehaviour
     public GameObject headset;
     public OVRInput.Controller leftController;
     public OVRInput.Controller rightController;
+    public GameObject leftControllerObject;
+    public GameObject rightControllerObject;
     public OVRCameraRig cameraRig;
     public TMP_Text coordinateText;
     private ControllerState stateStore;
@@ -15,7 +17,13 @@ public class displayCoordinates : MonoBehaviour
     void Start()
     {
         headset = GameObject.Find("CenterEyeAnchor");
-        stateStore = new ControllerState(leftController, rightController, headset);
+        stateStore = new ControllerState(
+            leftController,
+            rightController,
+            leftControllerObject,
+            rightControllerObject,
+            headset
+        );
     }
 
     // Update is called once per frame

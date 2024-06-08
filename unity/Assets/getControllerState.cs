@@ -6,6 +6,8 @@ public class ControllerState
 {
     private OVRInput.Controller leftController;
     private OVRInput.Controller rightController;
+    private GameObject leftControllerObject;
+    private GameObject rightControllerObject;
     private GameObject headset;
 
     public bool leftX;
@@ -31,10 +33,17 @@ public class ControllerState
     public Vector3 headLocalPosition;
     public Quaternion headLocalRotation;
 
-    public ControllerState(OVRInput.Controller leftController, OVRInput.Controller rightController, GameObject headset)
+    public ControllerState(
+        OVRInput.Controller leftController,
+        OVRInput.Controller rightController,
+        GameObject leftControllerObject,
+        GameObject rightControllerObject,
+        GameObject headset)
     {
         this.leftController = leftController;
         this.rightController = rightController;
+        this.leftControllerObject = leftControllerObject;
+        this.rightControllerObject = rightControllerObject;
         this.headset = headset;
     }
 

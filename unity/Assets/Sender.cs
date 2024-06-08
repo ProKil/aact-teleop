@@ -14,6 +14,8 @@ public class Sender : MonoBehaviour
 
     public OVRInput.Controller leftController;
     public OVRInput.Controller rightController;
+    public GameObject leftControllerObject;
+    public GameObject rightControllerObject;
     public GameObject headset;
     private ControllerState stateStore;
 
@@ -22,8 +24,13 @@ public class Sender : MonoBehaviour
         ForceDotNet.Force();
         socket = new PushSocket();
         socket.Bind("tcp://*:12345");
-        headset = GameObject.Find("CenterEyeAnchor");
-        stateStore = new ControllerState(leftController, rightController, headset);
+        stateStore = new ControllerState(
+            leftController,
+            rightController,
+            leftControllerObject,
+            rightControllerObject,
+            headset
+        );
     }
 
     private void Update()
