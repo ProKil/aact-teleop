@@ -79,6 +79,7 @@ class Client(object):
 
     # Configurations
     translation_speed: float = 10
+    gripper_length: float = 0.26
 
     def __init__(self, dry_run: bool = False) -> None:
         self.quest_ip = os.environ["QUEST_IP"]
@@ -225,7 +226,7 @@ class Client(object):
         # 9. Consider the angle of the wrist
         arm_length_gripper_subtracted = arm_length_projected_to_floor - 0.26 * np.cos(
             wrist_pitch
-        )
+        ) * np.cos(wrist_yaw)
         arm_lift_gripper_subtracted = arm_lift - 0.26 * np.sin(wrist_pitch)
 
         target_position = TargetPosition(
