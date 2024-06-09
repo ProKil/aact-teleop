@@ -129,6 +129,8 @@ class Client(object):
         6. We need to calculate the desired arm lift.
         7. We need to calculate the desired wrist pitch, yaw, and roll.
         8. We need to calculate the desired gripper status.
+        9. We need to consider the angle of the wrist.
+        10. We need to get head tilt (pitch) and head pan (yaw).
         """
 
         # 1. Convert the axes
@@ -228,6 +230,19 @@ class Client(object):
         )
         arm_lift_gripper_subtracted = arm_lift - 0.26 * np.sin(wrist_pitch)
 
+        # 10. Get head tilt (pitch) and head pan (yaw)
+        head_tilt, head_pan, _ = get_euler(
+            (
+                controller_states.headset_rotation[3],
+                controller_states.headset_rotation[0],
+                controller_states.headset_rotation[1],
+                controller_states.headset_rotation[2],
+            )
+        )
+
+        head_tilt = -head_tilt
+        head_pan = _normalize_angle(-head_pan - desired_base_rotation_in_unity_space)
+
         target_position = TargetPosition(
             translation_speed=desired_base_movement,
             theta=desired_base_rotation_in_stretch_space,
@@ -238,6 +253,8 @@ class Client(object):
             wrist_yaw=wrist_yaw,
             wrist_roll=wrist_roll,
             stretch_gripper=grip_status,
+            head_tilt=head_tilt,
+            head_pan=head_pan,
         )
 
         if controller_states.record_button:
