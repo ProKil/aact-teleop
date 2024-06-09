@@ -3,12 +3,14 @@ import json
 import math
 import sys
 import time
-from typing import Any, AsyncGenerator, Dict, List, Tuple
+from typing import Any, AsyncGenerator, Dict, Generator, List, Tuple
+import cv2
+from fastapi.responses import StreamingResponse
 from typing_extensions import Annotated
 import numpy as np
 import uvicorn
 from stretch_body import robot as rb  # type: ignore
-from stretch_body.hello_utils import ThreadServiceExit  # type: ignore
+from stretch_body.hello_utils import ThreadServiceExit, setup_realsense_camera  # type: ignore
 from pydantic import BaseModel, Field, AfterValidator
 
 from fastapi import BackgroundTasks, FastAPI, WebSocket
@@ -333,6 +335,8 @@ async def control_loop(robot: rb.Robot) -> None:
             robot.end_of_arm.move_to("wrist_pitch", target_position.wrist_pitch)
             robot.end_of_arm.move_to("wrist_roll", target_position.wrist_roll)
             robot.end_of_arm.move_to("stretch_gripper", target_position.stretch_gripper)
+            robot.head.move_to("head_tilt", target_position.head_tilt)
+            robot.head.move_to("head_pan", target_position.head_pan)
             robot.push_command()
             await asyncio.sleep(1 / 80)
         except (ThreadServiceExit, KeyboardInterrupt):
@@ -375,6 +379,35 @@ async def move_to_ws(websocket: WebSocket) -> None:
         data = await websocket.receive_text()
         global target_position
         target_position = TargetPosition(**json.loads(data))
+
+
+@app.get("/video")
+async def video_feed() -> StreamingResponse:
+    def generate() -> Generator[bytes, None, None]:
+        pipeline = setup_realsense_camera(None, (1280, 720), (1280, 720), 30)
+
+        try:
+            while True:
+                frames = pipeline.wait_for_frames()
+                color_frame = frames.get_color_frame()
+                if not color_frame:
+                    continue
+
+                color_image = np.rot90(np.asanyarray(color_frame.get_data()), -1)
+
+                ret, buffer = cv2.imencode(".jpg", color_image)
+                frame = buffer.tobytes()
+                yield (
+                    b"--frame\r\n"
+                    b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n\r\n"
+                )
+
+        finally:
+            pipeline.stop()
+
+    return StreamingResponse(
+        generate(), media_type="multipart/x-mixed-replace; boundary=frame"
+    )
 
 
 def main() -> None:
