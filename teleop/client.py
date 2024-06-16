@@ -1,8 +1,12 @@
 import logging
 import time
-from typing import Tuple, cast
+from typing import AsyncGenerator, Tuple, cast
+from fastapi import FastAPI, Request
+from contextlib import asynccontextmanager
 from pydantic import BaseModel, Field
+import uvicorn
 import zmq
+from zmq.asyncio import Socket, Context
 import json
 import requests
 import numpy as np
@@ -12,6 +16,12 @@ import os
 from teleop.data_classes import TargetPosition
 from teleop.utils import _normalize_angle
 from websockets.sync.client import connect, ClientConnection
+
+import multiprocessing
+
+from fastapi.templating import Jinja2Templates
+from starlette.templating import _TemplateResponse
+import asyncio
 
 
 def get_2d_rotation_from_quaternion(q: Tuple[float, float, float, float]) -> float:
@@ -69,7 +79,7 @@ class Client(object):
     # Connections
     quest_ip: str
     stretch_ip: str
-    quest_socket: zmq.Socket[bytes]
+    quest_socket: Socket
     stretch_socket: ClientConnection | None
 
     # Memory
@@ -89,8 +99,8 @@ class Client(object):
         self.base_rotation_offset = None
         self.quaternion_offset = None
 
-    def _connect_quest(self) -> zmq.Socket[bytes]:
-        context = zmq.Context()
+    def _connect_quest(self) -> Socket:
+        context = Context()
         quest_socket = context.socket(zmq.PULL)
         quest_socket.setsockopt(zmq.CONFLATE, 1)
         quest_socket.connect(f"tcp://{self.quest_ip}:12345")
@@ -271,7 +281,7 @@ class Client(object):
 
         return target_position
 
-    def event_loop(self) -> None:
+    async def event_loop(self) -> None:
         # start control loop
 
         last_time = time.time()
@@ -280,8 +290,11 @@ class Client(object):
             _ = requests.request(
                 "POST", f"http://{self.stretch_ip}:8000/start_control_loop"
             ).json()
+            _ = requests.request(
+                "POST", f"http://{self.stretch_ip}:8000/start_video_feed"
+            ).json()
         while True:
-            message = self.quest_socket.recv()
+            message = await self.quest_socket.recv()
             now_time = time.time()
             self.delta_time = now_time - last_time
             last_time = now_time
@@ -322,10 +335,41 @@ class Client(object):
                 self.stretch_socket.send(control_signals.model_dump_json())
 
 
-def main() -> None:
+def client_loop() -> None:
+    """
+    This function is used to receive the raw signals from the Quest and convert them into control signals for the robot.
+    """
+    print("running client loop")
     dotenv.load_dotenv()
-
     client = Client()
-    client.event_loop()
-
+    asyncio.run(client.event_loop())
     del client
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    app.state.background_process = multiprocessing.Process(target=client_loop)
+    app.state.background_process.start()
+    yield
+    app.state.background_process.terminate()
+    app.state.background_process.join()
+
+
+templates = Jinja2Templates(directory="teleop/templates")
+app = FastAPI(lifespan=lifespan)
+
+
+@app.get("/video_feed")
+def video_feed(request: Request) -> _TemplateResponse:
+    dotenv.load_dotenv()
+    return templates.TemplateResponse(
+        "index.html.j2",
+        {
+            "ws_url": f"ws://{os.environ['STRETCH_IP']}:8000/video_feed_ws",
+            "request": request,
+        },
+    )
+
+
+def main() -> None:
+    uvicorn.run("teleop.client:app", host="0.0.0.0", port=8001, reload=False)
