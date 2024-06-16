@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import math
 import sys
 import time
@@ -71,9 +72,14 @@ async def update_video_feed() -> None:
     global frame
     while True:
         start_time = time.time()
-        success, camera_frame = camera.read()
-        if not success:
-            break
+        try:
+            async with asyncio.timeout(1 / 30):
+                success, camera_frame = camera.read()
+                if not success:
+                    continue
+        except asyncio.TimeoutError:
+            logging.debug("Video feed acquire timeout")
+            continue
 
         camera_frame = cv2.rotate(camera_frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
         ret, buffer = cv2.imencode(".jpg", camera_frame)
