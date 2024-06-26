@@ -72,8 +72,9 @@ class ToolStretchDexWrist(EndOfArm):
     def home(self):
         self.motors['stretch_gripper'].home()
         self.motors['wrist_pitch'].move_to(0)
-        self.motors['wrist_roll'].move_to(0)
+        self.motors['wrist_roll'].move_to(3)
         self.motors['wrist_yaw'].home()
+        self.motors['wrist_roll'].move_to(0)
 
     def pre_stow(self,robot=None):
         if robot:
