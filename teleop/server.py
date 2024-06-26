@@ -1,16 +1,17 @@
 import asyncio
 import json
+import logging
 import math
 import sys
 import time
-from typing import Any, AsyncGenerator, Dict, Generator, List, Tuple
+from typing import Any, AsyncGenerator, Callable, Dict, Generator, List, Tuple, TypeVar
 import cv2
 from fastapi.responses import StreamingResponse
 from typing_extensions import Annotated
 import numpy as np
 import uvicorn
 from stretch_body import robot as rb  # type: ignore
-from stretch_body.hello_utils import ThreadServiceExit, setup_realsense_camera  # type: ignore
+from stretch_body.hello_utils import ThreadServiceExit  # type: ignore
 from pydantic import BaseModel, Field, AfterValidator
 
 from fastapi import BackgroundTasks, FastAPI, WebSocket
@@ -19,6 +20,7 @@ import signal
 
 from teleop.data_classes import TargetPosition
 from teleop.utils import _normalize_angle
+import concurrent
 
 
 @asynccontextmanager
@@ -48,6 +50,59 @@ signal.signal(signal.SIGTERM, handle_exit)
 
 
 robot = None
+frame = None
+video_feed_started = False
+
+
+T = TypeVar("T")
+
+
+def run_with_timeout(
+    func: Callable[..., T],
+    args: Tuple[Any, ...] = (),
+    kwargs: Dict[str, Any] = {},
+    timeout_duration: float = 1,
+) -> T:
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future = executor.submit(func, *args, **kwargs)
+        try:
+            return future.result(timeout=timeout_duration)
+        except concurrent.futures.TimeoutError:
+            raise asyncio.TimeoutError
+
+
+async def update_video_feed() -> None:
+    """
+    Use a different process to update the video feed.
+    """
+
+    global video_feed_started
+
+    if video_feed_started:
+        print("Video feed already started.")
+        return
+    else:
+        video_feed_started = True
+
+    camera = cv2.VideoCapture(6, cv2.CAP_ANY)
+    print("Starting video feed.")
+
+    global frame
+    while True:
+        start_time = time.time()
+        try:
+            success, camera_frame = run_with_timeout(camera.read, timeout_duration=1)
+            if not success:
+                continue
+        except asyncio.TimeoutError:
+            logging.warning("Video feed acquire timeout")
+            continue
+
+        camera_frame = cv2.rotate(camera_frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        ret, buffer = cv2.imencode(".jpg", camera_frame)
+        frame = buffer.tobytes()
+        end_time = time.time()
+        await asyncio.sleep(end_time - start_time - 1 / 30)
 
 
 def _choose_closest_angle(
@@ -277,6 +332,7 @@ async def control_loop(robot: rb.Robot) -> None:
 
     if control_loop_started:
         print("Control loop already started.")
+        return
     else:
         print("Starting control loop.")
         control_loop_started = True
@@ -366,10 +422,14 @@ async def get_lift_status() -> Any:
 
 @app.post("/start_control_loop")
 async def start_control_loop(background_tasks: BackgroundTasks) -> Dict[str, str]:
-    if background_tasks.tasks:
-        return {"message": "Control loop already started."}
     background_tasks.add_task(control_loop, robot)
     return {"message": "Control loop started."}
+
+
+@app.post("/start_video_feed")
+async def start_video_feed(background_tasks: BackgroundTasks) -> Dict[str, str]:
+    background_tasks.add_task(update_video_feed)
+    return {"message": "Video feed started."}
 
 
 @app.websocket("/move_to_ws")
@@ -381,29 +441,39 @@ async def move_to_ws(websocket: WebSocket) -> None:
         target_position = TargetPosition(**json.loads(data))
 
 
+async def receive_target_positition(websocket: WebSocket) -> None:
+    global target_position
+    while True:
+        data = await websocket.receive_text()
+        target_position = TargetPosition(**json.loads(data))
+
+
+@app.websocket("/video_feed_ws")
+async def send_video_frame(websocket: WebSocket) -> None:
+    global frame
+    await websocket.accept()
+    while True:
+        if frame:
+            await websocket.send_bytes(frame)
+        else:
+            pass
+        await asyncio.sleep(1 / 30)
+
+
 @app.get("/video")
-async def video_feed() -> StreamingResponse:
+def video_feed() -> StreamingResponse:
+    global frame
+
     def generate() -> Generator[bytes, None, None]:
-        pipeline = setup_realsense_camera(None, (1280, 720), (1280, 720), 30)
-
-        try:
-            while True:
-                frames = pipeline.wait_for_frames()
-                color_frame = frames.get_color_frame()
-                if not color_frame:
-                    continue
-
-                color_image = np.rot90(np.asanyarray(color_frame.get_data()), -1)
-
-                ret, buffer = cv2.imencode(".jpg", color_image)
-                frame = buffer.tobytes()
+        while True:
+            if frame:
                 yield (
                     b"--frame\r\n"
                     b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n\r\n"
                 )
-
-        finally:
-            pipeline.stop()
+            else:
+                pass
+            time.sleep(1 / 30)
 
     return StreamingResponse(
         generate(), media_type="multipart/x-mixed-replace; boundary=frame"
@@ -411,6 +481,4 @@ async def video_feed() -> StreamingResponse:
 
 
 def main() -> None:
-    uvicorn.run(
-        "teleop.server:app", host="0.0.0.0", port=8000, reload=False, log_level="debug"
-    )
+    uvicorn.run("teleop.server:app", host="0.0.0.0", port=8000, reload=False)

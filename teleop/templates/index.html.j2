@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Live Streaming</title>
+        <style>
+            /* Make the image take up the full width of the viewport */
+            body {
+                margin: 0;
+                padding: 0;
+                overflow: hidden; /* Optional: to hide any overflow */
+            }
+            #frame {
+                display: block; /* Ensure it behaves like a block element */
+                width: 100vw; /* 100% of the viewport width */
+                height: 100vh; /* 100% of the viewport height */
+                object-fit: cover; /* Scale the image to cover the entire element */
+            }
+        </style>
+    </head>
+    <body>
+        <img id="frame" src="">
+        <script>
+            let ws = new WebSocket("{{ ws_url }}");
+            let image = document.getElementById("frame");
+            image.onload = function(){
+                URL.revokeObjectURL(this.src); // release the blob URL once the image is loaded
+            }
+            ws.onmessage = function(event) {
+                image.src = URL.createObjectURL(event.data);
+            };
+        </script>
+    </body>
+</html>
