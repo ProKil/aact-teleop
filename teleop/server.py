@@ -4,7 +4,7 @@ import logging
 import math
 import sys
 import time
-from typing import Any, AsyncGenerator, Dict, Generator, List, Tuple
+from typing import Any, AsyncGenerator, Callable, Dict, Generator, List, Tuple, TypeVar
 import cv2
 from fastapi.responses import StreamingResponse
 from typing_extensions import Annotated
@@ -20,6 +20,7 @@ import signal
 
 from teleop.data_classes import TargetPosition
 from teleop.utils import _normalize_angle
+import concurrent
 
 
 @asynccontextmanager
@@ -53,6 +54,23 @@ frame = None
 video_feed_started = False
 
 
+T = TypeVar("T")
+
+
+def run_with_timeout(
+    func: Callable[..., T],
+    args: Tuple[Any, ...] = (),
+    kwargs: Dict[str, Any] = {},
+    timeout_duration: float = 1,
+) -> T:
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        future = executor.submit(func, *args, **kwargs)
+        try:
+            return future.result(timeout=timeout_duration)
+        except concurrent.futures.TimeoutError:
+            raise asyncio.TimeoutError
+
+
 async def update_video_feed() -> None:
     """
     Use a different process to update the video feed.
@@ -73,12 +91,11 @@ async def update_video_feed() -> None:
     while True:
         start_time = time.time()
         try:
-            async with asyncio.timeout(1 / 30):
-                success, camera_frame = camera.read()
-                if not success:
-                    continue
+            success, camera_frame = run_with_timeout(camera.read, timeout_duration=1)
+            if not success:
+                continue
         except asyncio.TimeoutError:
-            logging.debug("Video feed acquire timeout")
+            logging.warning("Video feed acquire timeout")
             continue
 
         camera_frame = cv2.rotate(camera_frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
