@@ -1,8 +1,9 @@
 import logging
 import time
-from typing import AsyncGenerator, Tuple, cast
-from fastapi import FastAPI, Request
+from typing import AsyncGenerator, Generator, Tuple, cast
+from fastapi import FastAPI
 from contextlib import asynccontextmanager
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 import uvicorn
 import zmq
@@ -20,7 +21,6 @@ from websockets.sync.client import connect, ClientConnection
 import multiprocessing
 
 from fastapi.templating import Jinja2Templates
-from starlette.templating import _TemplateResponse
 import asyncio
 
 
@@ -103,7 +103,7 @@ class Client(object):
     def _connect_quest(self) -> Socket:
         context = Context()
         quest_socket = context.socket(zmq.PULL)
-        quest_socket.setsockopt(zmq.CONFLATE, 1)
+        # quest_socket.setsockopt(zmq.CONFLATE, 1)
         quest_socket.connect(f"tcp://{self.quest_ip}:12345")
 
         return quest_socket
@@ -342,9 +342,10 @@ def client_loop() -> None:
     """
     print("running client loop")
     dotenv.load_dotenv()
-    client = Client()
-    asyncio.run(client.event_loop())
-    del client
+    while True:
+        client = Client()
+        asyncio.run(client.event_loop())
+        del client
 
 
 @asynccontextmanager
@@ -361,16 +362,41 @@ app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/video_feed")
-def video_feed(request: Request) -> _TemplateResponse:
+def video_feed() -> StreamingResponse:
     dotenv.load_dotenv()
-    return templates.TemplateResponse(
-        "index.html.j2",
-        {
-            "ws_url": f"ws://{os.environ['STRETCH_IP']}:8000/video_feed_ws",
-            "request": request,
-        },
+
+    websocket_url = f"ws://{os.environ['STRETCH_IP']}:8000/video_feed_ws"
+    websocket = connect(websocket_url)
+
+    def generate() -> Generator[bytes, None, None]:
+        while True:
+            frame = websocket.recv()
+            assert isinstance(frame, bytes)
+            if frame:
+                yield (
+                    b"--frame\r\n"
+                    b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n\r\n"
+                )
+            else:
+                pass
+            time.sleep(1 / 30)
+
+    return StreamingResponse(
+        generate(), media_type="multipart/x-mixed-replace; boundary=frame"
     )
 
 
 def main() -> None:
-    uvicorn.run("teleop.client:app", host="0.0.0.0", port=8001, reload=False)
+    dotenv.load_dotenv()
+
+    if "SSLKEYFILE" in os.environ and "SSLCERTFILE" in os.environ:
+        uvicorn.run(
+            "teleop.client:app",
+            host="0.0.0.0",
+            port=8443,
+            ssl_keyfile=os.environ["SSLKEYFILE"],
+            ssl_certfile=os.environ["SSLCERTFILE"],
+            reload=False,
+        )
+    else:
+        uvicorn.run("teleop.client:app", host="0.0.0.0", port=8000)
