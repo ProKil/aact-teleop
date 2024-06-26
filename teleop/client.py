@@ -1,7 +1,7 @@
 import logging
 import time
 from typing import AsyncGenerator, Generator, Tuple, cast
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
@@ -21,7 +21,6 @@ from websockets.sync.client import connect, ClientConnection
 import multiprocessing
 
 from fastapi.templating import Jinja2Templates
-from starlette.templating import _TemplateResponse
 import asyncio
 
 
@@ -364,7 +363,7 @@ app = FastAPI(lifespan=lifespan)
 @app.get("/video_feed")
 def video_feed() -> StreamingResponse:
     dotenv.load_dotenv()
-    
+
     websocket_url = f"ws://{os.environ['STRETCH_IP']}:8000/video_feed_ws"
     websocket = connect(websocket_url)
 
@@ -380,7 +379,7 @@ def video_feed() -> StreamingResponse:
             else:
                 pass
             time.sleep(1 / 30)
-    
+
     return StreamingResponse(
         generate(), media_type="multipart/x-mixed-replace; boundary=frame"
     )
@@ -390,6 +389,13 @@ def main() -> None:
     dotenv.load_dotenv()
 
     if "SSLKEYFILE" in os.environ and "SSLCERTFILE" in os.environ:
-        uvicorn.run("teleop.client:app", host="0.0.0.0", port=8443, ssl_keyfile=os.environ["SSLKEYFILE"], ssl_certfile=os.environ["SSLCERTFILE"], reload=False)
+        uvicorn.run(
+            "teleop.client:app",
+            host="0.0.0.0",
+            port=8443,
+            ssl_keyfile=os.environ["SSLKEYFILE"],
+            ssl_certfile=os.environ["SSLCERTFILE"],
+            reload=False,
+        )
     else:
         uvicorn.run("teleop.client:app", host="0.0.0.0", port=8000)
