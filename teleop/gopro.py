@@ -6,6 +6,7 @@ from typing import AsyncGenerator, Optional
 
 import cv2
 import numpy as np
+import numpy.typing as npt
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from open_gopro import WiredGoPro, Params
@@ -20,7 +21,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 # Global variables
 gopro: Optional[WiredGoPro] = None
 shutdown_event: asyncio.Event = asyncio.Event()
-latest_frame: Optional[np.ndarray] = None
+latest_frame: Optional[npt.NDArray[np.uint8]] = None
 frame_lock: asyncio.Lock = asyncio.Lock()
 
 
@@ -108,8 +109,8 @@ async def capture_frames() -> None:
     try:
         while not shutdown_event.is_set():
             success: bool
-            frame: np.ndarray
-            success, frame = cap.read()
+            frame: npt.NDArray[np.uint8]
+            success, frame = cap.read()  # type: ignore[assignment]
             if not success:
                 logger.warning("Failed to read frame from camera.")
                 await asyncio.sleep(0.1)
@@ -130,10 +131,10 @@ async def generate_frames() -> AsyncGenerator[bytes, None]:
             if latest_frame is None:
                 await asyncio.sleep(0.1)
                 continue
-            frame: np.ndarray = latest_frame.copy()
+            frame: npt.NDArray[np.uint8] = latest_frame.copy()
 
         ret: bool
-        buffer: np.ndarray
+        buffer: npt.NDArray[np.uint8]
         ret, buffer = cv2.imencode(".jpg", frame)
         frame_bytes: bytes = buffer.tobytes()
         yield (

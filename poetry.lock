@@ -2696,7 +2696,7 @@ description = "Open GoPro API and Examples"
 optional = false
 python-versions = ">=3.9,<3.13"
 files = []
-develop = false
+develop = true
 
 [package.dependencies]
 bleak = "=0.21.1"
@@ -5307,4 +5307,4 @@ pyzmq = "*"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11.9"
-content-hash = "ea8d2af9acca95b05f52146103caecfccea89bbec6a61e84620cc8a746ed87c2"
+content-hash = "550fff146484a131fdf1b15cf488e94082544ad440c8eeedcbdc6eef08c03e1b"
