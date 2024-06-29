@@ -14,7 +14,8 @@ zmq = "^0.0.0"
 numpy = "^1.26.4"
 hello-robot-stretch-body = {path = "./body", develop = true, platform="linux"}
 redis = "^5.0.7"
-
+open-gopro = {path = "./open_gopro", develop = true}
+types-requests = "^2.32.0.20240622"
 [tool.poetry.group.test.dependencies]
 mypy = "^1.8.0"
 
@@ -29,7 +30,7 @@ strict = true
 plugins = [
     "pydantic.mypy"
 ]
-exclude = "body/*"
+exclude = "(body|open_gopro)/*"
 
 [tool.poetry.scripts]
 server = 'teleop.server:main'

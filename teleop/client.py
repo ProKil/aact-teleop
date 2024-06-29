@@ -1,8 +1,13 @@
 import logging
 import time
-from typing import Tuple, cast
+from typing import AsyncGenerator, Generator, Tuple, cast
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+import uvicorn
 import zmq
+from zmq.asyncio import Socket, Context
 import json
 import requests
 import numpy as np
@@ -12,6 +17,11 @@ import os
 from teleop.data_classes import TargetPosition
 from teleop.utils import _normalize_angle
 from websockets.sync.client import connect, ClientConnection
+
+import multiprocessing
+
+from fastapi.templating import Jinja2Templates
+import asyncio
 
 
 def get_2d_rotation_from_quaternion(q: Tuple[float, float, float, float]) -> float:
@@ -69,7 +79,7 @@ class Client(object):
     # Connections
     quest_ip: str
     stretch_ip: str
-    quest_socket: zmq.Socket[bytes]
+    quest_socket: Socket
     stretch_socket: ClientConnection | None
 
     # Memory
@@ -79,6 +89,7 @@ class Client(object):
 
     # Configurations
     translation_speed: float = 10
+    gripper_length: float = 0.26
 
     def __init__(self, dry_run: bool = False) -> None:
         self.quest_ip = os.environ["QUEST_IP"]
@@ -89,10 +100,10 @@ class Client(object):
         self.base_rotation_offset = None
         self.quaternion_offset = None
 
-    def _connect_quest(self) -> zmq.Socket[bytes]:
-        context = zmq.Context()
+    def _connect_quest(self) -> Socket:
+        context = Context()
         quest_socket = context.socket(zmq.PULL)
-        quest_socket.setsockopt(zmq.CONFLATE, 1)
+        # quest_socket.setsockopt(zmq.CONFLATE, 1)
         quest_socket.connect(f"tcp://{self.quest_ip}:12345")
 
         return quest_socket
@@ -129,6 +140,8 @@ class Client(object):
         6. We need to calculate the desired arm lift.
         7. We need to calculate the desired wrist pitch, yaw, and roll.
         8. We need to calculate the desired gripper status.
+        9. We need to consider the angle of the wrist.
+        10. We need to get head tilt (pitch) and head pan (yaw).
         """
 
         # 1. Convert the axes
@@ -225,8 +238,21 @@ class Client(object):
         # 9. Consider the angle of the wrist
         arm_length_gripper_subtracted = arm_length_projected_to_floor - 0.26 * np.cos(
             wrist_pitch
-        )
+        ) * np.cos(wrist_yaw)
         arm_lift_gripper_subtracted = arm_lift - 0.26 * np.sin(wrist_pitch)
+
+        # 10. Get head tilt (pitch) and head pan (yaw)
+        head_tilt, head_pan, _ = get_euler(
+            (
+                controller_states.headset_rotation[3],
+                controller_states.headset_rotation[0],
+                controller_states.headset_rotation[1],
+                controller_states.headset_rotation[2],
+            )
+        )
+
+        head_tilt = -head_tilt
+        head_pan = _normalize_angle(-head_pan - desired_base_rotation_in_unity_space)
 
         target_position = TargetPosition(
             translation_speed=desired_base_movement,
@@ -238,6 +264,8 @@ class Client(object):
             wrist_yaw=wrist_yaw,
             wrist_roll=wrist_roll,
             stretch_gripper=grip_status,
+            head_tilt=head_tilt,
+            head_pan=head_pan,
         )
 
         if controller_states.record_button:
@@ -254,7 +282,7 @@ class Client(object):
 
         return target_position
 
-    def event_loop(self) -> None:
+    async def event_loop(self) -> None:
         # start control loop
 
         last_time = time.time()
@@ -263,8 +291,11 @@ class Client(object):
             _ = requests.request(
                 "POST", f"http://{self.stretch_ip}:8000/start_control_loop"
             ).json()
+            _ = requests.request(
+                "POST", f"http://{self.stretch_ip}:8000/start_video_feed"
+            ).json()
         while True:
-            message = self.quest_socket.recv()
+            message = await self.quest_socket.recv()
             now_time = time.time()
             self.delta_time = now_time - last_time
             last_time = now_time
@@ -305,10 +336,67 @@ class Client(object):
                 self.stretch_socket.send(control_signals.model_dump_json())
 
 
+def client_loop() -> None:
+    """
+    This function is used to receive the raw signals from the Quest and convert them into control signals for the robot.
+    """
+    print("running client loop")
+    dotenv.load_dotenv()
+    while True:
+        client = Client()
+        asyncio.run(client.event_loop())
+        del client
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    app.state.background_process = multiprocessing.Process(target=client_loop)
+    app.state.background_process.start()
+    yield
+    app.state.background_process.terminate()
+    app.state.background_process.join()
+
+
+templates = Jinja2Templates(directory="teleop/templates")
+app = FastAPI(lifespan=lifespan)
+
+
+@app.get("/video_feed")
+def video_feed() -> StreamingResponse:
+    dotenv.load_dotenv()
+
+    websocket_url = f"ws://{os.environ['STRETCH_IP']}:8000/video_feed_ws"
+    websocket = connect(websocket_url)
+
+    def generate() -> Generator[bytes, None, None]:
+        while True:
+            frame = websocket.recv()
+            assert isinstance(frame, bytes)
+            if frame:
+                yield (
+                    b"--frame\r\n"
+                    b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n\r\n"
+                )
+            else:
+                pass
+            time.sleep(1 / 30)
+
+    return StreamingResponse(
+        generate(), media_type="multipart/x-mixed-replace; boundary=frame"
+    )
+
+
 def main() -> None:
     dotenv.load_dotenv()
 
-    client = Client()
-    client.event_loop()
-
-    del client
+    if "SSLKEYFILE" in os.environ and "SSLCERTFILE" in os.environ:
+        uvicorn.run(
+            "teleop.client:app",
+            host="0.0.0.0",
+            port=8443,
+            ssl_keyfile=os.environ["SSLKEYFILE"],
+            ssl_certfile=os.environ["SSLCERTFILE"],
+            reload=False,
+        )
+    else:
+        uvicorn.run("teleop.client:app", host="0.0.0.0", port=8000)
