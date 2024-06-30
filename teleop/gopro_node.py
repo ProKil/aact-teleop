@@ -8,8 +8,7 @@ import numpy.typing as npt
 import numpy as np
 from logging import getLogger
 
-from teleop.gopro import capture_frames
-import cv2  # type: ignore[import-not-found]
+import cv2
 
 
 class GoProNode(Node[Tick, Image]):
@@ -26,23 +25,27 @@ class GoProNode(Node[Tick, Image]):
         self.logger = getLogger(__name__)
         self.gopro: WiredGoPro | None = None
         self.shutdown_event: asyncio.Event = asyncio.Event()
-        self.latest_frame: npt.NDArray[np.uint8] | None = None
+        self.latest_frame: bytes | None = None
         self.frame_lock: asyncio.Lock = asyncio.Lock()
         self.task: asyncio.Task[None] | None = None
 
     async def capture_frames(self) -> None:
         cap: cv2.VideoCapture = cv2.VideoCapture("udp://0.0.0.0:8554")
+        self.logger.info("Starting frame capture...")
         try:
             while not self.shutdown_event.is_set():
                 success: bool
                 frame: npt.NDArray[np.uint8]
-                success, frame = cap.read()
+                success, frame = cap.read()  # type: ignore[assignment]
+                buffer: npt.NDArray[np.uint8]
+                _, buffer = cv2.imencode(".jpg", frame)
+                frame_bytes: bytes = buffer.tobytes()
                 if not success:
                     self.logger.warning("Failed to read frame from camera.")
                     await asyncio.sleep(0.1)
                     continue
                 async with self.frame_lock:
-                    self.latest_frame = frame
+                    self.latest_frame = frame_bytes
                 await asyncio.sleep(0.01)
         except Exception as e:
             self.logger.error(f"Error in capture_frames: {e}")
@@ -82,13 +85,16 @@ class GoProNode(Node[Tick, Image]):
                 await self.gopro.http_command.webcam_status()
             ).data.status
             self.logger.debug(f"Waiting for webcam... Current status: {status}")
+            if status == WebcamStatus.IDLE:
+                self.logger.info("Webcam is idle. Try starting again.")
+                await self.gopro.http_command.webcam_start()
             if status == WebcamStatus.HIGH_POWER_PREVIEW:
                 self.logger.info("Webcam is ready.")
                 break
             await asyncio.sleep(0.5)
 
         # Start frame capture task
-        self.task = asyncio.create_task(capture_frames())
+        self.task = asyncio.create_task(self.capture_frames())
         return await super().__aenter__()
 
     async def __aexit__(self, _: Any, __: Any, ___: Any) -> None:
@@ -105,14 +111,30 @@ class GoProNode(Node[Tick, Image]):
         return await super().__aexit__(_, __, ___)
 
     async def event_handler(self, _: Tick) -> AsyncIterator[tuple[str, Image]]:
-        yield self.output_channels[0], Image(image=self.latest_frame)
+        if self.latest_frame is not None:
+            self.logger.debug("Sending frame...")
+            yield self.output_channels[0], Image(image=self.latest_frame)
+        else:
+            return
 
 
 async def _main() -> None:
-    node = GoProNode(output_channel="gopro/image")
+    import os
+
+    if "REDIS_URL" in os.environ:
+        redis_url = os.environ["REDIS_URL"]
+        node = GoProNode(
+            output_channel="gopro/image",
+            redis_url=redis_url,
+        )
+    else:
+        node = GoProNode(output_channel="gopro/image")
     async with node:
         await node.event_loop()
 
 
 if __name__ == "__main__":
+    import dotenv
+
+    dotenv.load_dotenv()
     asyncio.run(_main())
