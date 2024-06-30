@@ -38,19 +38,20 @@ class Node(Generic[InputType, OutputType]):
         self.pubsub = self.r.pubsub()
 
     async def __aenter__(self) -> Self:
+        await self.r.ping()
         await self.pubsub.subscribe(*self.input_channels)
         return self
 
     async def __aexit__(self, _: Any, __: Any, ___: Any) -> None:
         await self.pubsub.unsubscribe()
-        self.r.close()
+        await self.r.close()
 
     async def _wait_for_input(
         self,
     ) -> AsyncIterator[InputType]:
         async for message in self.pubsub.listen():
             if message["type"] == "message":
-                yield self.input_type.model_validate_strings(message["data"])
+                yield self.input_type.model_validate_json(message["data"])
 
     async def event_loop(
         self,
