@@ -5,6 +5,10 @@ description = "Teleoperating stretch robot"
 authors = ["Hao Zhu <prokilchu@gmail.com>"]
 license = "MIT License"
 readme = "README.md"
+packages = [
+    { include = "teleop" },
+    { include = "pubsub_server" }
+]
 
 [tool.poetry.dependencies]
 python = "~3.11.9"

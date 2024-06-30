@@ -24,5 +24,5 @@ jobs:
     - name: Type-checking package with mypy
       run: |
         # Run this mypy instance against our main package.
-        poetry run mypy --install-types --non-interactive teleop
+        poetry run mypy --install-types --non-interactive .
         poetry run mypy --strict .

@@ -1,4 +1,4 @@
-from typing import Any, AsyncGenerator, Generic, Self, Type, TypeVar
+from typing import Any, AsyncIterator, Generic, Self, Type, TypeVar
 from pubsub_server.messages import Message
 
 from abc import abstractmethod
@@ -21,7 +21,7 @@ class Node(Generic[InputType, OutputType]):
         output_channels: list[str],
         input_type: Type[InputType],
         output_type: Type[OutputType],
-        redis_kwargs: dict[str, Any] = {},
+        redis_url: str = "redis://localhost:6379/0",
     ):
         self.input_channels = input_channels
         self.output_channels = output_channels
@@ -29,27 +29,25 @@ class Node(Generic[InputType, OutputType]):
         self.output_type = output_type
 
         try:
-            self.r: Redis = Redis(**redis_kwargs)
+            self.r: Redis = Redis.from_url(redis_url)
         except ConnectionRefusedError:
             raise ConnectionRefusedError(
-                f"Could not connect to Redis with the provided arguments. {redis_kwargs}"
+                f"Could not connect to Redis with the provided url. {redis_url}"
             )
 
         self.pubsub = self.r.pubsub()
 
-    async def __enter__(self) -> Self:
+    async def __aenter__(self) -> Self:
         await self.pubsub.subscribe(*self.input_channels)
         return self
 
-    async def __exit__(
-        self,
-    ) -> None:
+    async def __aexit__(self, _: Any, __: Any, ___: Any) -> None:
         await self.pubsub.unsubscribe()
         self.r.close()
 
     async def _wait_for_input(
         self,
-    ) -> AsyncGenerator[InputType, None]:
+    ) -> AsyncIterator[InputType]:
         async for message in self.pubsub.listen():
             if message["type"] == "message":
                 yield self.input_type.model_validate_strings(message["data"])
@@ -58,9 +56,14 @@ class Node(Generic[InputType, OutputType]):
         self,
     ) -> None:
         async for input_message in self._wait_for_input():
-            output_channel, output_message = await self.event_handler(input_message)
-            await self.r.publish(output_channel, output_message.model_dump_json())
+            async for output_channel, output_message in self.event_handler(
+                input_message
+            ):
+                await self.r.publish(output_channel, output_message.model_dump_json())
 
     @abstractmethod
-    async def event_handler(self, _: InputType) -> tuple[str, OutputType]:
-        raise NotImplementedError("You must implement this method in your subclass.")
+    async def event_handler(
+        self, _: InputType
+    ) -> AsyncIterator[tuple[str, OutputType]]:
+        raise NotImplementedError("event_handler must be implemented in a subclass.")
+        yield "", self.output_type()  # unreachable: dummy return value
