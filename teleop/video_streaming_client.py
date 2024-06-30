@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 import os
 from typing import AsyncIterator
 import dotenv
@@ -8,9 +7,6 @@ import uvicorn
 
 from pubsub_server.nodes import Node
 from pubsub_server.messages import Message, Image
-
-
-app = FastAPI()
 
 
 class VideoStreamingNode(Node[Image, Message]):
@@ -32,32 +28,23 @@ class VideoStreamingNode(Node[Image, Message]):
         yield "", Message()
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    import os
-
-    app.state.node = await VideoStreamingNode(
-        redis_url=os.environ["REDIS_URL"]
-    ).__aenter__()
-    try:
-        yield
-    finally:
-        await app.state.node.__aexit__(None, None, None)
+app = FastAPI()
 
 
 @app.get("/video_feed")
-def video_feed() -> StreamingResponse:
+async def video_feed() -> StreamingResponse:
     async def generate() -> AsyncIterator[bytes]:
-        async for message in app.state.node._wait_for_input():
-            frame = message.image
-            assert isinstance(frame, bytes)
-            if frame:
-                yield (
-                    b"--frame\r\n"
-                    b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n\r\n"
-                )
-            else:
-                pass
+        async with VideoStreamingNode(redis_url=os.environ["REDIS_URL"]) as node:
+            async for message in node._wait_for_input():
+                frame = message.image
+                assert isinstance(frame, bytes)
+                if frame:
+                    yield (
+                        b"--frame\r\n"
+                        b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n\r\n"
+                    )
+                else:
+                    pass
 
     return StreamingResponse(
         generate(), media_type="multipart/x-mixed-replace; boundary=frame"
@@ -69,7 +56,7 @@ def main() -> None:
 
     if "SSLKEYFILE" in os.environ and "SSLCERTFILE" in os.environ:
         uvicorn.run(
-            "teleop.client:app",
+            "teleop.video_streaming_client:app",
             host="0.0.0.0",
             port=8443,
             ssl_keyfile=os.environ["SSLKEYFILE"],
@@ -77,4 +64,8 @@ def main() -> None:
             reload=False,
         )
     else:
-        uvicorn.run("teleop.client:app", host="0.0.0.0", port=8000)
+        uvicorn.run("teleop.video_streaming_client:app", host="0.0.0.0", port=8003)
+
+
+if __name__ == "__main__":
+    main()
