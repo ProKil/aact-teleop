@@ -12,7 +12,7 @@ from pubsub_server.messages import Message, Image
 class VideoStreamingNode(Node[Image, Message]):
     def __init__(
         self,
-        input_channel: str = "gopro/image",
+        input_channel: str = "wrist_cam",
         redis_url: str = "redis://localhost:6379/0",
     ) -> None:
         super().__init__(
@@ -32,9 +32,11 @@ app = FastAPI()
 
 
 @app.get("/video_feed")
-async def video_feed() -> StreamingResponse:
+async def video_feed(input_channel: str) -> StreamingResponse:
     async def generate() -> AsyncIterator[bytes]:
-        async with VideoStreamingNode(redis_url=os.environ["REDIS_URL"]) as node:
+        async with VideoStreamingNode(
+            input_channel=input_channel, redis_url=os.environ["REDIS_URL"]
+        ) as node:
             async for message in node._wait_for_input():
                 frame = message.image
                 assert isinstance(frame, bytes)
