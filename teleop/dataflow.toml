@@ -1,2 +1,6 @@
 [[nodes]]
 node_name = "tick"
+
+[[nodes]]
+node_name = "gopro"
+output_channel = "wrist_cam"

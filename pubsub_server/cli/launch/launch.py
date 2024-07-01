@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 from typing import Any, TypeVar
 from ..app import app
@@ -7,7 +8,8 @@ import typer
 from pydantic import BaseModel, ConfigDict, Field
 from pubsub_server import NodeFactory, Message
 
-from multiprocessing import Pool
+
+from multiprocessing import Pool, log_to_stderr
 
 import toml
 
@@ -28,12 +30,19 @@ class Config(BaseModel):
 
 
 async def _run_node(node_config: NodeConfig, redis_url: str) -> None:
-    async with NodeFactory.make(
-        node_config.node_name,
-        **_dict_without_key(dict(node_config.model_config), "extra"),
-        redis_url=redis_url,
-    ) as node:
-        await node.event_loop()
+    logging.basicConfig(level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    logger.info(f"Starting node {node_config}")
+    try:
+        async with NodeFactory.make(
+            node_config.node_name,
+            **_dict_without_key(dict(node_config), "node_name"),
+            redis_url=redis_url,
+        ) as node:
+            logger.info(f"Starting eventloop {node_config.node_name}")
+            await node.event_loop()
+    except Exception as e:
+        logger.error(f"Error in node {node_config.node_name}: {e}")
 
 
 def _sync_run_node(node_config: NodeConfig, redis_url: str) -> None:
@@ -49,6 +58,9 @@ def launch(
     dataflow_toml: str = typer.Option(help="Configuration dataflow toml file"),
 ) -> None:
     config = Config.model_validate(toml.load(dataflow_toml))
+    log_to_stderr(logging.DEBUG)
+
+    print(config)
 
     with Pool(processes=len(config.nodes)) as pool:
         pool.starmap_async(
