@@ -23,7 +23,7 @@ class VideoStreamingNode(Node[Image, Message]):
             redis_url=redis_url,
         )
 
-    async def event_handler(self, _: Image) -> AsyncIterator[tuple[str, Message]]:
+    async def event_handler(self, _: Message) -> AsyncIterator[tuple[str, Message]]:
         raise NotImplementedError("VideoStreamingNode does not have an event handler.")
         yield "", Message()
 

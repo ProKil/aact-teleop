@@ -5,8 +5,8 @@ from abc import abstractmethod
 
 from redis.asyncio import Redis
 
-InputType = TypeVar("InputType", bound=Message)
-OutputType = TypeVar("OutputType", bound=Message)
+InputType = TypeVar("InputType", bound=Message, covariant=True)
+OutputType = TypeVar("OutputType", bound=Message, covariant=True)
 
 
 class Node(Generic[InputType, OutputType]):
@@ -63,8 +63,6 @@ class Node(Generic[InputType, OutputType]):
                 await self.r.publish(output_channel, output_message.model_dump_json())
 
     @abstractmethod
-    async def event_handler(
-        self, _: InputType
-    ) -> AsyncIterator[tuple[str, OutputType]]:
+    async def event_handler(self, _: Message) -> AsyncIterator[tuple[str, OutputType]]:
         raise NotImplementedError("event_handler must be implemented in a subclass.")
         yield "", self.output_type()  # unreachable: dummy return value

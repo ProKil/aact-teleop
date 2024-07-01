@@ -3,8 +3,10 @@ from typing import AsyncIterator
 
 from pubsub_server.messages import Tick, Message
 from .base import Node
+from .registry import NodeFactory
 
 
+@NodeFactory.register("tick")
 class TickNode(Node[Message, Tick]):
     def __init__(self, redis_url: str = "redis://localhost:6379/0"):
         super().__init__(

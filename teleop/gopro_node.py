@@ -1,7 +1,7 @@
 import asyncio
 from typing import Any, AsyncIterator, Self
-from pubsub_server import Node
-from pubsub_server.messages import Tick, Image
+from pubsub_server import Node, NodeFactory
+from pubsub_server.messages import Tick, Image, Message
 from open_gopro import WiredGoPro, Params
 from open_gopro.constants import WebcamStatus, WebcamError
 import numpy.typing as npt
@@ -11,6 +11,7 @@ from logging import getLogger
 import cv2
 
 
+@NodeFactory.register("gopro")
 class GoProNode(Node[Tick, Image]):
     def __init__(
         self, output_channel: str, redis_url: str = "redis://localhost:6379/0"
@@ -110,7 +111,7 @@ class GoProNode(Node[Tick, Image]):
             self.logger.info("Shutting down GoPro connection...")
         return await super().__aexit__(_, __, ___)
 
-    async def event_handler(self, _: Tick) -> AsyncIterator[tuple[str, Image]]:
+    async def event_handler(self, _: Message) -> AsyncIterator[tuple[str, Image]]:
         if self.latest_frame is not None:
             self.logger.debug("Sending frame...")
             yield self.output_channels[0], Image(image=self.latest_frame)

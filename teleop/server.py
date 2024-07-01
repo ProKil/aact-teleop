@@ -5,7 +5,7 @@ import math
 import sys
 import time
 from typing import Any, AsyncGenerator, Callable, Dict, Generator, List, Tuple, TypeVar
-import cv2  # type: ignore[import-not-found]
+import cv2
 from fastapi.responses import StreamingResponse
 from typing_extensions import Annotated
 import numpy as np
@@ -50,7 +50,7 @@ signal.signal(signal.SIGTERM, handle_exit)
 
 
 robot: rb.Robot | None = None
-frame = None
+frame: bytes | None = None
 video_feed_started = False
 
 

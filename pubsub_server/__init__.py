@@ -1,3 +1,4 @@
-from .nodes import Node
+from .nodes import Node, NodeFactory
+from .messages import Message
 
-__all__ = ["Node"]
+__all__ = ["Node", "NodeFactory", "Message"]
