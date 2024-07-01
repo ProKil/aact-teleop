@@ -6,24 +6,24 @@ from fastapi.responses import StreamingResponse
 import uvicorn
 
 from pubsub_server.nodes import Node
-from pubsub_server.messages import Message, Image
+from pubsub_server.messages import Message, Image, Zero
 
 
-class VideoStreamingNode(Node[Image, Message]):
+class VideoStreamingNode(Node[Image, Zero]):
     def __init__(
         self,
         input_channel: str = "wrist_cam",
         redis_url: str = "redis://localhost:6379/0",
     ) -> None:
         super().__init__(
-            input_channels=[input_channel],
-            output_channels=[],
-            input_type=Image,
-            output_type=Message,
+            input_channel_types=[(input_channel, Image)],
+            output_channel_types=[],
             redis_url=redis_url,
         )
 
-    async def event_handler(self, _: Message) -> AsyncIterator[tuple[str, Message]]:
+    async def event_handler(
+        self, _: str, __: Message[Image]
+    ) -> AsyncIterator[tuple[str, Message[Zero]]]:
         raise NotImplementedError("VideoStreamingNode does not have an event handler.")
         yield "", Message()
 
@@ -37,8 +37,8 @@ async def video_feed(input_channel: str) -> StreamingResponse:
         async with VideoStreamingNode(
             input_channel=input_channel, redis_url=os.environ["REDIS_URL"]
         ) as node:
-            async for message in node._wait_for_input():
-                frame = message.image
+            async for _, message in node._wait_for_input():
+                frame = message.data.image
                 assert isinstance(frame, bytes)
                 if frame:
                     yield (

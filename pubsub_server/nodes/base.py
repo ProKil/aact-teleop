@@ -1,68 +1,74 @@
 from typing import Any, AsyncIterator, Generic, Self, Type, TypeVar
-from pubsub_server.messages import Message
+from pydantic import BaseModel, ConfigDict
 
 from abc import abstractmethod
-
+from pubsub_server.messages import Message
 from redis.asyncio import Redis
 
-InputType = TypeVar("InputType", bound=Message, covariant=True)
-OutputType = TypeVar("OutputType", bound=Message, covariant=True)
+InputType = TypeVar("InputType", covariant=True)
+OutputType = TypeVar("OutputType", covariant=True)
 
 
-class Node(Generic[InputType, OutputType]):
-    input_channels: list[str]
-    output_channels: list[str]
-    input_type: Type[InputType]
-    output_type: Type[OutputType]
+class Node(BaseModel, Generic[InputType, OutputType]):
+    input_channel_types: dict[str, Type[InputType]]
+    output_channel_types: dict[str, Type[OutputType]]
+    redis_url: str
+    model_config = ConfigDict(extra="allow")
 
     def __init__(
         self,
-        input_channels: list[str],
-        output_channels: list[str],
-        input_type: Type[InputType],
-        output_type: Type[OutputType],
+        input_channel_types: list[tuple[str, Type[InputType]]],
+        output_channel_types: list[tuple[str, Type[OutputType]]],
         redis_url: str = "redis://localhost:6379/0",
     ):
-        self.input_channels = input_channels
-        self.output_channels = output_channels
-        self.input_type = input_type
-        self.output_type = output_type
+        super().__init__(
+            input_channel_types=dict(input_channel_types),
+            output_channel_types=dict(output_channel_types),
+            redis_url=redis_url,
+        )
 
-        try:
-            self.r: Redis = Redis.from_url(redis_url)
-        except ConnectionRefusedError:
-            raise ConnectionRefusedError(
-                f"Could not connect to Redis with the provided url. {redis_url}"
-            )
-
+        self.r: Redis = Redis.from_url(redis_url)
         self.pubsub = self.r.pubsub()
 
     async def __aenter__(self) -> Self:
-        await self.r.ping()
-        await self.pubsub.subscribe(*self.input_channels)
+        try:
+            await self.r.ping()
+        except ConnectionError:
+            raise ValueError(
+                f"Could not connect to Redis with the provided url. {self.redis_url}"
+            )
+        await self.pubsub.subscribe(*self.input_channel_types.keys())
         return self
 
     async def __aexit__(self, _: Any, __: Any, ___: Any) -> None:
         await self.pubsub.unsubscribe()
-        await self.r.close()
+        await self.r.aclose()
 
     async def _wait_for_input(
         self,
-    ) -> AsyncIterator[InputType]:
+    ) -> AsyncIterator[tuple[str, Message[InputType]]]:
         async for message in self.pubsub.listen():
-            if message["type"] == "message":
-                yield self.input_type.model_validate_json(message["data"])
+            channel = message["channel"].decode("utf-8")
+            if message["type"] == "message" and channel in self.input_channel_types:
+                data = Message[self.input_channel_types[channel]].model_validate_json(
+                    message["data"]
+                )  # type: ignore
+                yield channel, data
+        raise Exception("Input channel closed unexpectedly")
 
     async def event_loop(
         self,
     ) -> None:
-        async for input_message in self._wait_for_input():
+        async for input_channel, input_message in self._wait_for_input():
             async for output_channel, output_message in self.event_handler(
-                input_message
+                input_channel, input_message
             ):
                 await self.r.publish(output_channel, output_message.model_dump_json())
+        raise Exception("Event loop exited unexpectedly")
 
     @abstractmethod
-    async def event_handler(self, _: Message) -> AsyncIterator[tuple[str, OutputType]]:
+    async def event_handler(
+        self, _: str, __: Message[InputType]
+    ) -> AsyncIterator[tuple[str, Message[OutputType]]]:
         raise NotImplementedError("event_handler must be implemented in a subclass.")
         yield "", self.output_type()  # unreachable: dummy return value

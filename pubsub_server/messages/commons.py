@@ -1,10 +1,17 @@
 from typing import Any, Annotated
 from .base import Message
-from pydantic import PlainValidator, PlainSerializer, WithJsonSchema
+from pydantic import BaseModel, PlainValidator, PlainSerializer, WithJsonSchema
 
 
-class Tick(Message):
+class Zero(BaseModel):
+    pass
+
+
+class Tick(BaseModel):
     tick: int
+
+
+TickMessage = Message[Tick]
 
 
 def hex_bytes_validator(o: Any) -> bytes:
@@ -25,5 +32,8 @@ HexBytes = Annotated[
 ]
 
 
-class Image(Message):
+class Image(BaseModel):
     image: HexBytes
+
+
+ImageMessage = Message[Image]

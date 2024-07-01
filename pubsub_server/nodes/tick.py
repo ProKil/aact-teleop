@@ -1,25 +1,23 @@
 import asyncio
 from typing import AsyncIterator
 
-from pubsub_server.messages import Tick, Message
+from pubsub_server.messages import Tick, Message, Zero
 from .base import Node
 from .registry import NodeFactory
 
 
 @NodeFactory.register("tick")
-class TickNode(Node[Message, Tick]):
+class TickNode(Node[Zero, Tick]):
     def __init__(self, redis_url: str = "redis://localhost:6379/0"):
         super().__init__(
-            input_channels=[],
-            output_channels=[
-                "tick/millis/1",
-                "tick/millis/5",
-                "tick/millis/10",
-                "tick/millis/100",
-                "tick/secs/1",
+            input_channel_types=[],
+            output_channel_types=[
+                ("tick/millis/1", Tick),
+                ("tick/millis/5", Tick),
+                ("tick/millis/10", Tick),
+                ("tick/millis/100", Tick),
+                ("tick/secs/1", Tick),
             ],
-            input_type=Message,
-            output_type=Tick,
             redis_url=redis_url,
         )
 
@@ -48,9 +46,11 @@ class TickNode(Node[Message, Tick]):
             tick_count += 1
             await asyncio.sleep(0.0001)
 
-    async def event_handler(self, _: Message) -> AsyncIterator[tuple[str, Tick]]:
+    async def event_handler(
+        self, _: str, __: Message[Zero]
+    ) -> AsyncIterator[tuple[str, Message[Tick]]]:
         raise NotImplementedError("TickNode does not have an event handler.")
-        yield "", Tick(tick=0)
+        yield "", Message[Tick](data=Tick(tick=0))
 
 
 async def _main() -> None:

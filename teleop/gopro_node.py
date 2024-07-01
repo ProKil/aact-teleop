@@ -17,12 +17,15 @@ class GoProNode(Node[Tick, Image]):
         self, output_channel: str, redis_url: str = "redis://localhost:6379/0"
     ):
         super().__init__(
-            input_channels=["tick/millis/10"],
-            output_channels=[output_channel],
-            input_type=Tick,
-            output_type=Image,
+            input_channel_types=[
+                ("tick/millis/10", Tick),
+            ],
+            output_channel_types=[
+                (output_channel, Image),
+            ],
             redis_url=redis_url,
         )
+        self.output_channel = output_channel
         self.logger = getLogger(__name__)
         self.gopro: WiredGoPro | None = None
         self.shutdown_event: asyncio.Event = asyncio.Event()
@@ -111,9 +114,14 @@ class GoProNode(Node[Tick, Image]):
             self.logger.info("Shutting down GoPro connection...")
         return await super().__aexit__(_, __, ___)
 
-    async def event_handler(self, _: Message) -> AsyncIterator[tuple[str, Image]]:
+    async def event_handler(
+        self, _: str, __: Message[Tick]
+    ) -> AsyncIterator[tuple[str, Message[Image]]]:
         if self.latest_frame is not None:
-            yield self.output_channels[0], Image(image=self.latest_frame)
+            yield (
+                self.output_channel,
+                Message[Image](data=Image(image=self.latest_frame)),
+            )
         else:
             return
 

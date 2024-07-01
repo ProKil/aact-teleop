@@ -24,6 +24,10 @@ requests = "^2.32.3"
 opencv-contrib-python = "^4.10.0.84"
 toml = "^0.10.2"
 types-toml = "^0.10.8.20240310"
+pytest = "^8.2.2"
+pytest-mock = "^3.14.0"
+fakeredis = "^2.23.3"
+pytest-asyncio = "^0.23.7"
 [tool.poetry.group.test.dependencies]
 mypy = "^1.8.0"
 
@@ -44,3 +48,9 @@ exclude = "(body|open_gopro)/*"
 server = 'teleop.server:main'
 client = 'teleop.client:main'
 pubsub = 'pubsub_server.cli:app'
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+testpaths = [
+    "tests",
+]

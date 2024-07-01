@@ -1,5 +1,9 @@
 from pydantic import BaseModel
 
+from typing import Generic, TypeVar
 
-class Message(BaseModel):
-    pass
+T = TypeVar("T")
+
+
+class Message(BaseModel, Generic[T]):
+    data: T
