@@ -1,6 +1,12 @@
+extra_modules = ["teleop"]
+
 [[nodes]]
 node_name = "tick"
 
 [[nodes]]
 node_name = "gopro"
 output_channel = "wrist_cam"
+
+[[nodes]]
+node_name = "webcam"
+output_channel = "head_cam"

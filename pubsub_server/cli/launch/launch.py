@@ -26,6 +26,7 @@ class Config(BaseModel):
     redis_url: str = Field(
         default_factory=lambda: os.environ.get("REDIS_URL", "redis://localhost:6379/0")
     )
+    extra_modules: list[str] = Field(default_factory=lambda: list())
     nodes: list[NodeConfig]
 
 
@@ -58,9 +59,12 @@ def launch(
     dataflow_toml: str = typer.Option(help="Configuration dataflow toml file"),
 ) -> None:
     config = Config.model_validate(toml.load(dataflow_toml))
-    log_to_stderr(logging.DEBUG)
-
     print(config)
+    # dynamically import extra modules
+    for module in config.extra_modules:
+        __import__(module)
+
+    log_to_stderr(logging.DEBUG)
 
     with Pool(processes=len(config.nodes)) as pool:
         pool.starmap_async(

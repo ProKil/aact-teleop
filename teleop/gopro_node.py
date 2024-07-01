@@ -113,7 +113,6 @@ class GoProNode(Node[Tick, Image]):
 
     async def event_handler(self, _: Message) -> AsyncIterator[tuple[str, Image]]:
         if self.latest_frame is not None:
-            self.logger.debug("Sending frame...")
             yield self.output_channels[0], Image(image=self.latest_frame)
         else:
             return
