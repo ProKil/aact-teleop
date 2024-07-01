@@ -11,7 +11,10 @@ from pubsub_server.messages import Tick, Image
 @NodeFactory.register("webcam")
 class WebcamNode(Node[Tick, Image]):
     def __init__(
-        self, output_channel: str, redis_url: str = "redis://localhost:6379/0"
+        self,
+        output_channel: str,
+        webcam_id: str,
+        redis_url: str = "redis://localhost:6379/0",
     ):
         super().__init__(
             input_channels=["tick/millis/10"],
@@ -25,12 +28,13 @@ class WebcamNode(Node[Tick, Image]):
         self.latest_frame: bytes | None = None
         self.frame_lock: asyncio.Lock = asyncio.Lock()
         self.task: asyncio.Task[None] | None = None
+        self.webcam_id = webcam_id
 
     async def update_video_feed(self) -> None:
         """
         Use a different process to update the video feed.
         """
-        camera = cv2.VideoCapture(6, cv2.CAP_ANY)
+        camera = cv2.VideoCapture(self.webcam_id, cv2.CAP_ANY)
         self.logger.debug("Starting video feed.")
 
         while not self.shutdown_event.is_set():
