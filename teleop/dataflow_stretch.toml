@@ -11,3 +11,8 @@ output_channel = "wrist_cam"
 node_name = "webcam"
 output_channel = "head_cam"
 webcam_id = 6
+
+[[nodes]]
+node_name = "stretch"
+input_channel = "quest_control"
+output_channel = "stretch_status"

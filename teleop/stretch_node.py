@@ -1,4 +1,5 @@
 import asyncio
+from copy import deepcopy
 import time
 from typing import Any, AsyncIterator, Self
 
@@ -41,6 +42,7 @@ class StretchNode(Node[TargetPosition | Tick, TargetPosition]):
         self.robot: Robot = Robot()
         self.tasks: list[asyncio.Task[None]] = []
         self.target_position: TargetPosition = TargetPosition()
+        self.current_position: TargetPosition = TargetPosition()
 
     async def control_loop(self, robot: Robot) -> None:
         start_time = time.time()
@@ -105,6 +107,10 @@ class StretchNode(Node[TargetPosition | Tick, TargetPosition]):
                 )
                 robot.head.move_to("head_tilt", self.target_position.head_tilt)
                 robot.head.move_to("head_pan", self.target_position.head_pan)
+                self.current_position = deepcopy(self.target_position)
+                self.current_position.x = current_x
+                self.current_position.y = current_y
+                self.current_position.theta = current_theta
                 robot.push_command()
                 await asyncio.sleep(1 / 80)
             except (ThreadServiceExit, KeyboardInterrupt):
@@ -126,7 +132,7 @@ class StretchNode(Node[TargetPosition | Tick, TargetPosition]):
         if input_channel == "tick/millis/10":
             yield (
                 self.output_channel,
-                Message[TargetPosition](data=self.target_position),
+                Message[TargetPosition](data=self.current_position),
             )
         else:
             assert isinstance(input_message.data, TargetPosition)

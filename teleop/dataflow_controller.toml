@@ -1,0 +1,6 @@
+extra_modules = ["teleop"]
+
+[[nodes]]
+node_name = "vr_controller"
+input_channel = "quest_status"
+output_channel = "quest_control"
