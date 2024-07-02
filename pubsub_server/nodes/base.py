@@ -50,9 +50,9 @@ class Node(BaseModel, Generic[InputType, OutputType]):
         async for message in self.pubsub.listen():
             channel = message["channel"].decode("utf-8")
             if message["type"] == "message" and channel in self.input_channel_types:
-                data = Message[self.input_channel_types[channel]].model_validate_json(
+                data = Message[self.input_channel_types[channel]].model_validate_json(  # type: ignore
                     message["data"]
-                )  # type: ignore
+                )
                 yield channel, data
         raise Exception("Input channel closed unexpectedly")
 

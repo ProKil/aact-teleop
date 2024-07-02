@@ -1,0 +1,10 @@
+[[nodes]]
+node_name = "tick"
+
+[[nodes]]
+node_name = "random"
+run_in_subprocess = true
+
+[nodes.node_args]
+input_channel = "tick/millis/1"
+output_channel = "random/number/1"
