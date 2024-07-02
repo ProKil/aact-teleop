@@ -1,11 +1,24 @@
+import logging
+import toml
 import typer
 from ..app import app
-from .launch import NodeConfig, _sync_run_node
+from .launch import Config, _sync_run_node
 
 
 @app.command()
 def run_node(
-    node_config_json: str = typer.Option(), redis_url: str = typer.Option()
+    dataflow_toml: str = typer.Option(),
+    node_name: str = typer.Option(),
+    redis_url: str = typer.Option(),
 ) -> None:
-    node_config = NodeConfig.model_validate_json(node_config_json)
-    _sync_run_node(node_config, redis_url)
+    logger = logging.getLogger(__name__)
+    config = Config.model_validate(toml.load(dataflow_toml))
+    logger.info(f"Starting dataflow with config {config}")
+    # dynamically import extra modules
+    for module in config.extra_modules:
+        __import__(module)
+
+    for nodes in config.nodes:
+        if nodes.node_name == node_name:
+            _sync_run_node(nodes, redis_url)
+            break

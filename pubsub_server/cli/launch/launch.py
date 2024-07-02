@@ -79,7 +79,7 @@ def run_dataflow(
         # Nodes that run w/ subprocess
         for node in config.nodes:
             if node.run_in_subprocess:
-                command = f"pubsub run-node --node-config-json {repr(node.model_dump_json())} --redis-url {config.redis_url}"
+                command = f"pubsub run-node --dataflow-toml {dataflow_toml} --node-name {node.node_name} --redis-url {config.redis_url}"
                 logger.info(f"executing {command}")
                 node_process = Popen(
                     [command],
@@ -97,6 +97,11 @@ def run_dataflow(
                     if not node.run_in_subprocess
                 ],
             ).get()
+
+        # In case there is no nodes that are run w/ multiprocessing, wait for the subprocesses
+        for node_process in subprocesses:
+            node_process.wait()
+
     except Exception as e:
         logger.warning("Error in multiprocessing: ", e)
         for node_process in subprocesses:

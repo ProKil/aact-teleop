@@ -49,7 +49,7 @@ class TickNode(Node[Zero, Tick]):
                     Message[Tick](data=Tick(tick=tick_count)).model_dump_json(),
                 )
             tick_count += 1
-            await asyncio.sleep(0.0001)
+            await asyncio.sleep(0.001)
 
     async def event_handler(
         self, _: str, __: Message[Zero]

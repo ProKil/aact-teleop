@@ -1,5 +1,6 @@
 [[nodes]]
 node_name = "tick"
+run_in_subprocess = true
 
 [[nodes]]
 node_name = "random"
