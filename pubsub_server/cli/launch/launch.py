@@ -9,7 +9,6 @@ import typer
 from pydantic import BaseModel, ConfigDict, Field
 from pubsub_server import NodeFactory
 
-
 from multiprocessing import Pool, log_to_stderr
 from subprocess import Popen
 
@@ -65,29 +64,30 @@ def _dict_without_key(d: dict[str, Any], key: str) -> dict[str, Any]:
 def run_dataflow(
     dataflow_toml: str = typer.Option(help="Configuration dataflow toml file"),
 ) -> None:
+    logger = logging.getLogger(__name__)
     config = Config.model_validate(toml.load(dataflow_toml))
-    print(config)
+    logger.info(f"Starting dataflow with config {config}")
     # dynamically import extra modules
     for module in config.extra_modules:
         __import__(module)
 
     log_to_stderr(logging.DEBUG)
 
-    # Nodes that run w/ subprocess
     subprocesses: list[Popen[bytes]] = []
-    for node in config.nodes:
-        if node.run_in_subprocess:
-            command = f"pubsub run-node --node-config-json {repr(node.model_dump_json())} --redis-url {config.redis_url}"
-            print(command)
-            node_process = Popen(
-                [command],
-                shell=True,
-                preexec_fn=os.setsid,  # Start the subprocess in a new process group
-            )
-            subprocesses.append(node_process)
 
-    # Nodes that run w/ multiprocessing
     try:
+        # Nodes that run w/ subprocess
+        for node in config.nodes:
+            if node.run_in_subprocess:
+                command = f"pubsub run-node --node-config-json {repr(node.model_dump_json())} --redis-url {config.redis_url}"
+                logger.info(f"executing {command}")
+                node_process = Popen(
+                    [command],
+                    shell=True,
+                    preexec_fn=os.setsid,  # Start the subprocess in a new process group
+                )
+                subprocesses.append(node_process)
+        # Nodes that run w/ multiprocessing
         with Pool(processes=len(config.nodes)) as pool:
             pool.starmap_async(
                 _sync_run_node,
@@ -98,8 +98,12 @@ def run_dataflow(
                 ],
             ).get()
     except Exception as e:
-        print("Error in multiprocessing: ", e)
+        logger.warning("Error in multiprocessing: ", e)
         for node_process in subprocesses:
             os.killpg(
                 os.getpgid(node_process.pid), signal.SIGTERM
             )  # Kill the process group
+    finally:
+        # Ensure all subprocesses are terminated
+        for node_process in subprocesses:
+            os.killpg(os.getpgid(node_process.pid), signal.SIGTERM)
