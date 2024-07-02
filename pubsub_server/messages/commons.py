@@ -11,6 +11,10 @@ class Tick(BaseModel):
     tick: int
 
 
+class Float(BaseModel):
+    value: float
+
+
 TickMessage = Message[Tick]
 
 

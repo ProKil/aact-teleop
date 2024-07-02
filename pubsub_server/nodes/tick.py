@@ -25,50 +25,34 @@ class TickNode(Node[Zero, Tick]):
         tick_count = 0
         while True:
             await self.r.publish(
-                "tick/millis/1", Tick(tick=tick_count).model_dump_json()
+                "tick/millis/1",
+                Message[Tick](data=Tick(tick=tick_count)).model_dump_json(),
             )
             if tick_count % 5 == 0:
                 await self.r.publish(
-                    "tick/millis/5", Tick(tick=tick_count).model_dump_json()
+                    "tick/millis/5",
+                    Message[Tick](data=Tick(tick=tick_count)).model_dump_json(),
                 )
             if tick_count % 10 == 0:
                 await self.r.publish(
-                    "tick/millis/10", Tick(tick=tick_count).model_dump_json()
+                    "tick/millis/10",
+                    Message[Tick](data=Tick(tick=tick_count)).model_dump_json(),
                 )
             if tick_count % 100 == 0:
                 await self.r.publish(
-                    "tick/millis/100", Tick(tick=tick_count).model_dump_json()
+                    "tick/millis/100",
+                    Message[Tick](data=Tick(tick=tick_count)).model_dump_json(),
                 )
             if tick_count % 1000 == 0:
                 await self.r.publish(
-                    "tick/secs/1", Tick(tick=tick_count).model_dump_json()
+                    "tick/secs/1",
+                    Message[Tick](data=Tick(tick=tick_count)).model_dump_json(),
                 )
             tick_count += 1
-            await asyncio.sleep(0.0001)
+            await asyncio.sleep(0.001)
 
     async def event_handler(
         self, _: str, __: Message[Zero]
     ) -> AsyncIterator[tuple[str, Message[Tick]]]:
         raise NotImplementedError("TickNode does not have an event handler.")
         yield "", Message[Tick](data=Tick(tick=0))
-
-
-async def _main() -> None:
-    import os
-
-    if "REDIS_URL" in os.environ:
-        node = TickNode(redis_url=os.environ["REDIS_URL"])
-    else:
-        node = TickNode()
-    async with node:
-        await node.event_loop()
-
-
-if __name__ == "__main__":
-    import dotenv
-
-    dotenv.load_dotenv()
-
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(_main())
-    loop.close()

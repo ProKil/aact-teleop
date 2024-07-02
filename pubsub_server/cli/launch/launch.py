@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import signal
 from typing import Any, TypeVar
 from ..app import app
 import typer
@@ -8,8 +9,8 @@ import typer
 from pydantic import BaseModel, ConfigDict, Field
 from pubsub_server import NodeFactory
 
-
 from multiprocessing import Pool
+from subprocess import Popen
 
 import toml
 
@@ -17,9 +18,14 @@ InputType = TypeVar("InputType")
 OutputType = TypeVar("OutputType")
 
 
+class NodeArgs(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+
 class NodeConfig(BaseModel):
     node_name: str
-    model_config = ConfigDict(extra="allow")
+    run_in_subprocess: bool = Field(default=False)
+    node_args: NodeArgs = Field(default_factory=NodeArgs)
 
 
 class Config(BaseModel):
@@ -37,7 +43,7 @@ async def _run_node(node_config: NodeConfig, redis_url: str) -> None:
     try:
         async with NodeFactory.make(
             node_config.node_name,
-            **_dict_without_key(dict(node_config), "node_name"),
+            **node_config.node_args.model_dump(),
             redis_url=redis_url,
         ) as node:
             logger.info(f"Starting eventloop {node_config.node_name}")
@@ -55,18 +61,54 @@ def _dict_without_key(d: dict[str, Any], key: str) -> dict[str, Any]:
 
 
 @app.command()
-def launch(
+def run_dataflow(
     dataflow_toml: str = typer.Option(help="Configuration dataflow toml file"),
 ) -> None:
+    logger = logging.getLogger(__name__)
     config = Config.model_validate(toml.load(dataflow_toml))
-    print(config)
+    logger.info(f"Starting dataflow with config {config}")
     # dynamically import extra modules
     for module in config.extra_modules:
         __import__(module)
 
     # log_to_stderr(logging.DEBUG)
 
-    with Pool(processes=len(config.nodes)) as pool:
-        pool.starmap_async(
-            _sync_run_node, [(node, config.redis_url) for node in config.nodes]
-        ).get()
+    subprocesses: list[Popen[bytes]] = []
+
+    try:
+        # Nodes that run w/ subprocess
+        for node in config.nodes:
+            if node.run_in_subprocess:
+                command = f"pubsub run-node --dataflow-toml {dataflow_toml} --node-name {node.node_name} --redis-url {config.redis_url}"
+                logger.info(f"executing {command}")
+                node_process = Popen(
+                    [command],
+                    shell=True,
+                    preexec_fn=os.setsid,  # Start the subprocess in a new process group
+                )
+                subprocesses.append(node_process)
+        # Nodes that run w/ multiprocessing
+        with Pool(processes=len(config.nodes)) as pool:
+            pool.starmap_async(
+                _sync_run_node,
+                [
+                    (node, config.redis_url)
+                    for node in config.nodes
+                    if not node.run_in_subprocess
+                ],
+            ).get()
+
+        # In case there is no nodes that are run w/ multiprocessing, wait for the subprocesses
+        for node_process in subprocesses:
+            node_process.wait()
+
+    except Exception as e:
+        logger.warning("Error in multiprocessing: ", e)
+        for node_process in subprocesses:
+            os.killpg(
+                os.getpgid(node_process.pid), signal.SIGTERM
+            )  # Kill the process group
+    finally:
+        # Ensure all subprocesses are terminated
+        for node_process in subprocesses:
+            os.killpg(os.getpgid(node_process.pid), signal.SIGTERM)

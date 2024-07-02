@@ -5497,4 +5497,4 @@ pyzmq = "*"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11.9"
-content-hash = "3e23eca51668a618500f762be321ed3b2c6b7becabf0b8ed7c8fe555e3901e79"
+content-hash = "f48d7b6c9a52d01bed74a373bb45e111b1b68c1243e2f2a5674cade9a1cde161"

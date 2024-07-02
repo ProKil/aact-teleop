@@ -5,14 +5,21 @@ node_name = "tick"
 
 [[nodes]]
 node_name = "gopro"
+
+[[nodes.node_args]]
 output_channel = "wrist_cam"
 
 [[nodes]]
 node_name = "webcam"
+
+[[nodes.node_args]]
 output_channel = "head_cam"
 webcam_id = 6
 
 [[nodes]]
 node_name = "stretch"
+run_in_subprocess = true # stretch body uses multiprocessing, so it had to be run in a subprocess
+
+[[nodes.node_args]]
 input_channel = "quest_control"
 output_channel = "stretch_status"
