@@ -1,0 +1,9 @@
+[submodule "unity/Assets/TLab/TLabVKeyborad"]
+	path = unity/Assets/TLab/TLabVKeyborad
+	url = https://github.com/TLabAltoh/TLabVKeyborad.git
+[submodule "unity/Assets/TLab/TLabWebView"]
+	path = unity/Assets/TLab/TLabWebView
+	url = https://github.com/TLabAltoh/TLabWebView.git
+[submodule "unity/Assets/TLab/TLabVRPlayerController"]
+	path = unity/Assets/TLab/TLabVRPlayerController
+	url = https://github.com/TLabAltoh/TLabVRPlayerController.git
