@@ -6,15 +6,15 @@ from ..app import app
 import typer
 
 from pydantic import BaseModel, ConfigDict, Field
-from pubsub_server import NodeFactory, Message
+from pubsub_server import NodeFactory
 
 
-from multiprocessing import Pool, log_to_stderr
+from multiprocessing import Pool
 
 import toml
 
-InputType = TypeVar("InputType", bound=Message)
-OutputType = TypeVar("OutputType", bound=Message)
+InputType = TypeVar("InputType")
+OutputType = TypeVar("OutputType")
 
 
 class NodeConfig(BaseModel):
@@ -64,7 +64,7 @@ def launch(
     for module in config.extra_modules:
         __import__(module)
 
-    log_to_stderr(logging.DEBUG)
+    # log_to_stderr(logging.DEBUG)
 
     with Pool(processes=len(config.nodes)) as pool:
         pool.starmap_async(

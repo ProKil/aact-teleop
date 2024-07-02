@@ -67,7 +67,6 @@ class WebcamNode(Node[Tick, Image]):
         self, _: str, __: Message[Tick]
     ) -> AsyncIterator[tuple[str, Message[Image]]]:
         if self.latest_frame is not None:
-            self.logger.debug("Sending frame...")
             yield (
                 self.output_channel,
                 Message[Image](data=Image(image=self.latest_frame)),
