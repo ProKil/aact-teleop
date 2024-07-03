@@ -13,7 +13,6 @@ from .server import (
     ControlPolicyArguments,
     PlanTrajectoryArguments,
     Position,
-    control_loop,
     handle_exit,
     pid_control_policy,
     plan_trajectory,
@@ -119,7 +118,7 @@ class StretchNode(Node[TargetPosition | Tick, TargetPosition]):
 
     async def __aenter__(self) -> Self:
         self.robot.startup()
-        self.tasks.append(asyncio.create_task(control_loop(self.robot)))
+        self.tasks.append(asyncio.create_task(self.control_loop(self.robot)))
         return await super().__aenter__()
 
     async def __aexit__(self, _: Any, __: Any, ___: Any) -> None:

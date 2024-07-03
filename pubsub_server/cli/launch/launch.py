@@ -2,7 +2,7 @@ import asyncio
 import logging
 import os
 import signal
-from typing import Any, TypeVar
+from typing import Annotated, Any, TypeVar
 from ..app import app
 import typer
 
@@ -85,7 +85,9 @@ def run_node(
 
 @app.command()
 def run_dataflow(
-    dataflow_toml: str = typer.Option(help="Configuration dataflow toml file"),
+    dataflow_toml: Annotated[
+        str, typer.Argument(help="Configuration dataflow toml file")
+    ],
 ) -> None:
     logger = logging.getLogger(__name__)
     config = Config.model_validate(toml.load(dataflow_toml))
