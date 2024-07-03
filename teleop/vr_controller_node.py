@@ -20,7 +20,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         self,
         input_channel: str,
         output_channel: str,
-        quest_controller_ip: str = os.environ.get("QUEST_CONTROLLER_IP", ""),
+        quest_controller_ip: str = os.environ.get("QUEST_IP", ""),
         translation_speed: float = 0.5,
         gripper_length: float = 0.26,
         redis_url: str = "redis://localhost:6379/0",
@@ -238,7 +238,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
                 controller_states
             )
 
-            self.r.publish(
+            await self.r.publish(
                 self.output_channel,
                 Message[TargetPosition](data=control_signals).model_dump_json(),
             )

@@ -1,8 +1,9 @@
-extra_modules = ["teleop"]
+extra_modules = ["teleop.vr_controller_node"]
 
 [[nodes]]
-node_name = "vr_controller"
+node_name = "quest_controller"
 
-[[nodes.node_args]]
+[nodes.node_args]
 input_channel = "quest_status"
 output_channel = "quest_control"
+translation_speed = 10
