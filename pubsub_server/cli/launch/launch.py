@@ -50,6 +50,7 @@ async def _run_node(node_config: NodeConfig, redis_url: str) -> None:
             await node.event_loop()
     except Exception as e:
         logger.error(f"Error in node {node_config.node_name}: {e}")
+        raise Exception(e)
 
 
 def _sync_run_node(node_config: NodeConfig, redis_url: str) -> None:
@@ -83,6 +84,11 @@ def run_node(
             break
 
 
+def _import_extra_modules(extra_modules: list[str]) -> None:
+    for module in extra_modules:
+        __import__(module)
+
+
 @app.command()
 def run_dataflow(
     dataflow_toml: Annotated[
@@ -92,11 +98,6 @@ def run_dataflow(
     logger = logging.getLogger(__name__)
     config = Config.model_validate(toml.load(dataflow_toml))
     logger.info(f"Starting dataflow with config {config}")
-    # dynamically import extra modules
-    for module in config.extra_modules:
-        __import__(module)
-
-    # log_to_stderr(logging.DEBUG)
 
     subprocesses: list[Popen[bytes]] = []
 
@@ -123,7 +124,11 @@ def run_dataflow(
         signal.signal(signal.SIGINT, _cleanup_subprocesses)
 
         # Nodes that run w/ multiprocessing
-        with Pool(processes=len(config.nodes)) as pool:
+        with Pool(
+            processes=len(config.nodes),
+            initializer=_import_extra_modules,
+            initargs=(config.extra_modules,),
+        ) as pool:
             pool.starmap_async(
                 _sync_run_node,
                 [
