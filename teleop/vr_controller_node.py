@@ -200,6 +200,17 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
 
         last_time = time.time()
 
+        controller_states: HeadsetControllerStates = HeadsetControllerStates(
+            headset_position=(0, 0, 0),
+            headset_rotation=(0, 0, 0, 0),
+            controller_position=(0, 0, 0),
+            controller_rotation=(0, 0, 0, 0),
+            controller_trigger=0,
+            reset_button=False,
+            record_button=False,
+            controller_thumbstick=(0, 0),
+        )
+
         while True:
             message = await self.quest_socket.recv()
             now_time = time.time()
@@ -208,6 +219,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
             try:
                 data = json.loads(message.decode())
             except json.JSONDecodeError:
+                self.logger.info(f"The last controller states were {controller_states}")
                 print("Terminating the connection...")
                 return
 
@@ -233,6 +245,14 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
                     map(float, right_controller["RightThumbstickAxes"].split(","))
                 ),
             )
+
+            if controller_states.controller_position == (
+                0.0,
+                0.0,
+                0.0,
+            ) and controller_states.controller_rotation == (0.0, 0.0, 0.0, 1.0):
+                self.logger.warning("Abnoraml controller states detected. Skipping...")
+                continue
 
             control_signals = self._convert_controller_states_to_control_signals(
                 controller_states
