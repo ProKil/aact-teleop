@@ -53,11 +53,34 @@ async def _run_node(node_config: NodeConfig, redis_url: str) -> None:
 
 
 def _sync_run_node(node_config: NodeConfig, redis_url: str) -> None:
-    asyncio.run(_run_node(node_config, redis_url))
+    loop = asyncio.get_event_loop()
+
+    try:
+        loop.run_until_complete(_run_node(node_config, redis_url))
+    except asyncio.CancelledError:
+        logger = logging.getLogger(__name__)
+        logger.info(f"Node {node_config.node_name} shutdown gracefully.")
+    finally:
+        loop.close()
 
 
-def _dict_without_key(d: dict[str, Any], key: str) -> dict[str, Any]:
-    return {k: v for k, v in d.items() if k != key}
+@app.command()
+def run_node(
+    dataflow_toml: str = typer.Option(),
+    node_name: str = typer.Option(),
+    redis_url: str = typer.Option(),
+) -> None:
+    logger = logging.getLogger(__name__)
+    config = Config.model_validate(toml.load(dataflow_toml))
+    logger.info(f"Starting dataflow with config {config}")
+    # dynamically import extra modules
+    for module in config.extra_modules:
+        __import__(module)
+
+    for nodes in config.nodes:
+        if nodes.node_name == node_name:
+            _sync_run_node(nodes, redis_url)
+            break
 
 
 @app.command()
@@ -87,6 +110,16 @@ def run_dataflow(
                     preexec_fn=os.setsid,  # Start the subprocess in a new process group
                 )
                 subprocesses.append(node_process)
+
+        def _cleanup_subprocesses(
+            signum: int | None = None, frame: Any | None = None
+        ) -> None:
+            for node_process in subprocesses:
+                os.killpg(os.getpgid(node_process.pid), signal.SIGTERM)
+
+        signal.signal(signal.SIGTERM, _cleanup_subprocesses)
+        signal.signal(signal.SIGINT, _cleanup_subprocesses)
+
         # Nodes that run w/ multiprocessing
         with Pool(processes=len(config.nodes)) as pool:
             pool.starmap_async(
@@ -104,11 +137,6 @@ def run_dataflow(
 
     except Exception as e:
         logger.warning("Error in multiprocessing: ", e)
-        for node_process in subprocesses:
-            os.killpg(
-                os.getpgid(node_process.pid), signal.SIGTERM
-            )  # Kill the process group
+        _cleanup_subprocesses()
     finally:
-        # Ensure all subprocesses are terminated
-        for node_process in subprocesses:
-            os.killpg(os.getpgid(node_process.pid), signal.SIGTERM)
+        _cleanup_subprocesses()
