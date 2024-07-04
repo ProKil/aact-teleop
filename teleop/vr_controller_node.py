@@ -39,6 +39,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         self.translation_speed = translation_speed
         self.gripper_length = gripper_length
         self.base_rotation_offset: float | None = None
+        self.lift_offset: float = 0.0
         self.quaternion_offset: tuple[float, float, float, float] | None = None
         self.logger = getLogger(__name__)
         self.quest_controller_ip = quest_controller_ip
@@ -119,8 +120,12 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
                 self.base_rotation_offset = (
                     desired_base_rotation_in_unity_space - self.current_status.theta
                 )
+                self.lift_offset = (
+                    controller_states.controller_position[1] - self.current_status.lift
+                )
             else:
                 self.base_rotation_offset = 0.0
+                self.lift_offset = 0.0
 
         desired_base_rotation_in_stretch_space = _normalize_angle(
             desired_base_rotation_in_unity_space - self.base_rotation_offset
@@ -135,7 +140,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         )
 
         # 6. We need to calculate the desired arm lift.
-        arm_lift = controller_states.controller_position[1]
+        arm_lift = controller_states.controller_position[1] - self.lift_offset
 
         # 7. We need to calculate the desired wrist pitch, yaw, and roll.
         wrist_pitch = -wrist_pitch
