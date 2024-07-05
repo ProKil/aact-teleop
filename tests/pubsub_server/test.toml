@@ -20,4 +20,6 @@ json_file_path = "/tmp/record.jsonl"
 [nodes.node_args.record_channel_types]
 "tick/millis/10" = "tick"
 "tick/millis/20" = "tick"
+"tick/millis/50" = "tick"
+"tick/millis/100" = "tick"
 "random/number/1" = "float"

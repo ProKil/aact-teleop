@@ -21,39 +21,32 @@ class TickNode(Node[Zero, Tick]):
             ],
             redis_url=redis_url,
         )
-        self.task_queue: asyncio.Queue[tuple[str, Tick]] = asyncio.Queue()
-        self.task: asyncio.Task[None] | None = None
 
-    async def _send_tick(self) -> None:
-        while True:
-            channel, tick = await self.task_queue.get()
-            await self.r.publish(channel, Message[Tick](data=tick).model_dump_json())
-            self.task_queue.task_done()
-
-    async def event_loop(self) -> None:
+    async def tick_at_given_interval(self, channel: str, interval: float) -> None:
         tick_count = 0
         last: float | None = None
-        last_sleep = 0.01
+        last_sleep = interval
         while True:
-            if tick_count % 10 == 0:
-                await self.task_queue.put(("tick/millis/10", Tick(tick=tick_count)))
-            if tick_count % 20 == 0:
-                await self.task_queue.put(("tick/millis/20", Tick(tick=tick_count)))
-            if tick_count % 50 == 0:
-                await self.task_queue.put(("tick/millis/50", Tick(tick=tick_count)))
-            if tick_count % 100 == 0:
-                await self.task_queue.put(("tick/millis/100", Tick(tick=tick_count)))
-            if tick_count % 1000 == 0:
-                await self.task_queue.put(("tick/sec/1", Tick(tick=tick_count)))
-            tick_count += 10
+            await self.r.publish(
+                channel, Message[Tick](data=Tick(tick=tick_count)).model_dump_json()
+            )
+            tick_count += 1
             now = time.time()
             if last is not None:
-                last_sleep = last_sleep - (now - last - 0.01)
+                last_sleep = last_sleep - (now - last - interval)
             await asyncio.sleep(last_sleep)
             last = now
 
+    async def event_loop(self) -> None:
+        await asyncio.gather(
+            self.tick_at_given_interval("tick/millis/10", 0.01),
+            self.tick_at_given_interval("tick/millis/20", 0.02),
+            self.tick_at_given_interval("tick/millis/50", 0.05),
+            self.tick_at_given_interval("tick/millis/100", 0.1),
+            self.tick_at_given_interval("tick/secs/1", 1.0),
+        )
+
     async def __aenter__(self) -> Self:
-        self.task = asyncio.create_task(self._send_tick())
         return await super().__aenter__()
 
     async def event_handler(
