@@ -8,6 +8,11 @@ import uvicorn
 from pubsub_server.nodes import Node
 from pubsub_server.messages import Message, Image, Zero
 
+from aiostream import stream 
+import numpy as np 
+import cv2
+
+
 
 class VideoStreamingNode(Node[Image, Zero]):
     def __init__(
@@ -48,6 +53,71 @@ async def video_feed(input_channel: str) -> StreamingResponse:
                 else:
                     pass
 
+    return StreamingResponse(
+        generate(), media_type="multipart/x-mixed-replace; boundary=frame"
+    )
+
+def combine_frame(image1, image2): 
+    # Decode byte streams to images using OpenCV
+    if image1 != None and image2 != None: 
+        np_img1 = np.frombuffer(image1, np.uint8)
+        np_img2 = np.frombuffer(image2, np.uint8)
+        img1 = cv2.imdecode(np_img1, cv2.IMREAD_COLOR)
+        img2 = cv2.imdecode(np_img2, cv2.IMREAD_COLOR)
+
+
+        # # Ensure both images have the same height
+        # if img1.shape[0] != img2.shape[0]:
+        #     #height = min(img1.shape[0], img2.shape[0])
+        #     height = min(img1.shape[0], img2.shape[0])
+
+        #     img1 = cv2.resize(img1, (int(img1.shape[1] * height / img1.shape[0]), height))
+        #     img2 = cv2.resize(img2, (int(img2.shape[1] * height / img2.shape[0]), height))
+
+         # Resize img2 to 0.5 times its original size
+        img2 = cv2.resize(img2, (0, 0), fx=0.5, fy=0.5)
+
+        # Ensure both images have the same height
+        if img1.shape[0] != img2.shape[0]:
+            height = max(img1.shape[0], img2.shape[0])
+            
+            # Pad img2 with white space horizontally to match width of img1
+            pad_height = img1.shape[0] - img2.shape[0]
+            img2 = cv2.copyMakeBorder(img2, int(pad_height/2), int(pad_height/2), 0, 0, cv2.BORDER_CONSTANT, value=(0, 0, 0))
+
+        # Combine images horizontally
+        combined_image = cv2.hconcat([img1, img2])
+
+        # Encode the combined image to bytes
+        _, combined_image_bytes = cv2.imencode('.jpg', combined_image)
+        return combined_image_bytes.tobytes() 
+    elif image1 != None and image2 == None: 
+        return image1
+    elif image1 == None and image2 != None: 
+        return image2 
+    else: 
+        return None
+
+
+@app.get("/combined_feed")
+async def video_feed_2(input_channel_1 : str, input_channel_2 : str) -> StreamingResponse: 
+    async def generate () -> AsyncIterator[bytes]: 
+        image1 : bytes | None = None 
+        image2 : bytes | None = None
+        async with VideoStreamingNode(
+            input_channel = input_channel_1, redis_url=os.environ["REDIS_URL"]
+        ) as node1:
+            async with VideoStreamingNode(input_channel=input_channel_2, redis_url= os.environ["REDIS_URL"]
+            ) as node2: 
+                async for input_channel, message in stream.merge(node1._wait_for_input(), node2._wait_for_input()): 
+                    if input_channel == input_channel_1: 
+                            image1 = message.data.image 
+                            assert isinstance(image1, bytes)
+                    elif input_channel_2 == input_channel_2: 
+                            image2 = message.data.image 
+                            assert isinstance(image2, bytes)
+                    yield (b"--frame\r\n"
+                        b"Content-Type: image/jpeg\r\n\r\n" + combine_frame(image1, image2) + b"\r\n\r\n")
     return StreamingResponse(
         generate(), media_type="multipart/x-mixed-replace; boundary=frame"
     )
