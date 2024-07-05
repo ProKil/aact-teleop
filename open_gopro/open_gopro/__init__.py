@@ -22,5 +22,3 @@ from open_gopro.api import Params
 from open_gopro.gopro_wired import WiredGoPro
 from open_gopro.gopro_wireless import WirelessGoPro
 from open_gopro.models import GoProResp
-
-__all__ = ["WiredGoPro", "WirelessGoPro", "Params", "GoProResp", "Logger"]

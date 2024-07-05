@@ -33,9 +33,7 @@ class Logger:
             c = object.__new__(cls)
             cls._instances[cls] = c
             return c
-        raise RuntimeError(
-            "The logger can only be setup once and this should be done at the top level."
-        )
+        raise RuntimeError("The logger can only be setup once and this should be done at the top level.")
 
     def __init__(
         self,
@@ -70,9 +68,7 @@ class Logger:
         # monkey-patch a `print` global into the http.client module; all calls to
         # print() in that module will then use our logger's debug method
         http_client.HTTPConnection.debuglevel = 1
-        http_client.print = lambda *args: logging.getLogger("http.client").debug(
-            " ".join(args)
-        )  # type: ignore
+        http_client.print = lambda *args: logging.getLogger("http.client").debug(" ".join(args))  # type: ignore
 
         self.file_handler: logging.Handler | None
         if output:
@@ -91,12 +87,8 @@ class Logger:
             self.file_handler = None
 
         # Use Rich for colorful console logging
-        self.stream_handler = RichHandler(
-            rich_tracebacks=True, enable_link_path=True, show_time=False
-        )
-        stream_formatter = logging.Formatter(
-            "%(asctime)s.%(msecs)03d %(message)s", datefmt="%H:%M:%S"
-        )
+        self.stream_handler = RichHandler(rich_tracebacks=True, enable_link_path=True, show_time=False)
+        stream_formatter = logging.Formatter("%(asctime)s.%(msecs)03d %(message)s", datefmt="%H:%M:%S")
         self.stream_handler.setFormatter(stream_formatter)
         self.stream_handler.setLevel(logging.INFO)
         logger.addHandler(self.stream_handler)
@@ -213,9 +205,7 @@ class Logger:
 
 
 def setup_logging(
-    base: logging.Logger | str,
-    output: Path | None = None,
-    modules: list[str] | None = None,
+    base: logging.Logger | str, output: Path | None = None, modules: list[str] | None = None
 ) -> logging.Logger:
     """Configure the GoPro modules for logging and get a logger that can be used by the application
 

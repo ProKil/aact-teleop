@@ -12,9 +12,7 @@ from open_gopro.gopro_base import GoProBase
 
 @pytest.mark.asyncio
 async def test_write_command_correct_uuid_cmd_id(mock_ble_communicator: GoProBase):
-    response = await mock_ble_communicator.ble_command.set_shutter(
-        shutter=Params.Toggle.ENABLE
-    )
+    response = await mock_ble_communicator.ble_command.set_shutter(shutter=Params.Toggle.ENABLE)
     assert response["uuid"] == GoProUUIDs.CQ_COMMAND
     assert response["packet"] == bytearray([1, 1, 1])
 
@@ -34,18 +32,12 @@ async def test_read_command_correct_uuid(mock_ble_communicator: GoProBase):
 
 @pytest.mark.asyncio
 async def test_ble_setting(mock_ble_communicator: GoProBase):
-    response = await mock_ble_communicator.ble_setting.led.set(
-        Params.LED.BLE_KEEP_ALIVE
-    )
+    response = await mock_ble_communicator.ble_setting.led.set(Params.LED.BLE_KEEP_ALIVE)
     assert response["uuid"] == GoProUUIDs.CQ_SETTINGS
-    assert response["packet"] == bytearray(
-        [SettingId.LED, 1, Params.LED.BLE_KEEP_ALIVE]
-    )
+    assert response["packet"] == bytearray([SettingId.LED, 1, Params.LED.BLE_KEEP_ALIVE])
 
 
 @pytest.mark.asyncio
 async def test_fastpass_shutter(mock_ble_communicator: GoProBase):
-    response = await mock_ble_communicator.ble_command.set_shutter(
-        shutter=Params.Toggle.ENABLE
-    )
+    response = await mock_ble_communicator.ble_command.set_shutter(shutter=Params.Toggle.ENABLE)
     assert response["uuid"] == GoProUUIDs.CQ_COMMAND

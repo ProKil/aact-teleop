@@ -18,9 +18,7 @@ console = Console()
 
 
 def parse_arguments() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Connect to a GoPro camera's Wifi Access Point."
-    )
+    parser = argparse.ArgumentParser(description="Connect to a GoPro camera's Wifi Access Point.")
     return add_cli_args_and_parse(parser)
 
 
@@ -28,9 +26,7 @@ async def main(args: argparse.Namespace) -> None:
     setup_logging(__name__, args.log)
     gopro: Optional[WirelessGoPro] = None
 
-    async with WirelessGoPro(
-        args.identifier, wifi_interface=args.wifi_interface, sudo_password=args.password
-    ) as gopro:
+    async with WirelessGoPro(args.identifier, wifi_interface=args.wifi_interface, sudo_password=args.password) as gopro:
         # Now we only want errors
         set_stream_logging_level(logging.ERROR)
 

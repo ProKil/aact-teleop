@@ -4,12 +4,14 @@
 # pylint: disable = redefined-outer-name
 
 import uuid
+from typing import Dict, List
 
 import pytest
 
 from open_gopro.ble import BleUUID, Characteristic, Descriptor, GattDB, Service
 from open_gopro.ble.services import BLE_BASE_UUID, UUIDs, UUIDsMeta
 from open_gopro.constants import BleUUID
+from tests.conftest import mock_gatt_db
 
 
 def test_128_bit_uuid():
@@ -21,8 +23,7 @@ def test_128_bit_uuid():
     assert len(u.hex)
     u = BleUUID(
         "128 bit from byte le",
-        bytes_le=b"\x78\x56\x34\x12\x34\x12\x78\x56"
-        + b"\x12\x34\x56\x78\x12\x34\x56\x78",
+        bytes_le=b"\x78\x56\x34\x12\x34\x12\x78\x56" + b"\x12\x34\x56\x78\x12\x34\x56\x78",
     )
     assert len(u.hex)
 
@@ -32,27 +33,19 @@ def test_16_bit_uuid():
     assert len(u.hex)
     u = BleUUID("16 bit from int", format=BleUUID.Format.BIT_16, int=1234)
     assert len(u.hex)
-    u = BleUUID(
-        "16 bit from bytes", format=BleUUID.Format.BIT_16, bytes=bytes([0xAB, 0xCD])
-    )
+    u = BleUUID("16 bit from bytes", format=BleUUID.Format.BIT_16, bytes=bytes([0xAB, 0xCD]))
     assert len(u.hex)
 
 
 def test_uuid_negative():
     with pytest.raises(ValueError):
-        u = BleUUID(
-            "16 bit from bytes le",
-            format=BleUUID.Format.BIT_16,
-            bytes_le=bytes([0xCD, 0xAB]),
-        )
+        u = BleUUID("16 bit from bytes le", format=BleUUID.Format.BIT_16, bytes_le=bytes([0xCD, 0xAB]))
     with pytest.raises(ValueError):
         u = BleUUID("Multiple inputs", format=BleUUID.Format.BIT_16, hex="", int=1)
     with pytest.raises(ValueError):
         u = BleUUID("Bad string", format=BleUUID.Format.BIT_16, hex="AB")
     with pytest.raises(ValueError):
-        u = BleUUID(
-            "Bad bytes", format=BleUUID.Format.BIT_16, bytes=bytes([0xAB, 0xCD, 0xEF])
-        )
+        u = BleUUID("Bad bytes", format=BleUUID.Format.BIT_16, bytes=bytes([0xAB, 0xCD, 0xEF]))
 
 
 def test_ble_uuids():
@@ -120,9 +113,7 @@ def test_characteristic_view(mock_gatt_db: GattDB):
         assert len(char.uuid.hex)
 
     assert list(mock_gatt_db.characteristics.keys()) == [c.uuid for c in chars]
-    assert list([c.uuid for c in mock_gatt_db.characteristics.values()]) == [
-        c.uuid for c in chars
-    ]
+    assert list([c.uuid for c in mock_gatt_db.characteristics.values()]) == [c.uuid for c in chars]
 
 
 def test_gatt_db(mock_gatt_db: GattDB):

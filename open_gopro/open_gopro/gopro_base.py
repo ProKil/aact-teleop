@@ -54,9 +54,7 @@ class GoProMessageInterface(enum.Enum):
 
 
 @wrapt.decorator
-def catch_thread_exception(
-    wrapped: Callable, instance: GoProBase, args: Any, kwargs: Any
-) -> Callable | None:
+def catch_thread_exception(wrapped: Callable, instance: GoProBase, args: Any, kwargs: Any) -> Callable | None:
     """Catch any exceptions from this method and pass them to the exception handler identifier by thread name
 
     Args:
@@ -86,9 +84,7 @@ def ensure_opened(interface: tuple[GoProMessageInterface]) -> Callable:
     """
 
     @wrapt.decorator
-    def wrapper(
-        wrapped: Callable, instance: GoProBase, args: Any, kwargs: Any
-    ) -> Callable:
+    def wrapper(wrapped: Callable, instance: GoProBase, args: Any, kwargs: Any) -> Callable:
         if GoProMessageInterface.BLE in interface and not instance.is_ble_connected:
             raise GpException.GoProNotOpened("BLE not connected")
         if GoProMessageInterface.HTTP in interface and not instance.is_http_connected:
@@ -99,9 +95,7 @@ def ensure_opened(interface: tuple[GoProMessageInterface]) -> Callable:
 
 
 @wrapt.decorator
-async def enforce_message_rules(
-    wrapped: MessageMethodType, instance: GoProBase, args: Any, kwargs: Any
-) -> GoProResp:
+async def enforce_message_rules(wrapped: MessageMethodType, instance: GoProBase, args: Any, kwargs: Any) -> GoProResp:
     """Decorator proxy to call the GoProBase's _enforce_message_rules method.
 
     Args:
@@ -395,12 +389,7 @@ class GoProBase(GoProHttp, Generic[ApiType]):
 
     @enforce_message_rules
     async def _get_json(
-        self,
-        message: HttpMessage,
-        *,
-        timeout: int = HTTP_TIMEOUT,
-        rules: MessageRules = MessageRules(),
-        **kwargs: Any,
+        self, message: HttpMessage, *, timeout: int = HTTP_TIMEOUT, rules: MessageRules = MessageRules(), **kwargs: Any
     ) -> GoProResp:
         url = self._base_url + message.build_url(**kwargs)
         logger.debug(f"Sending:  {url}")
@@ -408,19 +397,11 @@ class GoProBase(GoProHttp, Generic[ApiType]):
         response: GoProResp | None = None
         for retry in range(1, GoProBase.HTTP_GET_RETRIES + 1):
             try:
-                http_response = requests.get(
-                    url, timeout=timeout, **self._build_http_request_args(message)
-                )
-                logger.trace(
-                    f"received raw json: {json.dumps(http_response.json() if http_response.text else {}, indent=4)}"
-                )  # type: ignore
+                http_response = requests.get(url, timeout=timeout, **self._build_http_request_args(message))
+                logger.trace(f"received raw json: {json.dumps(http_response.json() if http_response.text else {}, indent=4)}")  # type: ignore
                 if not http_response.ok:
-                    logger.warning(
-                        f"Received non-success status {http_response.status_code}: {http_response.reason}"
-                    )
-                response = RequestsHttpRespBuilderDirector(
-                    http_response, message._parser
-                )()
+                    logger.warning(f"Received non-success status {http_response.status_code}: {http_response.reason}")
+                response = RequestsHttpRespBuilderDirector(http_response, message._parser)()
                 break
             except requests.exceptions.ConnectionError as e:
                 # This appears to only occur after initial connection after pairing
@@ -439,18 +420,11 @@ class GoProBase(GoProHttp, Generic[ApiType]):
 
     @enforce_message_rules
     async def _get_stream(
-        self,
-        message: HttpMessage,
-        *,
-        timeout: int = HTTP_TIMEOUT,
-        rules: MessageRules = MessageRules(),
-        **kwargs: Any,
+        self, message: HttpMessage, *, timeout: int = HTTP_TIMEOUT, rules: MessageRules = MessageRules(), **kwargs: Any
     ) -> GoProResp:
         url = self._base_url + message.build_url(path=kwargs["camera_file"])
         logger.debug(f"Sending:  {url}")
-        with requests.get(
-            url, stream=True, timeout=timeout, **self._build_http_request_args(message)
-        ) as request:
+        with requests.get(url, stream=True, timeout=timeout, **self._build_http_request_args(message)) as request:
             request.raise_for_status()
             file = kwargs["local_file"]
             with open(file, "wb") as f:
@@ -458,21 +432,11 @@ class GoProBase(GoProHttp, Generic[ApiType]):
                 for chunk in request.iter_content(chunk_size=8192):
                     f.write(chunk)
 
-        return GoProResp(
-            protocol=GoProResp.Protocol.HTTP,
-            status=ErrorCode.SUCCESS,
-            data=file,
-            identifier=url,
-        )
+        return GoProResp(protocol=GoProResp.Protocol.HTTP, status=ErrorCode.SUCCESS, data=file, identifier=url)
 
     @enforce_message_rules
     async def _put_json(
-        self,
-        message: HttpMessage,
-        *,
-        timeout: int = HTTP_TIMEOUT,
-        rules: MessageRules = MessageRules(),
-        **kwargs: Any,
+        self, message: HttpMessage, *, timeout: int = HTTP_TIMEOUT, rules: MessageRules = MessageRules(), **kwargs: Any
     ) -> GoProResp:
         url = self._base_url + message.build_url(**kwargs)
         body = message.build_body(**kwargs)
@@ -480,22 +444,11 @@ class GoProBase(GoProHttp, Generic[ApiType]):
         response: GoProResp | None = None
         for retry in range(1, GoProBase.HTTP_GET_RETRIES + 1):
             try:
-                http_response = requests.put(
-                    url,
-                    timeout=timeout,
-                    json=body,
-                    **self._build_http_request_args(message),
-                )
-                logger.trace(
-                    f"received raw json: {json.dumps(http_response.json() if http_response.text else {}, indent=4)}"
-                )  # type: ignore
+                http_response = requests.put(url, timeout=timeout, json=body, **self._build_http_request_args(message))
+                logger.trace(f"received raw json: {json.dumps(http_response.json() if http_response.text else {}, indent=4)}")  # type: ignore
                 if not http_response.ok:
-                    logger.warning(
-                        f"Received non-success status {http_response.status_code}: {http_response.reason}"
-                    )
-                response = RequestsHttpRespBuilderDirector(
-                    http_response, message._parser
-                )()
+                    logger.warning(f"Received non-success status {http_response.status_code}: {http_response.reason}")
+                response = RequestsHttpRespBuilderDirector(http_response, message._parser)()
                 break
             except requests.exceptions.ConnectionError as e:
                 # This appears to only occur after initial connection after pairing

@@ -159,10 +159,7 @@ There is no wireless interface on the system.
             response = r'Profile "GP24500456" is deleted from interface "Wi-Fi".'
         elif command == r"add_profile":
             response = r"Profile GP24500456 is added on interface Wi-Fi."
-        elif (
-            command
-            == r'netsh wlan connect ssid="GP24500456" name="GP24500456" interface="Wi-Fi"'
-        ):
+        elif command == r'netsh wlan connect ssid="GP24500456" name="GP24500456" interface="Wi-Fi"':
             response = r"Connection request was completed successfully."
         elif command == r'netsh interface set interface "Wi-Fi" "enable"':
             response = r"This network connection does not exist."

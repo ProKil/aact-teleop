@@ -28,9 +28,7 @@ class WifiClient:
         self.ssid: Optional[str]
         self.password: Optional[str]
 
-    def open(
-        self, ssid: str, password: str, timeout: int = 15, retries: int = 5
-    ) -> None:
+    def open(self, ssid: str, password: str, timeout: int = 15, retries: int = 5) -> None:
         """Open the WiFi client resource so that it is ready to send and receive data
 
         Args:

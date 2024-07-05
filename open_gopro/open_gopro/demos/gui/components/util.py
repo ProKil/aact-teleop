@@ -40,9 +40,7 @@ class BufferlessVideoCapture(threading.Thread):
         """
         self.printer = printer
         self.printer("Starting viewer...")
-        self.cap = cv2.VideoCapture(
-            source + "?overrun_nonfatal=1&fifo_size=50000000", cv2.CAP_FFMPEG
-        )
+        self.cap = cv2.VideoCapture(source + "?overrun_nonfatal=1&fifo_size=50000000", cv2.CAP_FFMPEG)
         self.q: queue.Queue[Any] = queue.Queue()
         super().__init__(daemon=True)
         self.start()

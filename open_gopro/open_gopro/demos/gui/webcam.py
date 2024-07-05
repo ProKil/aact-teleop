@@ -22,9 +22,7 @@ console = Console()
 STREAM_URL: Final[str] = r"udp://0.0.0.0:8554"
 
 
-async def wait_for_webcam_status(
-    gopro: GoProBase, statuses: set[WebcamStatus], timeout: int = 10
-) -> bool:
+async def wait_for_webcam_status(gopro: GoProBase, statuses: set[WebcamStatus], timeout: int = 10) -> bool:
     """Wait for specified webcam status(es) for a given timeout
 
     Args:
@@ -61,11 +59,7 @@ async def main(args: argparse.Namespace) -> int:
 
     try:
         async with (
-            WirelessGoPro(
-                args.identifier,
-                wifi_interface=args.wifi_interface,
-                enable_wifi=not args.cohn,
-            )  # type: ignore
+            WirelessGoPro(args.identifier, wifi_interface=args.wifi_interface, enable_wifi=not args.cohn)  # type: ignore
             if bool(args.cohn or args.wireless)
             else WiredGoPro(args.identifier)
         ) as gopro:
@@ -75,9 +69,7 @@ async def main(args: argparse.Namespace) -> int:
                 assert await gopro.is_cohn_provisioned
                 assert await gopro.configure_cohn()
             else:
-                await gopro.http_command.wired_usb_control(
-                    control=Params.Toggle.DISABLE
-                )
+                await gopro.http_command.wired_usb_control(control=Params.Toggle.DISABLE)
 
             await gopro.http_command.set_shutter(shutter=Params.Toggle.DISABLE)
             if (await gopro.http_command.webcam_status()).data.status not in {
@@ -89,17 +81,13 @@ async def main(args: argparse.Namespace) -> int:
                 await wait_for_webcam_status(gopro, {WebcamStatus.OFF})
 
             console.print("[blue]Starting webcam...")
-            if (
-                status := (await gopro.http_command.webcam_start()).data.error
-            ) != WebcamError.SUCCESS:
+            if (status := (await gopro.http_command.webcam_start()).data.error) != WebcamError.SUCCESS:
                 console.print(f"[red]Couldn't start webcam: {status}")
                 return -1
             await wait_for_webcam_status(gopro, {WebcamStatus.HIGH_POWER_PREVIEW})
 
             # Start player
-            display_video_blocking(
-                STREAM_URL, printer=console.print
-            )  # blocks until user exists viewer
+            display_video_blocking(STREAM_URL, printer=console.print)  # blocks until user exists viewer
             console.print("[blue]Stopping webcam...")
             assert (await gopro.http_command.webcam_stop()).ok
             await wait_for_webcam_status(gopro, {WebcamStatus.OFF, WebcamStatus.IDLE})
@@ -117,12 +105,8 @@ async def main(args: argparse.Namespace) -> int:
 
 
 def parse_arguments() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Setup and view a GoPro webcam using TS protocol."
-    )
-    protocol = parser.add_argument_group(
-        "protocol", "Mutually exclusive Protocol option if not default wired USB."
-    )
+    parser = argparse.ArgumentParser(description="Setup and view a GoPro webcam using TS protocol.")
+    protocol = parser.add_argument_group("protocol", "Mutually exclusive Protocol option if not default wired USB.")
     group = protocol.add_mutually_exclusive_group()
     group.add_argument(
         "--wireless",

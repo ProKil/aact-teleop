@@ -49,9 +49,7 @@ async def test_get_with_params(mock_wifi_communicator: GoProBase):
 
 @pytest.mark.asyncio
 async def test_get_binary(mock_wifi_communicator: GoProBase):
-    response, file = await mock_wifi_communicator.http_command.get_gpmf_data(
-        camera_file=camera_file
-    )
+    response, file = await mock_wifi_communicator.http_command.get_gpmf_data(camera_file=camera_file)
     assert response.url == f"gopro/media/gpmf?path={camera_file}"
     assert file == Path("XXX.mp4")
 
@@ -68,18 +66,14 @@ async def test_get_binary_with_component(mock_wifi_communicator: GoProBase):
 @pytest.mark.asyncio
 async def test_with_multiple_params(mock_wifi_communicator: GoProBase):
     offset_ms = 2500
-    response = await mock_wifi_communicator.http_command.add_file_hilight(
-        file=camera_file, offset=offset_ms
-    )
+    response = await mock_wifi_communicator.http_command.add_file_hilight(file=camera_file, offset=offset_ms)
     assert response.url == f"gopro/media/hilight/file?path={camera_file}&ms=2500"
 
 
 @pytest.mark.asyncio
 async def test_string_arg(mock_wifi_communicator: GoProBase):
-    response = await mock_wifi_communicator.http_command.webcam_start(
-        protocol=Params.WebcamProtocol.RTSP
-    )
-    assert response.url == "gopro/webcam/start?protocol=RTSP"
+    response = await mock_wifi_communicator.http_command.webcam_start(protocol=Params.WebcamProtocol.RTSP)
+    assert response.url == f"gopro/webcam/start?protocol=RTSP"
 
 
 def test_ensure_no_positional_args(mock_wifi_communicator: GoProBase):

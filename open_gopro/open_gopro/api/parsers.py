@@ -99,11 +99,7 @@ class JsonParsers:
                 for k, v in data[name].items():
                     identifier = cast(types.ResponseType, id_map(int(k)))
                     try:
-                        if not (
-                            parser_builder := GlobalParsers.get_query_container(
-                                identifier
-                            )
-                        ):
+                        if not (parser_builder := GlobalParsers.get_query_container(identifier)):
                             parsed[identifier] = v
                         else:
                             parsed[identifier] = parser_builder(v)
@@ -111,9 +107,7 @@ class JsonParsers:
                         # This is the case where we receive a value that is not defined in our params.
                         # This shouldn't happen and is either a firmware bug or means the documentation needs to
                         # be updated. However, it isn't functionally critical.
-                        logger.warning(
-                            f"{str(identifier)} does not contain a value {v}"
-                        )
+                        logger.warning(f"{str(identifier)} does not contain a value {v}")
                         parsed[identifier] = v
             return parsed
 
@@ -242,9 +236,7 @@ class ByteParserBuilders:
                         else original_field_to_json(self, field, value)
                     )
                     as_dict = ProtobufToDict(
-                        response,
-                        including_default_value_fields=False,
-                        preserving_proto_field_name=True,
+                        response, including_default_value_fields=False, preserving_proto_field_name=True
                     )
                     # For any unset fields, use None
                     for key in response.DESCRIPTOR.fields_by_name:
@@ -269,12 +261,7 @@ class ByteParserBuilders:
     class DateTime(BytesParser, BytesBuilder):
         """Handle local and non-local datetime parsing / building"""
 
-        def build(
-            self,
-            obj: datetime.datetime,
-            tzone: int | None = None,
-            is_dst: bool | None = None,
-        ) -> bytes:
+        def build(self, obj: datetime.datetime, tzone: int | None = None, is_dst: bool | None = None) -> bytes:
             """Build bytestream from datetime and optional local arguments
 
             Args:
@@ -285,14 +272,7 @@ class ByteParserBuilders:
             Returns:
                 bytes: bytestream built from datetime
             """
-            byte_data = [
-                *Int16ub.build(obj.year),
-                obj.month,
-                obj.day,
-                obj.hour,
-                obj.minute,
-                obj.second,
-            ]
+            byte_data = [*Int16ub.build(obj.year), obj.month, obj.day, obj.hour, obj.minute, obj.second]
             if tzone is not None and is_dst is not None:
                 byte_data.extend([*Int16sb.build(tzone), *Flag.build(is_dst)])
             return bytes(byte_data)
@@ -314,11 +294,7 @@ class ByteParserBuilders:
             return (
                 {"datetime": dt}
                 if is_dst_tz
-                else {
-                    "datetime": dt,
-                    "tzone": Int16sb.parse(buf[7:9]),
-                    "dst": bool(buf[9]),
-                }
+                else {"datetime": dt, "tzone": Int16sb.parse(buf[7:9]), "dst": bool(buf[9])}
             )
 
     class Construct(BytesParserBuilder):

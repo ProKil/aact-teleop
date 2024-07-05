@@ -27,41 +27,25 @@ async def main(args: argparse.Namespace) -> None:
             else WirelessGoPro(args.identifier, wifi_interface=args.wifi_interface)
         ) as gopro:
             assert gopro
-            assert (
-                await gopro.http_command.load_preset_group(
-                    group=proto.EnumPresetGroup.PRESET_GROUP_ID_VIDEO
-                )
-            ).ok
+            assert (await gopro.http_command.load_preset_group(group=proto.EnumPresetGroup.PRESET_GROUP_ID_VIDEO)).ok
 
             # Get the media list before
-            media_set_before = set(
-                (await gopro.http_command.get_media_list()).data.files
-            )
+            media_set_before = set((await gopro.http_command.get_media_list()).data.files)
             # Take a video
             console.print("Capturing a video...")
-            assert (
-                await gopro.http_command.set_shutter(shutter=Params.Toggle.ENABLE)
-            ).ok
+            assert (await gopro.http_command.set_shutter(shutter=Params.Toggle.ENABLE)).ok
             await asyncio.sleep(args.record_time)
-            assert (
-                await gopro.http_command.set_shutter(shutter=Params.Toggle.DISABLE)
-            ).ok
+            assert (await gopro.http_command.set_shutter(shutter=Params.Toggle.DISABLE)).ok
 
             # Get the media list after
-            media_set_after = set(
-                (await gopro.http_command.get_media_list()).data.files
-            )
+            media_set_after = set((await gopro.http_command.get_media_list()).data.files)
             # The video (is most likely) the difference between the two sets
             video = media_set_after.difference(media_set_before).pop()
 
             # Download the video
             console.print(f"Downloading {video.filename}...")
-            await gopro.http_command.download_file(
-                camera_file=video.filename, local_file=args.output
-            )
-            console.print(
-                f"Success!! :smiley: File has been downloaded to {args.output}"
-            )
+            await gopro.http_command.download_file(camera_file=video.filename, local_file=args.output)
+            console.print(f"Success!! :smiley: File has been downloaded to {args.output}")
     except Exception as e:  # pylint: disable = broad-except
         logger.error(repr(e))
 
@@ -71,9 +55,7 @@ async def main(args: argparse.Namespace) -> None:
 
 
 def parse_arguments() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Connect to a GoPro camera, take a video, then download it."
-    )
+    parser = argparse.ArgumentParser(description="Connect to a GoPro camera, take a video, then download it.")
     parser.add_argument(
         "record_time",
         type=float,

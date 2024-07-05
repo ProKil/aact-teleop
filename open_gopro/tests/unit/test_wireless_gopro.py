@@ -38,17 +38,11 @@ async def test_lifecycle(mock_wireless_gopro: WirelessGoPro):
     # Ensure we can't send commands because not ready
     assert not await mock_wireless_gopro.is_ready
     with pytest.raises(asyncio.TimeoutError):
-        await asyncio.wait_for(
-            mock_wireless_gopro.ble_command.enable_wifi_ap(enable=False), 1
-        )
+        await asyncio.wait_for(mock_wireless_gopro.ble_command.enable_wifi_ap(enable=False), 1)
 
     # Mock receiving initial not-encoding and not-busy statuses
-    await mock_wireless_gopro._update_internal_state(
-        update=StatusId.ENCODING, value=False
-    )
-    await mock_wireless_gopro._update_internal_state(
-        update=StatusId.SYSTEM_BUSY, value=False
-    )
+    await mock_wireless_gopro._update_internal_state(update=StatusId.ENCODING, value=False)
+    await mock_wireless_gopro._update_internal_state(update=StatusId.SYSTEM_BUSY, value=False)
     assert await mock_wireless_gopro.is_ready
 
     results = await asyncio.gather(
@@ -78,9 +72,7 @@ async def test_http_get(mock_wireless_gopro_basic: WirelessGoPro, monkeypatch):
     session = requests.Session()
     adapter = requests_mock.Adapter()
     session.mount(mock_wireless_gopro_basic._base_url + message._endpoint, adapter)
-    adapter.register_uri(
-        "GET", mock_wireless_gopro_basic._base_url + message._endpoint, json="{}"
-    )
+    adapter.register_uri("GET", mock_wireless_gopro_basic._base_url + message._endpoint, json="{}")
     monkeypatch.setattr("open_gopro.gopro_base.requests.get", session.get)
     response = await mock_wireless_gopro_basic._get_json(message)
     assert response.ok
@@ -93,40 +85,28 @@ async def test_http_file(mock_wireless_gopro_basic: WirelessGoPro, monkeypatch):
     session = requests.Session()
     adapter = requests_mock.Adapter()
     session.mount(mock_wireless_gopro_basic._base_url + message._endpoint, adapter)
-    adapter.register_uri(
-        "GET",
-        mock_wireless_gopro_basic._base_url + message._endpoint,
-        text="BINARY DATA",
-    )
+    adapter.register_uri("GET", mock_wireless_gopro_basic._base_url + message._endpoint, text="BINARY DATA")
     monkeypatch.setattr("open_gopro.gopro_base.requests.get", session.get)
-    await mock_wireless_gopro_basic._get_stream(
-        message, camera_file=out_file, local_file=out_file
-    )
+    await mock_wireless_gopro_basic._get_stream(message, camera_file=out_file, local_file=out_file)
     assert out_file.exists()
 
 
 @pytest.mark.asyncio
-async def test_http_response_timeout(
-    mock_wireless_gopro_basic: WirelessGoPro, monkeypatch
-):
+async def test_http_response_timeout(mock_wireless_gopro_basic: WirelessGoPro, monkeypatch):
     with pytest.raises(ResponseTimeout):
         message = HttpMessage("gopro/camera/stream/start", None)
         session = requests.Session()
         adapter = requests_mock.Adapter()
         session.mount(mock_wireless_gopro_basic._base_url + message._endpoint, adapter)
         adapter.register_uri(
-            "GET",
-            mock_wireless_gopro_basic._base_url + message._endpoint,
-            exc=requests.exceptions.ConnectTimeout,
+            "GET", mock_wireless_gopro_basic._base_url + message._endpoint, exc=requests.exceptions.ConnectTimeout
         )
         monkeypatch.setattr("open_gopro.gopro_base.requests.get", session.get)
         await mock_wireless_gopro_basic._get_json(message, timeout=1)
 
 
 @pytest.mark.asyncio
-async def test_http_response_error(
-    mock_wireless_gopro_basic: WirelessGoPro, monkeypatch
-):
+async def test_http_response_error(mock_wireless_gopro_basic: WirelessGoPro, monkeypatch):
     message = HttpMessage("gopro/camera/stream/start", None)
     session = requests.Session()
     adapter = requests_mock.Adapter()
@@ -151,18 +131,14 @@ async def test_get_update(mock_wireless_gopro_basic: WirelessGoPro):
     async def receive_encoding_status(id: types.UpdateType, value: bool):
         event.set()
 
-    mock_wireless_gopro_basic.register_update(
-        receive_encoding_status, StatusId.ENCODING
-    )
+    mock_wireless_gopro_basic.register_update(receive_encoding_status, StatusId.ENCODING)
     not_encoding = bytearray([0x05, 0x93, 0x00, StatusId.ENCODING.value, 0x01, 0x00])
     mock_wireless_gopro_basic._notification_handler(0xFF, not_encoding)
     await event.wait()
 
     # Now ensure unregistering works
     event.clear()
-    mock_wireless_gopro_basic.unregister_update(
-        receive_encoding_status, StatusId.ENCODING
-    )
+    mock_wireless_gopro_basic.unregister_update(receive_encoding_status, StatusId.ENCODING)
     not_encoding = bytearray([0x05, 0x13, 0x00, StatusId.ENCODING.value, 0x01, 0x00])
     mock_wireless_gopro_basic._notification_handler(0xFF, not_encoding)
     with pytest.raises(asyncio.TimeoutError):
@@ -177,9 +153,7 @@ async def test_get_update_unregister_all(mock_wireless_gopro_basic: WirelessGoPr
     async def receive_encoding_status(id: types.UpdateType, value: bool):
         event.set()
 
-    mock_wireless_gopro_basic.register_update(
-        receive_encoding_status, StatusId.ENCODING
-    )
+    mock_wireless_gopro_basic.register_update(receive_encoding_status, StatusId.ENCODING)
     not_encoding = bytearray([0x05, 0x93, 0x00, StatusId.ENCODING.value, 0x01, 0x00])
     mock_wireless_gopro_basic._notification_handler(0xFF, not_encoding)
     await event.wait()
@@ -195,6 +169,4 @@ async def test_get_update_unregister_all(mock_wireless_gopro_basic: WirelessGoPr
 
 def test_get_param_values_by_id():
     vector = list(Params.Resolution)[0]
-    assert (
-        GlobalParsers.get_query_container(SettingId.RESOLUTION)(vector.value) == vector
-    )
+    assert GlobalParsers.get_query_container(SettingId.RESOLUTION)(vector.value) == vector

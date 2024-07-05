@@ -77,9 +77,7 @@ async def process_battery_notifications(update: types.UpdateType, value: int) ->
 
     # Append and print sample
     global SAMPLE_INDEX
-    SAMPLES.append(
-        Sample(index=SAMPLE_INDEX, percentage=last_percentage, bars=last_bars)
-    )
+    SAMPLES.append(Sample(index=SAMPLE_INDEX, percentage=last_percentage, bars=last_bars))
     console.print(str(SAMPLES[-1]))
     SAMPLE_INDEX += 1
 
@@ -95,19 +93,13 @@ async def main(args: argparse.Namespace) -> None:
             async def log_battery() -> None:
                 global SAMPLE_INDEX
                 if args.poll:
-                    with console.status(
-                        "[bold green]Polling the battery until it dies..."
-                    ):
+                    with console.status("[bold green]Polling the battery until it dies..."):
                         while True:
                             SAMPLES.append(
                                 Sample(
                                     index=SAMPLE_INDEX,
-                                    percentage=(
-                                        await gopro.ble_status.int_batt_per.get_value()
-                                    ).data,
-                                    bars=(
-                                        await gopro.ble_status.batt_level.get_value()
-                                    ).data,
+                                    percentage=(await gopro.ble_status.int_batt_per.get_value()).data,
+                                    bars=(await gopro.ble_status.batt_level.get_value()).data,
                                 )
                             )
                             console.print(str(SAMPLES[-1]))
@@ -120,28 +112,16 @@ async def main(args: argparse.Namespace) -> None:
                     console.print("Configuring battery notifications...")
                     # Enable notifications of the relevant battery statuses. Also store initial values.
                     last_bars = (
-                        await gopro.ble_status.batt_level.register_value_update(
-                            process_battery_notifications
-                        )
+                        await gopro.ble_status.batt_level.register_value_update(process_battery_notifications)
                     ).data
                     last_percentage = (
-                        await gopro.ble_status.int_batt_per.register_value_update(
-                            process_battery_notifications
-                        )
+                        await gopro.ble_status.int_batt_per.register_value_update(process_battery_notifications)
                     ).data
                     # Append initial sample
-                    SAMPLES.append(
-                        Sample(
-                            index=SAMPLE_INDEX,
-                            percentage=last_percentage,
-                            bars=last_bars,
-                        )
-                    )
+                    SAMPLES.append(Sample(index=SAMPLE_INDEX, percentage=last_percentage, bars=last_bars))
                     SAMPLE_INDEX += 1
                     console.print(str(SAMPLES[-1]))
-                    console.print(
-                        "[bold green]Receiving battery notifications until it dies..."
-                    )
+                    console.print("[bold green]Receiving battery notifications until it dies...")
 
             asyncio.create_task(log_battery())
             await ainput("[purple]Press enter to exit.", console.print)

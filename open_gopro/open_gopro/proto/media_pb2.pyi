@@ -60,7 +60,7 @@ class ResponseLastCapturedMedia(google.protobuf.message.Message):
         self,
         *,
         result: response_generic_pb2.EnumResultGeneric.ValueType | None = ...,
-        media: response_generic_pb2.Media | None = ...,
+        media: response_generic_pb2.Media | None = ...
     ) -> None: ...
     def HasField(
         self,

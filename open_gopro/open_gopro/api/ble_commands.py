@@ -78,10 +78,8 @@ class BleCommands(BleMessages[BleMessage]):
         cmd=CmdId.SET_SHUTTER,
         param_builder=Int8ub,
         rules=MessageRules(
-            fastpass_analyzer=lambda **kwargs: kwargs["shutter"]
-            == Params.Toggle.DISABLE,
-            wait_for_encoding_analyzer=lambda **kwargs: kwargs["shutter"]
-            == Params.Toggle.ENABLE,
+            fastpass_analyzer=lambda **kwargs: kwargs["shutter"] == Params.Toggle.DISABLE,
+            wait_for_encoding_analyzer=lambda **kwargs: kwargs["shutter"] == Params.Toggle.ENABLE,
         ),
     )
     async def set_shutter(self, *, shutter: Params.Toggle) -> GoProResp[None]:
@@ -131,8 +129,7 @@ class BleCommands(BleMessages[BleMessage]):
                     Padding(1),
                     "board_type" / Hex(Int32ub),
                     "firmware_version_len" / Int8ub,
-                    "firmware_version"
-                    / PaddedString(this.firmware_version_len, "utf-8"),
+                    "firmware_version" / PaddedString(this.firmware_version_len, "utf-8"),
                     "serial_number_len" / Int8ub,
                     "serial_number" / PaddedString(this.serial_number_len, "utf-8"),
                     "ap_ssid_len" / Int8ub,
@@ -163,9 +160,7 @@ class BleCommands(BleMessages[BleMessage]):
         """
 
     @ble_write_command(GoProUUIDs.CQ_COMMAND, CmdId.LOAD_PRESET_GROUP, Int16ub)
-    async def load_preset_group(
-        self, *, group: proto.EnumPresetGroup.ValueType
-    ) -> GoProResp[None]:
+    async def load_preset_group(self, *, group: proto.EnumPresetGroup.ValueType) -> GoProResp[None]:
         """Load a Preset Group.
 
         Once complete, the most recently used preset in this group will be active.
@@ -205,9 +200,7 @@ class BleCommands(BleMessages[BleMessage]):
             byte_json_adapter=ByteParserBuilders.Construct(
                 Struct(Padding(1), "major" / Int8ub, Padding(1), "minor" / Int8ub)
             ),
-            json_parser=JsonParsers.LambdaParser(
-                lambda data: f"{data['major']}.{data['minor']}"
-            ),
+            json_parser=JsonParsers.LambdaParser(lambda data: f"{data['major']}.{data['minor']}"),
         ),
     )
     async def get_open_gopro_api_version(self) -> GoProResp[str]:
@@ -253,11 +246,7 @@ class BleCommands(BleMessages[BleMessage]):
             GoProResp: response as JSON
         """
 
-    @ble_write_command(
-        GoProUUIDs.CQ_COMMAND,
-        CmdId.SET_DATE_TIME,
-        param_builder=ByteParserBuilders.DateTime(),
-    )
+    @ble_write_command(GoProUUIDs.CQ_COMMAND, CmdId.SET_DATE_TIME, param_builder=ByteParserBuilders.DateTime())
     async def set_date_time(self, *, date_time: datetime.datetime) -> GoProResp[None]:
         """Set the camera's date and time (non timezone / DST version)
 
@@ -283,11 +272,7 @@ class BleCommands(BleMessages[BleMessage]):
             GoProResp: response as JSON
         """
 
-    @ble_write_command(
-        GoProUUIDs.CQ_COMMAND,
-        CmdId.SET_DATE_TIME_DST,
-        param_builder=ByteParserBuilders.DateTime(),
-    )
+    @ble_write_command(GoProUUIDs.CQ_COMMAND, CmdId.SET_DATE_TIME_DST, param_builder=ByteParserBuilders.DateTime())
     async def set_date_time_tz_dst(
         self, *, date_time: datetime.datetime, tz_offset: int, is_dst: bool
     ) -> GoProResp[None]:
@@ -324,9 +309,7 @@ class BleCommands(BleMessages[BleMessage]):
     @ble_read_command(
         uuid=GoProUUIDs.WAP_SSID,
         parser=Parser(
-            byte_json_adapter=ByteParserBuilders.Construct(
-                Struct("ssid" / GreedyString("utf-8"))
-            ),
+            byte_json_adapter=ByteParserBuilders.Construct(Struct("ssid" / GreedyString("utf-8"))),
             json_parser=JsonParsers.LambdaParser(lambda data: data["ssid"]),
         ),
     )
@@ -340,9 +323,7 @@ class BleCommands(BleMessages[BleMessage]):
     @ble_read_command(
         uuid=GoProUUIDs.WAP_PASSWORD,
         parser=Parser(
-            byte_json_adapter=ByteParserBuilders.Construct(
-                Struct("password" / GreedyString("utf-8"))
-            ),
+            byte_json_adapter=ByteParserBuilders.Construct(Struct("password" / GreedyString("utf-8"))),
             json_parser=JsonParsers.LambdaParser(lambda data: data["password"]),
         ),
     )
@@ -363,9 +344,7 @@ class BleCommands(BleMessages[BleMessage]):
         update_set=StatusId,
         action=RegisterUnregisterAll.Action.REGISTER,
     )
-    async def register_for_all_statuses(
-        self, callback: types.UpdateCb
-    ) -> GoProResp[None]:
+    async def register_for_all_statuses(self, callback: types.UpdateCb) -> GoProResp[None]:
         """Register push notifications for all statuses
 
         Args:
@@ -381,9 +360,7 @@ class BleCommands(BleMessages[BleMessage]):
         update_set=StatusId,
         action=RegisterUnregisterAll.Action.UNREGISTER,
     )
-    async def unregister_for_all_statuses(
-        self, callback: types.UpdateCb
-    ) -> GoProResp[None]:
+    async def unregister_for_all_statuses(self, callback: types.UpdateCb) -> GoProResp[None]:
         """Unregister push notifications for all statuses
 
         Args:
@@ -399,9 +376,7 @@ class BleCommands(BleMessages[BleMessage]):
         update_set=SettingId,
         action=RegisterUnregisterAll.Action.REGISTER,
     )
-    async def register_for_all_settings(
-        self, callback: types.UpdateCb
-    ) -> GoProResp[None]:
+    async def register_for_all_settings(self, callback: types.UpdateCb) -> GoProResp[None]:
         """Register push notifications for all settings
 
         Args:
@@ -417,9 +392,7 @@ class BleCommands(BleMessages[BleMessage]):
         update_set=SettingId,
         action=RegisterUnregisterAll.Action.UNREGISTER,
     )
-    async def unregister_for_all_settings(
-        self, callback: types.UpdateCb
-    ) -> GoProResp[None]:
+    async def unregister_for_all_settings(self, callback: types.UpdateCb) -> GoProResp[None]:
         """Unregister push notifications for all settings
 
         Args:
@@ -435,9 +408,7 @@ class BleCommands(BleMessages[BleMessage]):
         update_set=SettingId,
         action=RegisterUnregisterAll.Action.REGISTER,
     )
-    async def register_for_all_capabilities(
-        self, callback: types.UpdateCb
-    ) -> GoProResp[None]:
+    async def register_for_all_capabilities(self, callback: types.UpdateCb) -> GoProResp[None]:
         """Register push notifications for all capabilities
 
         Args:
@@ -453,9 +424,7 @@ class BleCommands(BleMessages[BleMessage]):
         update_set=SettingId,
         action=RegisterUnregisterAll.Action.UNREGISTER,
     )
-    async def unregister_for_all_capabilities(
-        self, callback: types.UpdateCb
-    ) -> GoProResp[None]:
+    async def unregister_for_all_capabilities(self, callback: types.UpdateCb) -> GoProResp[None]:
         """Unregister push notifications for all capabilities
 
         Args:
@@ -575,9 +544,7 @@ class BleCommands(BleMessages[BleMessage]):
             d["icon_id"] = icon_id
         if title is not None:
             if isinstance(title, str):
-                d["title_id"] = (
-                    proto.EnumPresetTitle.PRESET_TITLE_USER_DEFINED_CUSTOM_NAME
-                )
+                d["title_id"] = proto.EnumPresetTitle.PRESET_TITLE_USER_DEFINED_CUSTOM_NAME
                 d["custom_name"] = title
             elif isinstance(title, proto.EnumPresetTitle.ValueType):
                 d["title_id"] = title
@@ -593,9 +560,7 @@ class BleCommands(BleMessages[BleMessage]):
         request_proto=proto.RequestGetLastCapturedMedia,
         response_proto=proto.ResponseLastCapturedMedia,
     )
-    async def get_last_captured_media(
-        self,
-    ) -> GoProResp[proto.ResponseLastCapturedMedia]:
+    async def get_last_captured_media(self) -> GoProResp[proto.ResponseLastCapturedMedia]:
         """Get the last captured media file
 
         Returns:
@@ -638,11 +603,7 @@ class BleCommands(BleMessages[BleMessage]):
         Returns:
             GoProResp: result of scan with entries for WiFi networks
         """
-        return {
-            "scan_id": scan_id,
-            "start_index": start_index,
-            "max_entries": max_entries,
-        }  # type: ignore
+        return {"scan_id": scan_id, "start_index": start_index, "max_entries": max_entries}  # type: ignore
 
     @ble_proto_command(
         uuid=GoProUUIDs.CM_NET_MGMT_COMM,
@@ -653,9 +614,7 @@ class BleCommands(BleMessages[BleMessage]):
         response_proto=proto.ResponseConnect,
         additional_matching_ids={ActionId.REQUEST_WIFI_CONNECT_RSP},
     )
-    async def request_wifi_connect(
-        self, *, ssid: str
-    ) -> GoProResp[proto.ResponseConnect]:
+    async def request_wifi_connect(self, *, ssid: str) -> GoProResp[proto.ResponseConnect]:
         """Request the camera to connect to a WiFi network that is already provisioned.
 
         Updates will be sent as :py:attr:`open_gopro.constants.ActionId.NOTIF_PROVIS_STATE`
@@ -676,9 +635,7 @@ class BleCommands(BleMessages[BleMessage]):
         response_proto=proto.ResponseConnectNew,
         additional_matching_ids={ActionId.REQUEST_WIFI_CONNECT_NEW_RSP},
     )
-    async def request_wifi_connect_new(
-        self, *, ssid: str, password: str
-    ) -> GoProResp[proto.ResponseConnectNew]:
+    async def request_wifi_connect_new(self, *, ssid: str, password: str) -> GoProResp[proto.ResponseConnectNew]:
         """Request the camera to connect to a WiFi network that is not already provisioned.
 
         Updates will be sent as :py:attr:`open_gopro.constants.ActionId.NOTIF_PROVIS_STATE`
@@ -769,10 +726,7 @@ class BleCommands(BleMessages[BleMessage]):
         Returns:
             GoProResp: current livestream status
         """
-        return {
-            "register_live_stream_status": register or [],
-            "unregister_live_stream_status": unregister or [],
-        }  # type: ignore
+        return {"register_live_stream_status": register or [], "unregister_live_stream_status": unregister or []}  # type: ignore
 
     @ble_proto_command(
         uuid=GoProUUIDs.CQ_COMMAND,
@@ -797,9 +751,7 @@ class BleCommands(BleMessages[BleMessage]):
         request_proto=proto.RequestGetCOHNStatus,
         response_proto=proto.NotifyCOHNStatus,
     )
-    async def cohn_get_status(
-        self, *, register: bool
-    ) -> GoProResp[proto.NotifyCOHNStatus]:
+    async def cohn_get_status(self, *, register: bool) -> GoProResp[proto.NotifyCOHNStatus]:
         """Get (and optionally register for) the current COHN status
 
         Args:
@@ -818,9 +770,7 @@ class BleCommands(BleMessages[BleMessage]):
         request_proto=proto.RequestCreateCOHNCert,
         response_proto=proto.ResponseGeneric,
     )
-    async def cohn_create_certificate(
-        self, *, override: bool = False
-    ) -> GoProResp[None]:
+    async def cohn_create_certificate(self, *, override: bool = False) -> GoProResp[None]:
         """Create an SSL certificate on the camera to use for COHN
 
         Args:
@@ -898,9 +848,7 @@ class BleSettings(BleMessages[BleSetting.BleSettingMessageBase]):
         )
         """Resolution."""
 
-        self.fps: BleSetting[Params.FPS] = BleSetting[Params.FPS](
-            communicator, SettingId.FPS, Params.FPS
-        )
+        self.fps: BleSetting[Params.FPS] = BleSetting[Params.FPS](communicator, SettingId.FPS, Params.FPS)
         """Frames per second."""
 
         self.auto_off: BleSetting[Params.AutoOff] = BleSetting[Params.AutoOff](
@@ -908,62 +856,54 @@ class BleSettings(BleMessages[BleSetting.BleSettingMessageBase]):
         )
         """Set the auto off time."""
 
-        self.video_field_of_view: BleSetting[Params.VideoFOV] = BleSetting[
-            Params.VideoFOV
-        ](communicator, SettingId.VIDEO_FOV, Params.VideoFOV)
+        self.video_field_of_view: BleSetting[Params.VideoFOV] = BleSetting[Params.VideoFOV](
+            communicator, SettingId.VIDEO_FOV, Params.VideoFOV
+        )
         """Video FOV."""
 
-        self.photo_field_of_view: BleSetting[Params.PhotoFOV] = BleSetting[
-            Params.PhotoFOV
-        ](communicator, SettingId.PHOTO_FOV, Params.PhotoFOV)
+        self.photo_field_of_view: BleSetting[Params.PhotoFOV] = BleSetting[Params.PhotoFOV](
+            communicator, SettingId.PHOTO_FOV, Params.PhotoFOV
+        )
         """Photo FOV."""
 
-        self.multi_shot_field_of_view: BleSetting[Params.MultishotFOV] = BleSetting[
-            Params.MultishotFOV
-        ](communicator, SettingId.MULTI_SHOT_FOV, Params.MultishotFOV)
+        self.multi_shot_field_of_view: BleSetting[Params.MultishotFOV] = BleSetting[Params.MultishotFOV](
+            communicator, SettingId.MULTI_SHOT_FOV, Params.MultishotFOV
+        )
         """Multi-shot FOV."""
 
-        self.led: BleSetting[Params.LED] = BleSetting[Params.LED](
-            communicator, SettingId.LED, Params.LED
-        )
+        self.led: BleSetting[Params.LED] = BleSetting[Params.LED](communicator, SettingId.LED, Params.LED)
         """Set the LED options (or also send the BLE keep alive signal)."""
 
-        self.max_lens_mode: BleSetting[Params.MaxLensMode] = BleSetting[
-            Params.MaxLensMode
-        ](communicator, SettingId.MAX_LENS_MOD, Params.MaxLensMode)
+        self.max_lens_mode: BleSetting[Params.MaxLensMode] = BleSetting[Params.MaxLensMode](
+            communicator, SettingId.MAX_LENS_MOD, Params.MaxLensMode
+        )
         """Enable / disable max lens mod."""
 
-        self.hypersmooth: BleSetting[Params.HypersmoothMode] = BleSetting[
-            Params.HypersmoothMode
-        ](communicator, SettingId.HYPERSMOOTH, Params.HypersmoothMode)
+        self.hypersmooth: BleSetting[Params.HypersmoothMode] = BleSetting[Params.HypersmoothMode](
+            communicator, SettingId.HYPERSMOOTH, Params.HypersmoothMode
+        )
         """Set / disable hypersmooth."""
 
-        self.video_performance_mode: BleSetting[Params.PerformanceMode] = BleSetting[
-            Params.PerformanceMode
-        ](
+        self.video_performance_mode: BleSetting[Params.PerformanceMode] = BleSetting[Params.PerformanceMode](
             communicator,
             SettingId.VIDEO_PERFORMANCE_MODE,
             Params.PerformanceMode,
         )
         """Video Performance Mode."""
 
-        self.media_format: BleSetting[Params.MediaFormat] = BleSetting[
-            Params.MediaFormat
-        ](communicator, SettingId.MEDIA_FORMAT, Params.MediaFormat)
+        self.media_format: BleSetting[Params.MediaFormat] = BleSetting[Params.MediaFormat](
+            communicator, SettingId.MEDIA_FORMAT, Params.MediaFormat
+        )
         """Set the media format."""
 
-        self.anti_flicker: BleSetting[Params.AntiFlicker] = BleSetting[
-            Params.AntiFlicker
-        ](
+        self.anti_flicker: BleSetting[Params.AntiFlicker] = BleSetting[Params.AntiFlicker](
             communicator,
             SettingId.ANTI_FLICKER,
             Params.AntiFlicker,
         )
         """Anti Flicker frequency."""
 
-        self.camera_ux_mode: BleSetting[Params.CameraUxMode] = BleSetting[
-            Params.CameraUxMode
-        ](
+        self.camera_ux_mode: BleSetting[Params.CameraUxMode] = BleSetting[Params.CameraUxMode](
             communicator,
             SettingId.CAMERA_UX_MODE,
             Params.CameraUxMode,
@@ -977,9 +917,7 @@ class BleSettings(BleMessages[BleSetting.BleSettingMessageBase]):
         )
         """Video easy mode speed. It is not feasible to maintain this setting without code generation so just read as int."""
 
-        self.photo_easy_mode: BleSetting[Params.PhotoEasyMode] = BleSetting[
-            Params.PhotoEasyMode
-        ](
+        self.photo_easy_mode: BleSetting[Params.PhotoEasyMode] = BleSetting[Params.PhotoEasyMode](
             communicator,
             SettingId.PHOTO_EASY_MODE,
             Params.PhotoEasyMode,
@@ -993,36 +931,28 @@ class BleSettings(BleMessages[BleSetting.BleSettingMessageBase]):
         )
         """Current WiFi band being used."""
 
-        self.star_trail_length: BleSetting[Params.StarTrailLength] = BleSetting[
-            Params.StarTrailLength
-        ](
+        self.star_trail_length: BleSetting[Params.StarTrailLength] = BleSetting[Params.StarTrailLength](
             communicator,
             SettingId.STAR_TRAIL_LENGTH,
             Params.StarTrailLength,
         )
         """Multi shot star trail length."""
 
-        self.system_video_mode: BleSetting[Params.SystemVideoMode] = BleSetting[
-            Params.SystemVideoMode
-        ](
+        self.system_video_mode: BleSetting[Params.SystemVideoMode] = BleSetting[Params.SystemVideoMode](
             communicator,
             SettingId.SYSTEM_VIDEO_MODE,
             Params.SystemVideoMode,
         )
         """System video mode."""
 
-        self.video_horizon_leveling: BleSetting[Params.HorizonLeveling] = BleSetting[
-            Params.HorizonLeveling
-        ](
+        self.video_horizon_leveling: BleSetting[Params.HorizonLeveling] = BleSetting[Params.HorizonLeveling](
             communicator,
             SettingId.VIDEO_HORIZON_LEVELING,
             Params.HorizonLeveling,
         )
         """Lock / unlock horizon leveling for video."""
 
-        self.photo_horizon_leveling: BleSetting[Params.HorizonLeveling] = BleSetting[
-            Params.HorizonLeveling
-        ](
+        self.photo_horizon_leveling: BleSetting[Params.HorizonLeveling] = BleSetting[Params.HorizonLeveling](
             communicator,
             SettingId.PHOTO_HORIZON_LEVELING,
             Params.HorizonLeveling,
@@ -1043,48 +973,38 @@ class BleSettings(BleMessages[BleSetting.BleSettingMessageBase]):
         )
         """System Video Bit depth."""
 
-        self.video_profile: BleSetting[Params.VideoProfile] = BleSetting[
-            Params.VideoProfile
-        ](
+        self.video_profile: BleSetting[Params.VideoProfile] = BleSetting[Params.VideoProfile](
             communicator,
             SettingId.VIDEO_PROFILE,
             Params.VideoProfile,
         )
         """Video Profile (hdr, etc.)"""
 
-        self.video_aspect_ratio: BleSetting[Params.VideoAspectRatio] = BleSetting[
-            Params.VideoAspectRatio
-        ](
+        self.video_aspect_ratio: BleSetting[Params.VideoAspectRatio] = BleSetting[Params.VideoAspectRatio](
             communicator,
             SettingId.VIDEO_ASPECT_RATIO,
             Params.VideoAspectRatio,
         )
         """Video aspect ratio"""
 
-        self.video_easy_aspect_ratio: BleSetting[Params.EasyAspectRatio] = BleSetting[
-            Params.EasyAspectRatio
-        ](
+        self.video_easy_aspect_ratio: BleSetting[Params.EasyAspectRatio] = BleSetting[Params.EasyAspectRatio](
             communicator,
             SettingId.VIDEO_EASY_ASPECT_RATIO,
             Params.EasyAspectRatio,
         )
         """Video easy aspect ratio"""
 
-        self.multi_shot_easy_aspect_ratio: BleSetting[Params.EasyAspectRatio] = (
-            BleSetting[Params.EasyAspectRatio](
-                communicator,
-                SettingId.MULTI_SHOT_EASY_ASPECT_RATIO,
-                Params.EasyAspectRatio,
-            )
+        self.multi_shot_easy_aspect_ratio: BleSetting[Params.EasyAspectRatio] = BleSetting[Params.EasyAspectRatio](
+            communicator,
+            SettingId.MULTI_SHOT_EASY_ASPECT_RATIO,
+            Params.EasyAspectRatio,
         )
         """Multi shot easy aspect ratio"""
 
-        self.multi_shot_nlv_aspect_ratio: BleSetting[Params.EasyAspectRatio] = (
-            BleSetting[Params.EasyAspectRatio](
-                communicator,
-                SettingId.MULTI_SHOT_NLV_ASPECT_RATIO,
-                Params.EasyAspectRatio,
-            )
+        self.multi_shot_nlv_aspect_ratio: BleSetting[Params.EasyAspectRatio] = BleSetting[Params.EasyAspectRatio](
+            communicator,
+            SettingId.MULTI_SHOT_NLV_ASPECT_RATIO,
+            Params.EasyAspectRatio,
         )
         """Multi shot NLV aspect ratio"""
 
@@ -1095,18 +1015,14 @@ class BleSettings(BleMessages[BleSetting.BleSettingMessageBase]):
         )
         """Video Mode (i.e. quality)"""
 
-        self.timelapse_mode: BleSetting[Params.TimelapseMode] = BleSetting[
-            Params.TimelapseMode
-        ](
+        self.timelapse_mode: BleSetting[Params.TimelapseMode] = BleSetting[Params.TimelapseMode](
             communicator,
             SettingId.TIMELAPSE_MODE,
             Params.TimelapseMode,
         )
         """Timelapse Mode"""
 
-        self.maxlens_mod_type: BleSetting[Params.MaxLensModType] = BleSetting[
-            Params.MaxLensModType
-        ](
+        self.maxlens_mod_type: BleSetting[Params.MaxLensModType] = BleSetting[Params.MaxLensModType](
             communicator,
             SettingId.ADDON_MAX_LENS_MOD,
             Params.MaxLensModType,
@@ -1141,18 +1057,14 @@ class BleSettings(BleMessages[BleSetting.BleSettingMessageBase]):
         )
         """Hindsight time / disable"""
 
-        self.photo_interval: BleSetting[Params.PhotoInterval] = BleSetting[
-            Params.PhotoInterval
-        ](
+        self.photo_interval: BleSetting[Params.PhotoInterval] = BleSetting[Params.PhotoInterval](
             communicator,
             SettingId.PHOTO_INTERVAL,
             Params.PhotoInterval,
         )
         """Interval between photo captures"""
 
-        self.photo_duration: BleSetting[Params.PhotoDuration] = BleSetting[
-            Params.PhotoDuration
-        ](
+        self.photo_duration: BleSetting[Params.PhotoDuration] = BleSetting[Params.PhotoDuration](
             communicator,
             SettingId.PHOTO_INTERVAL_DURATION,
             Params.PhotoDuration,
@@ -1173,18 +1085,12 @@ class BleAsyncResponses:
         BleAsyncResponse(
             FeatureId.NETWORK_MANAGEMENT,
             ActionId.NOTIF_PROVIS_STATE,
-            Parser(
-                byte_json_adapter=ByteParserBuilders.Protobuf(
-                    proto.NotifProvisioningState
-                )
-            ),
+            Parser(byte_json_adapter=ByteParserBuilders.Protobuf(proto.NotifProvisioningState)),
         ),
         BleAsyncResponse(
             FeatureId.NETWORK_MANAGEMENT,
             ActionId.NOTIF_START_SCAN,
-            Parser(
-                byte_json_adapter=ByteParserBuilders.Protobuf(proto.NotifStartScanning)
-            ),
+            Parser(byte_json_adapter=ByteParserBuilders.Protobuf(proto.NotifStartScanning)),
         ),
         BleAsyncResponse(
             FeatureId.QUERY,
@@ -1198,9 +1104,7 @@ class BleAsyncResponses:
         """Add all of the defined asynchronous responses to the global parser map"""
         for response in cls.responses:
             GlobalParsers.add(response.action_id, response.parser)
-            GlobalParsers.add_feature_action_id_mapping(
-                response.feature_id, response.action_id
-            )
+            GlobalParsers.add_feature_action_id_mapping(response.feature_id, response.action_id)
 
 
 class BleStatuses(BleMessages[BleStatus.BleStatusMessageBase]):
@@ -1214,14 +1118,10 @@ class BleStatuses(BleMessages[BleStatus.BleStatusMessageBase]):
     """
 
     def __init__(self, communicator: GoProBle) -> None:
-        self.batt_present: BleStatus[bool] = BleStatus(
-            communicator, StatusId.BATT_PRESENT, Flag
-        )
+        self.batt_present: BleStatus[bool] = BleStatus(communicator, StatusId.BATT_PRESENT, Flag)
         """Is the system's internal battery present?"""
 
-        self.batt_level: BleStatus[int] = BleStatus(
-            communicator, StatusId.BATT_LEVEL, Int8ub
-        )
+        self.batt_level: BleStatus[int] = BleStatus(communicator, StatusId.BATT_LEVEL, Int8ub)
         """Rough approximation of internal battery level in bars."""
 
         self.deprecated_3: BleStatus[Any] = BleStatus(
@@ -1234,54 +1134,34 @@ class BleStatuses(BleMessages[BleStatus.BleStatusMessageBase]):
         )
         """This status is deprecated."""
 
-        self.system_hot: BleStatus[bool] = BleStatus(
-            communicator, StatusId.SYSTEM_HOT, Flag
-        )
+        self.system_hot: BleStatus[bool] = BleStatus(communicator, StatusId.SYSTEM_HOT, Flag)
         """Is the system currently overheating?"""
 
-        self.system_busy: BleStatus[bool] = BleStatus(
-            communicator, StatusId.SYSTEM_BUSY, Flag
-        )
+        self.system_busy: BleStatus[bool] = BleStatus(communicator, StatusId.SYSTEM_BUSY, Flag)
         """Is the camera busy?"""
 
-        self.quick_capture: BleStatus[bool] = BleStatus(
-            communicator, StatusId.QUICK_CAPTURE, Flag
-        )
+        self.quick_capture: BleStatus[bool] = BleStatus(communicator, StatusId.QUICK_CAPTURE, Flag)
         """Is quick capture feature enabled?"""
 
-        self.encoding_active: BleStatus[bool] = BleStatus(
-            communicator, StatusId.ENCODING, Flag
-        )
+        self.encoding_active: BleStatus[bool] = BleStatus(communicator, StatusId.ENCODING, Flag)
         """Is the camera currently encoding (i.e. capturing photo / video)?"""
 
-        self.lcd_lock_active: BleStatus[bool] = BleStatus(
-            communicator, StatusId.LCD_LOCK_ACTIVE, Flag
-        )
+        self.lcd_lock_active: BleStatus[bool] = BleStatus(communicator, StatusId.LCD_LOCK_ACTIVE, Flag)
         """Is the LCD lock currently active?"""
 
-        self.video_progress: BleStatus[int] = BleStatus(
-            communicator, StatusId.VIDEO_PROGRESS, Int32ub
-        )
+        self.video_progress: BleStatus[int] = BleStatus(communicator, StatusId.VIDEO_PROGRESS, Int32ub)
         """When encoding video, this is the duration (seconds) of the video so far; 0 otherwise."""
 
-        self.wireless_enabled: BleStatus[bool] = BleStatus(
-            communicator, StatusId.WIRELESS_ENABLED, Flag
-        )
+        self.wireless_enabled: BleStatus[bool] = BleStatus(communicator, StatusId.WIRELESS_ENABLED, Flag)
         """Are Wireless Connections enabled?"""
 
-        self.pair_state: BleStatus[Params.PairState] = BleStatus(
-            communicator, StatusId.PAIR_STATE, Params.PairState
-        )
+        self.pair_state: BleStatus[Params.PairState] = BleStatus(communicator, StatusId.PAIR_STATE, Params.PairState)
         """What is the pair state?"""
 
-        self.pair_type: BleStatus[Params.PairType] = BleStatus(
-            communicator, StatusId.PAIR_TYPE, Params.PairType
-        )
+        self.pair_type: BleStatus[Params.PairType] = BleStatus(communicator, StatusId.PAIR_TYPE, Params.PairType)
         """The last type of pairing that the camera was engaged in."""
 
-        self.pair_time: BleStatus[int] = BleStatus(
-            communicator, StatusId.PAIR_TIME, Int32ub
-        )
+        self.pair_time: BleStatus[int] = BleStatus(communicator, StatusId.PAIR_TIME, Int32ub)
         """	Time (milliseconds) since boot of last successful pairing complete action."""
 
         self.wap_scan_state: BleStatus[Params.PairType] = BleStatus(
@@ -1298,74 +1178,46 @@ class BleStatuses(BleMessages[BleStatus.BleStatusMessageBase]):
         )
         """Wifi AP provisioning state."""
 
-        self.remote_ctrl_ver: BleStatus[int] = BleStatus(
-            communicator, StatusId.REMOTE_CTRL_VER, Int8ub
-        )
+        self.remote_ctrl_ver: BleStatus[int] = BleStatus(communicator, StatusId.REMOTE_CTRL_VER, Int8ub)
         """What is the remote control version?"""
 
-        self.remote_ctrl_conn: BleStatus[bool] = BleStatus(
-            communicator, StatusId.REMOTE_CTRL_CONN, Flag
-        )
+        self.remote_ctrl_conn: BleStatus[bool] = BleStatus(communicator, StatusId.REMOTE_CTRL_CONN, Flag)
         """Is the remote control connected?"""
 
-        self.pair_state2: BleStatus[int] = BleStatus(
-            communicator, StatusId.PAIR_STATE2, Int8ub
-        )
+        self.pair_state2: BleStatus[int] = BleStatus(communicator, StatusId.PAIR_STATE2, Int8ub)
         """Wireless Pairing State."""
 
-        self.wlan_ssid: BleStatus[str] = BleStatus(
-            communicator, StatusId.WLAN_SSID, GreedyString(encoding="utf-8")
-        )
+        self.wlan_ssid: BleStatus[str] = BleStatus(communicator, StatusId.WLAN_SSID, GreedyString(encoding="utf-8"))
         """Provisioned WIFI AP SSID. On BLE connection, value is big-endian byte-encoded int."""
 
-        self.ap_ssid: BleStatus[str] = BleStatus(
-            communicator, StatusId.AP_SSID, GreedyString(encoding="utf-8")
-        )
+        self.ap_ssid: BleStatus[str] = BleStatus(communicator, StatusId.AP_SSID, GreedyString(encoding="utf-8"))
         """Camera's WIFI SSID. On BLE connection, value is big-endian byte-encoded int."""
 
-        self.app_count: BleStatus[int] = BleStatus(
-            communicator, StatusId.APP_COUNT, Int8ub
-        )
+        self.app_count: BleStatus[int] = BleStatus(communicator, StatusId.APP_COUNT, Int8ub)
         """The number of wireless devices connected to the camera."""
 
-        self.preview_enabled: BleStatus[bool] = BleStatus(
-            communicator, StatusId.PREVIEW_ENABLED, Flag
-        )
+        self.preview_enabled: BleStatus[bool] = BleStatus(communicator, StatusId.PREVIEW_ENABLED, Flag)
         """Is preview stream enabled?"""
 
-        self.sd_status: BleStatus[Params.SDStatus] = BleStatus(
-            communicator, StatusId.SD_STATUS, Params.SDStatus
-        )
+        self.sd_status: BleStatus[Params.SDStatus] = BleStatus(communicator, StatusId.SD_STATUS, Params.SDStatus)
         """Primary Storage Status."""
 
-        self.photos_rem: BleStatus[int] = BleStatus(
-            communicator, StatusId.PHOTOS_REM, Int32ub
-        )
+        self.photos_rem: BleStatus[int] = BleStatus(communicator, StatusId.PHOTOS_REM, Int32ub)
         """How many photos can be taken before sdcard is full?"""
 
-        self.video_rem: BleStatus[int] = BleStatus(
-            communicator, StatusId.VIDEO_REM, Int32ub
-        )
+        self.video_rem: BleStatus[int] = BleStatus(communicator, StatusId.VIDEO_REM, Int32ub)
         """How many minutes of video can be captured with current settings before sdcard is full?"""
 
-        self.num_group_photo: BleStatus[int] = BleStatus(
-            communicator, StatusId.NUM_GROUP_PHOTO, Int32ub
-        )
+        self.num_group_photo: BleStatus[int] = BleStatus(communicator, StatusId.NUM_GROUP_PHOTO, Int32ub)
         """How many group photos can be taken with current settings before sdcard is full?"""
 
-        self.num_group_video: BleStatus[int] = BleStatus(
-            communicator, StatusId.NUM_GROUP_VIDEO, Int32ub
-        )
+        self.num_group_video: BleStatus[int] = BleStatus(communicator, StatusId.NUM_GROUP_VIDEO, Int32ub)
         """Total number of group videos on sdcard."""
 
-        self.num_total_photo: BleStatus[int] = BleStatus(
-            communicator, StatusId.NUM_TOTAL_PHOTO, Int32ub
-        )
+        self.num_total_photo: BleStatus[int] = BleStatus(communicator, StatusId.NUM_TOTAL_PHOTO, Int32ub)
         """Total number of photos on sdcard."""
 
-        self.num_total_video: BleStatus[int] = BleStatus(
-            communicator, StatusId.NUM_TOTAL_VIDEO, Int32ub
-        )
+        self.num_total_video: BleStatus[int] = BleStatus(communicator, StatusId.NUM_TOTAL_VIDEO, Int32ub)
         """Total number of videos on sdcard."""
 
         self.deprecated_40: BleStatus[Any] = BleStatus(
@@ -1373,64 +1225,40 @@ class BleStatuses(BleMessages[BleStatus.BleStatusMessageBase]):
         )
         """This status is deprecated."""
 
-        self.ota_stat: BleStatus[Params.OTAStatus] = BleStatus(
-            communicator, StatusId.OTA_STAT, Params.OTAStatus
-        )
+        self.ota_stat: BleStatus[Params.OTAStatus] = BleStatus(communicator, StatusId.OTA_STAT, Params.OTAStatus)
         """The current status of Over The Air (OTA) update."""
 
-        self.download_cancel_pend: BleStatus[bool] = BleStatus(
-            communicator, StatusId.DOWNLOAD_CANCEL_PEND, Flag
-        )
+        self.download_cancel_pend: BleStatus[bool] = BleStatus(communicator, StatusId.DOWNLOAD_CANCEL_PEND, Flag)
         """Is download firmware update cancel request pending?"""
 
-        self.mode_group: BleStatus[int] = BleStatus(
-            communicator, StatusId.MODE_GROUP, Int8ub
-        )
+        self.mode_group: BleStatus[int] = BleStatus(communicator, StatusId.MODE_GROUP, Int8ub)
         """Current mode group (deprecated in HERO8)."""
 
-        self.locate_active: BleStatus[bool] = BleStatus(
-            communicator, StatusId.LOCATE_ACTIVE, Flag
-        )
+        self.locate_active: BleStatus[bool] = BleStatus(communicator, StatusId.LOCATE_ACTIVE, Flag)
         """Is locate camera feature active?"""
 
-        self.multi_count_down: BleStatus[int] = BleStatus(
-            communicator, StatusId.MULTI_COUNT_DOWN, Int32ub
-        )
+        self.multi_count_down: BleStatus[int] = BleStatus(communicator, StatusId.MULTI_COUNT_DOWN, Int32ub)
         """The current timelapse interval countdown value (e.g. 5...4...3...2...1...)."""
 
-        self.space_rem: BleStatus[int] = BleStatus(
-            communicator, StatusId.SPACE_REM, Int64ub
-        )
+        self.space_rem: BleStatus[int] = BleStatus(communicator, StatusId.SPACE_REM, Int64ub)
         """Remaining space on the sdcard in Kilobytes."""
 
-        self.streaming_supp: BleStatus[bool] = BleStatus(
-            communicator, StatusId.STREAMING_SUPP, Flag
-        )
+        self.streaming_supp: BleStatus[bool] = BleStatus(communicator, StatusId.STREAMING_SUPP, Flag)
         """Is streaming supports in current recording/flatmode/secondary-stream?"""
 
-        self.wifi_bars: BleStatus[int] = BleStatus(
-            communicator, StatusId.WIFI_BARS, Int8ub
-        )
+        self.wifi_bars: BleStatus[int] = BleStatus(communicator, StatusId.WIFI_BARS, Int8ub)
         """Wifi signal strength in bars."""
 
-        self.current_time_ms: BleStatus[int] = BleStatus(
-            communicator, StatusId.CURRENT_TIME_MS, Int32ub
-        )
+        self.current_time_ms: BleStatus[int] = BleStatus(communicator, StatusId.CURRENT_TIME_MS, Int32ub)
         """System time in milliseconds since system was booted."""
 
-        self.num_hilights: BleStatus[int] = BleStatus(
-            communicator, StatusId.NUM_HILIGHTS, Int8ub
-        )
+        self.num_hilights: BleStatus[int] = BleStatus(communicator, StatusId.NUM_HILIGHTS, Int8ub)
         """The number of hilights in encoding video (set to 0 when encoding stops)."""
 
-        self.last_hilight: BleStatus[int] = BleStatus(
-            communicator, StatusId.LAST_HILIGHT, Int32ub
-        )
+        self.last_hilight: BleStatus[int] = BleStatus(communicator, StatusId.LAST_HILIGHT, Int32ub)
         """Time since boot (msec) of most recent hilight in encoding video (set to 0 when encoding stops)."""
 
-        self.next_poll: BleStatus[int] = BleStatus(
-            communicator, StatusId.NEXT_POLL, Int32ub
-        )
+        self.next_poll: BleStatus[int] = BleStatus(communicator, StatusId.NEXT_POLL, Int32ub)
         """The min time between camera status updates (msec). Do not poll for status more often than this."""
 
         self.analytics_rdy: BleStatus[Params.AnalyticsState] = BleStatus(
@@ -1438,19 +1266,13 @@ class BleStatuses(BleMessages[BleStatus.BleStatusMessageBase]):
         )
         """The current state of camera analytics."""
 
-        self.analytics_size: BleStatus[int] = BleStatus(
-            communicator, StatusId.ANALYTICS_SIZE, Int32ub
-        )
+        self.analytics_size: BleStatus[int] = BleStatus(communicator, StatusId.ANALYTICS_SIZE, Int32ub)
         """The size (units??) of the analytics file."""
 
-        self.in_context_menu: BleStatus[bool] = BleStatus(
-            communicator, StatusId.IN_CONTEXT_MENU, Flag
-        )
+        self.in_context_menu: BleStatus[bool] = BleStatus(communicator, StatusId.IN_CONTEXT_MENU, Flag)
         """Is the camera currently in a contextual menu (e.g. Preferences)?"""
 
-        self.timelapse_rem: BleStatus[int] = BleStatus(
-            communicator, StatusId.TIMELAPSE_REM, Int32ub
-        )
+        self.timelapse_rem: BleStatus[int] = BleStatus(communicator, StatusId.TIMELAPSE_REM, Int32ub)
         """How many min of Timelapse video can be captured with current settings before sdcard is full?"""
 
         self.exposure_type: BleStatus[Params.ExposureMode] = BleStatus(
@@ -1458,29 +1280,19 @@ class BleStatuses(BleMessages[BleStatus.BleStatusMessageBase]):
         )
         """Liveview Exposure Select Mode."""
 
-        self.exposure_x: BleStatus[int] = BleStatus(
-            communicator, StatusId.EXPOSURE_X, Int8ub
-        )
+        self.exposure_x: BleStatus[int] = BleStatus(communicator, StatusId.EXPOSURE_X, Int8ub)
         """Liveview Exposure Select for y-coordinate (percent)."""
 
-        self.exposure_y: BleStatus[int] = BleStatus(
-            communicator, StatusId.EXPOSURE_Y, Int8ub
-        )
+        self.exposure_y: BleStatus[int] = BleStatus(communicator, StatusId.EXPOSURE_Y, Int8ub)
         """Liveview Exposure Select for y-coordinate (percent)."""
 
-        self.gps_stat: BleStatus[bool] = BleStatus(
-            communicator, StatusId.GPS_STAT, Flag
-        )
+        self.gps_stat: BleStatus[bool] = BleStatus(communicator, StatusId.GPS_STAT, Flag)
         """Does the camera currently have a GPS lock?"""
 
-        self.ap_state: BleStatus[bool] = BleStatus(
-            communicator, StatusId.AP_STATE, Flag
-        )
+        self.ap_state: BleStatus[bool] = BleStatus(communicator, StatusId.AP_STATE, Flag)
         """Is the Wifi radio enabled?"""
 
-        self.int_batt_per: BleStatus[int] = BleStatus(
-            communicator, StatusId.INT_BATT_PER, Int8ub
-        )
+        self.int_batt_per: BleStatus[int] = BleStatus(communicator, StatusId.INT_BATT_PER, Int8ub)
         """Internal battery level (percent)."""
 
         self.acc_mic_stat: BleStatus[Params.ExposureMode] = BleStatus(
@@ -1488,9 +1300,7 @@ class BleStatuses(BleMessages[BleStatus.BleStatusMessageBase]):
         )
         """Microphone Accessory status."""
 
-        self.digital_zoom: BleStatus[int] = BleStatus(
-            communicator, StatusId.DIGITAL_ZOOM, Int8ub
-        )
+        self.digital_zoom: BleStatus[int] = BleStatus(communicator, StatusId.DIGITAL_ZOOM, Int8ub)
         """	Digital Zoom level (percent)."""
 
         self.wireless_band: BleStatus[Params.WifiBand] = BleStatus(
@@ -1498,44 +1308,28 @@ class BleStatuses(BleMessages[BleStatus.BleStatusMessageBase]):
         )
         """Wireless Band."""
 
-        self.dig_zoom_active: BleStatus[bool] = BleStatus(
-            communicator, StatusId.DIG_ZOOM_ACTIVE, Flag
-        )
+        self.dig_zoom_active: BleStatus[bool] = BleStatus(communicator, StatusId.DIG_ZOOM_ACTIVE, Flag)
         """Is Digital Zoom feature available?"""
 
-        self.mobile_video: BleStatus[bool] = BleStatus(
-            communicator, StatusId.MOBILE_VIDEO, Flag
-        )
+        self.mobile_video: BleStatus[bool] = BleStatus(communicator, StatusId.MOBILE_VIDEO, Flag)
         """Are current video settings mobile friendly? (related to video compression and frame rate)."""
 
-        self.first_time: BleStatus[bool] = BleStatus(
-            communicator, StatusId.FIRST_TIME, Flag
-        )
+        self.first_time: BleStatus[bool] = BleStatus(communicator, StatusId.FIRST_TIME, Flag)
         """Is the camera currently in First Time Use (FTU) UI flow?"""
 
-        self.sec_sd_stat: BleStatus[Params.SDStatus] = BleStatus(
-            communicator, StatusId.SEC_SD_STAT, Params.SDStatus
-        )
+        self.sec_sd_stat: BleStatus[Params.SDStatus] = BleStatus(communicator, StatusId.SEC_SD_STAT, Params.SDStatus)
         """Secondary Storage Status (exclusive to Superbank)."""
 
-        self.band_5ghz_avail: BleStatus[bool] = BleStatus(
-            communicator, StatusId.BAND_5GHZ_AVAIL, Flag
-        )
+        self.band_5ghz_avail: BleStatus[bool] = BleStatus(communicator, StatusId.BAND_5GHZ_AVAIL, Flag)
         """Is 5GHz wireless band available?"""
 
-        self.system_ready: BleStatus[bool] = BleStatus(
-            communicator, StatusId.SYSTEM_READY, Flag
-        )
+        self.system_ready: BleStatus[bool] = BleStatus(communicator, StatusId.SYSTEM_READY, Flag)
         """Is the system ready to accept messages?"""
 
-        self.batt_ok_ota: BleStatus[bool] = BleStatus(
-            communicator, StatusId.BATT_OK_OTA, Flag
-        )
+        self.batt_ok_ota: BleStatus[bool] = BleStatus(communicator, StatusId.BATT_OK_OTA, Flag)
         """Is the internal battery charged sufficiently to start Over The Air (OTA) update?"""
 
-        self.video_low_temp: BleStatus[bool] = BleStatus(
-            communicator, StatusId.VIDEO_LOW_TEMP, Flag
-        )
+        self.video_low_temp: BleStatus[bool] = BleStatus(communicator, StatusId.VIDEO_LOW_TEMP, Flag)
         """Is the camera getting too cold to continue recording?"""
 
         self.orientation: BleStatus[Params.Orientation] = BleStatus(
@@ -1548,19 +1342,13 @@ class BleStatuses(BleMessages[BleStatus.BleStatusMessageBase]):
         )
         """This status is deprecated."""
 
-        self.zoom_encoding: BleStatus[bool] = BleStatus(
-            communicator, StatusId.ZOOM_ENCODING, Flag
-        )
+        self.zoom_encoding: BleStatus[bool] = BleStatus(communicator, StatusId.ZOOM_ENCODING, Flag)
         """Is this camera capable of zooming while encoding (static value based on model, not settings)?"""
 
-        self.flatmode_id: BleStatus[Params.Flatmode] = BleStatus(
-            communicator, StatusId.FLATMODE_ID, Params.Flatmode
-        )
+        self.flatmode_id: BleStatus[Params.Flatmode] = BleStatus(communicator, StatusId.FLATMODE_ID, Params.Flatmode)
         """Current flatmode ID."""
 
-        self.logs_ready: BleStatus[bool] = BleStatus(
-            communicator, StatusId.LOGS_READY, Flag
-        )
+        self.logs_ready: BleStatus[bool] = BleStatus(communicator, StatusId.LOGS_READY, Flag)
         """	Are system logs ready to be downloaded?"""
 
         self.deprecated_92: BleStatus[Any] = BleStatus(
@@ -1568,49 +1356,31 @@ class BleStatuses(BleMessages[BleStatus.BleStatusMessageBase]):
         )
         """This status is deprecated."""
 
-        self.video_presets: BleStatus[int] = BleStatus(
-            communicator, StatusId.VIDEO_PRESETS, Int32ub
-        )
+        self.video_presets: BleStatus[int] = BleStatus(communicator, StatusId.VIDEO_PRESETS, Int32ub)
         """Current Video Preset (ID)."""
 
-        self.photo_presets: BleStatus[int] = BleStatus(
-            communicator, StatusId.PHOTO_PRESETS, Int32ub
-        )
+        self.photo_presets: BleStatus[int] = BleStatus(communicator, StatusId.PHOTO_PRESETS, Int32ub)
         """Current Photo Preset (ID)."""
 
-        self.timelapse_presets: BleStatus[int] = BleStatus(
-            communicator, StatusId.TIMELAPSE_PRESETS, Int32ub
-        )
+        self.timelapse_presets: BleStatus[int] = BleStatus(communicator, StatusId.TIMELAPSE_PRESETS, Int32ub)
         """	Current Timelapse Preset (ID)."""
 
-        self.presets_group: BleStatus[int] = BleStatus(
-            communicator, StatusId.PRESETS_GROUP, Int32ub
-        )
+        self.presets_group: BleStatus[int] = BleStatus(communicator, StatusId.PRESETS_GROUP, Int32ub)
         """Current Preset Group (ID)."""
 
-        self.active_preset: BleStatus[int] = BleStatus(
-            communicator, StatusId.ACTIVE_PRESET, Int32ub
-        )
+        self.active_preset: BleStatus[int] = BleStatus(communicator, StatusId.ACTIVE_PRESET, Int32ub)
         """Currently Preset (ID)."""
 
-        self.preset_modified: BleStatus[int] = BleStatus(
-            communicator, StatusId.PRESET_MODIFIED, Int32ub
-        )
+        self.preset_modified: BleStatus[int] = BleStatus(communicator, StatusId.PRESET_MODIFIED, Int32ub)
         """Preset Modified Status, which contains an event ID and a preset (group) ID."""
 
-        self.live_burst_rem: BleStatus[int] = BleStatus(
-            communicator, StatusId.LIVE_BURST_REM, Int32ub
-        )
+        self.live_burst_rem: BleStatus[int] = BleStatus(communicator, StatusId.LIVE_BURST_REM, Int32ub)
         """How many Live Bursts can be captured before sdcard is full?"""
 
-        self.live_burst_total: BleStatus[int] = BleStatus(
-            communicator, StatusId.LIVE_BURST_TOTAL, Int32ub
-        )
+        self.live_burst_total: BleStatus[int] = BleStatus(communicator, StatusId.LIVE_BURST_TOTAL, Int32ub)
         """Total number of Live Bursts on sdcard."""
 
-        self.capt_delay_active: BleStatus[bool] = BleStatus(
-            communicator, StatusId.CAPT_DELAY_ACTIVE, Flag
-        )
+        self.capt_delay_active: BleStatus[bool] = BleStatus(communicator, StatusId.CAPT_DELAY_ACTIVE, Flag)
         """Is Capture Delay currently active (i.e. counting down)?"""
 
         self.media_mod_mic_stat: BleStatus[Params.MediaModMicStatus] = BleStatus(
@@ -1623,9 +1393,7 @@ class BleStatuses(BleMessages[BleStatus.BleStatusMessageBase]):
         )
         """Time Warp Speed."""
 
-        self.linux_core_active: BleStatus[bool] = BleStatus(
-            communicator, StatusId.LINUX_CORE_ACTIVE, Flag
-        )
+        self.linux_core_active: BleStatus[bool] = BleStatus(communicator, StatusId.LINUX_CORE_ACTIVE, Flag)
         """Is the system's Linux core active?"""
 
         self.camera_lens_type: BleStatus[Params.MaxLensMode] = BleStatus(
@@ -1633,24 +1401,16 @@ class BleStatuses(BleMessages[BleStatus.BleStatusMessageBase]):
         )
         """Camera lens type (reflects changes to setting 162)."""
 
-        self.video_hindsight: BleStatus[bool] = BleStatus(
-            communicator, StatusId.VIDEO_HINDSIGHT, Flag
-        )
+        self.video_hindsight: BleStatus[bool] = BleStatus(communicator, StatusId.VIDEO_HINDSIGHT, Flag)
         """Is Video Hindsight Capture Active?"""
 
-        self.scheduled_preset: BleStatus[int] = BleStatus(
-            communicator, StatusId.SCHEDULED_PRESET, Int32ub
-        )
+        self.scheduled_preset: BleStatus[int] = BleStatus(communicator, StatusId.SCHEDULED_PRESET, Int32ub)
         """Scheduled Capture Preset ID."""
 
-        self.scheduled_capture: BleStatus[bool] = BleStatus(
-            communicator, StatusId.SCHEDULED_CAPTURE, Flag
-        )
+        self.scheduled_capture: BleStatus[bool] = BleStatus(communicator, StatusId.SCHEDULED_CAPTURE, Flag)
         """Is Scheduled Capture set?"""
 
-        self.creating_preset: BleStatus[bool] = BleStatus(
-            communicator, StatusId.CREATING_PRESET, Flag
-        )
+        self.creating_preset: BleStatus[bool] = BleStatus(communicator, StatusId.CREATING_PRESET, Flag)
         """Is the camera in the process of creating a custom preset?"""
 
         self.media_mod_stat: BleStatus[Params.MediaModStatus] = BleStatus(
@@ -1658,19 +1418,13 @@ class BleStatuses(BleMessages[BleStatus.BleStatusMessageBase]):
         )
         """Media Mode Status (bitmasked)."""
 
-        self.turbo_mode: BleStatus[bool] = BleStatus(
-            communicator, StatusId.TURBO_MODE, Flag
-        )
+        self.turbo_mode: BleStatus[bool] = BleStatus(communicator, StatusId.TURBO_MODE, Flag)
         """Is Turbo Transfer active?"""
 
-        self.sd_rating_check_error: BleStatus[bool] = BleStatus(
-            communicator, StatusId.SD_RATING_CHECK_ERROR, Flag
-        )
+        self.sd_rating_check_error: BleStatus[bool] = BleStatus(communicator, StatusId.SD_RATING_CHECK_ERROR, Flag)
         """Does sdcard meet specified minimum write speed?"""
 
-        self.sd_write_speed_error: BleStatus[int] = BleStatus(
-            communicator, StatusId.SD_WRITE_SPEED_ERROR, Int8ub
-        )
+        self.sd_write_speed_error: BleStatus[int] = BleStatus(communicator, StatusId.SD_WRITE_SPEED_ERROR, Int8ub)
         """Number of sdcard write speed errors since device booted"""
 
         self.camera_control: BleStatus[Params.CameraControl] = BleStatus(
@@ -1678,19 +1432,13 @@ class BleStatuses(BleMessages[BleStatus.BleStatusMessageBase]):
         )
         """Camera control status ID"""
 
-        self.usb_connected: BleStatus[bool] = BleStatus(
-            communicator, StatusId.USB_CONNECTED, Flag
-        )
+        self.usb_connected: BleStatus[bool] = BleStatus(communicator, StatusId.USB_CONNECTED, Flag)
         """Is the camera connected to a PC via USB?"""
 
-        self.control_allowed_over_usb: BleStatus[bool] = BleStatus(
-            communicator, StatusId.CONTROL_OVER_USB, Flag
-        )
+        self.control_allowed_over_usb: BleStatus[bool] = BleStatus(communicator, StatusId.CONTROL_OVER_USB, Flag)
         """Is control allowed over USB?"""
 
-        self.total_sd_space_kb: BleStatus[int] = BleStatus(
-            communicator, StatusId.TOTAL_SD_SPACE_KB, Int32ub
-        )
+        self.total_sd_space_kb: BleStatus[int] = BleStatus(communicator, StatusId.TOTAL_SD_SPACE_KB, Int32ub)
         """Total space taken up on the SD card in kilobytes"""
 
         super().__init__(communicator)

@@ -55,9 +55,7 @@ def map_keys(obj: Any, key: str, func: Callable[[Any], Any]) -> None:
         pass
 
 
-def scrub(
-    obj: Any, bad_keys: list | None = None, bad_values: list | None = None
-) -> None:
+def scrub(obj: Any, bad_keys: list | None = None, bad_values: list | None = None) -> None:
     """Recursively scrub a collection (dict / list) of bad keys and / or bad values
 
     Args:
@@ -93,9 +91,7 @@ def scrub(
     recurse(obj)
 
 
-def pretty_print(
-    obj: Any, stringify_all: bool = True, should_quote: bool = True
-) -> str:
+def pretty_print(obj: Any, stringify_all: bool = True, should_quote: bool = True) -> str:
     """Recursively iterate through object and turn elements into strings
 
     Args:
@@ -208,18 +204,12 @@ def cmd(command: str) -> str:
     """
     # We don't want password showing in the log
     if "sudo" in command:
-        logged_command = (
-            command[: command.find('"') + 1]
-            + "********"
-            + command[command.find(" | sudo") - 1 :]
-        )
+        logged_command = command[: command.find('"') + 1] + "********" + command[command.find(" | sudo") - 1 :]
     else:
         logged_command = command
     util_logger.debug(f"Send cmd --> {logged_command}")
     response = (
-        subprocess.Popen(
-            command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-        )  # type: ignore
+        subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)  # type: ignore
         .stdout.read()
         .decode(errors="ignore")
     )
@@ -270,12 +260,7 @@ def add_cli_args_and_parse(
         argparse.ArgumentParser: modified argument parser
     """
     # Common args
-    parser.add_argument(
-        "--log",
-        type=Path,
-        help="Location to store detailed log",
-        default="gopro_demo.log",
-    )
+    parser.add_argument("--log", type=Path, help="Location to store detailed log", default="gopro_demo.log")
 
     if bluetooth:
         parser.add_argument(
@@ -316,9 +301,7 @@ async def ainput(string: str, printer: Callable = sys.stdout.write) -> str:
     Returns:
         str: Input read from console
     """
-    await asyncio.get_event_loop().run_in_executor(
-        None, lambda s=string: printer(s + " ")
-    )  # type: ignore
+    await asyncio.get_event_loop().run_in_executor(None, lambda s=string: printer(s + " "))  # type: ignore
     return await asyncio.get_event_loop().run_in_executor(None, sys.stdin.readline)
 
 

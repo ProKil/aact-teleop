@@ -78,13 +78,7 @@ class GoProEnumMeta(EnumMeta):
         Returns:
             Iterator[T]: enum iterator
         """
-        return iter(
-            [
-                x[1]
-                for x in cls._member_map_.items()
-                if x[0] not in GoProEnumMeta._iter_skip_names
-            ]
-        )  # type: ignore
+        return iter([x[1] for x in cls._member_map_.items() if x[0] not in GoProEnumMeta._iter_skip_names])  # type: ignore
 
 
 class GoProIntEnum(IntEnum, metaclass=GoProEnumMeta):
@@ -101,9 +95,7 @@ class GoProIntEnum(IntEnum, metaclass=GoProEnumMeta):
                 return self.name == other
             if isinstance(other, Enum):
                 return self.value == other.value
-            raise TypeError(
-                f"Unexpected case: proto enum can only be str or int, not {type(other)}"
-            )
+            raise TypeError(f"Unexpected case: proto enum can only be str or int, not {type(other)}")
         return super(IntEnum, self).__eq__(other)
 
     def __hash__(self) -> Any:
@@ -127,9 +119,7 @@ class GoProEnum(Enum, metaclass=GoProEnumMeta):
                 return self.name == other
             if isinstance(other, Enum):
                 return self.value == other.value
-            raise TypeError(
-                f"Unexpected case: proto enum can only be str or int, not {type(other)}"
-            )
+            raise TypeError(f"Unexpected case: proto enum can only be str or int, not {type(other)}")
         return super().__eq__(other)
 
     def __hash__(self) -> Any:
