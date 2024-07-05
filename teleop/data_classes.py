@@ -34,7 +34,7 @@ class TargetPosition(BaseModel):
         default=0, description="The wrist roll position."
     )
     stretch_gripper: Annotated[
-        float, AfterValidator(lambda x: min(max(x, -90), 90))
+        float, AfterValidator(lambda x: min(max(x, -50), 90))
     ] = Field(default=0, description="The stretch gripper position.")
     head_tilt: Annotated[float, AfterValidator(lambda x: min(max(x, -1.57), 0.27))] = (
         Field(default=0, description="The head tilt position.")

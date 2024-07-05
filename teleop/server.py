@@ -1,20 +1,17 @@
 import asyncio
-import json
 import logging
 import math
 import sys
 import time
-from typing import Any, AsyncGenerator, Callable, Dict, Generator, List, Tuple, TypeVar
+from typing import Any, AsyncGenerator, Callable, Dict, List, Tuple, TypeVar
 import cv2
-from fastapi.responses import StreamingResponse
 from typing_extensions import Annotated
 import numpy as np
-import uvicorn
-from stretch_body import robot as rb  # type: ignore
-from stretch_body.hello_utils import ThreadServiceExit  # type: ignore
+from stretch_body import robot as rb
+from stretch_body.hello_utils import ThreadServiceExit
 from pydantic import BaseModel, Field, AfterValidator
 
-from fastapi import BackgroundTasks, FastAPI, WebSocket
+from fastapi import FastAPI
 from contextlib import asynccontextmanager
 import signal
 
@@ -49,8 +46,8 @@ signal.signal(signal.SIGINT, handle_exit)
 signal.signal(signal.SIGTERM, handle_exit)
 
 
-robot = None
-frame = None
+robot: rb.Robot | None = None
+frame: bytes | None = None
 video_feed_started = False
 
 
@@ -400,85 +397,86 @@ async def control_loop(robot: rb.Robot) -> None:
             handle_exit(0, 0)
 
 
-@app.get("/get_base_status")
-async def get_base_status() -> Any:
-    return robot.base.status  # type: ignore
+# @app.get("/get_base_status")
+# async def get_base_status() -> Any:
+#     return robot.base.status  # type: ignore
 
 
-@app.get("/get_end_of_arm_status")
-async def get_end_of_arm_status() -> Any:
-    return robot.end_of_arm.status  # type: ignore
+# @app.get("/get_end_of_arm_status")
+# async def get_end_of_arm_status() -> Any:
+#     return robot.end_of_arm.status  # type: ignore
 
 
-@app.get("/get_arm_status")
-async def get_arm_status() -> Any:
-    return robot.arm.status  # type: ignore
+# @app.get("/get_arm_status")
+# async def get_arm_status() -> Any:
+#     return robot.arm.status  # type: ignore
 
 
-@app.get("/get_lift_status")
-async def get_lift_status() -> Any:
-    return robot.lift.status  # type: ignore
+# @app.get("/get_lift_status")
+# async def get_lift_status() -> Any:
+#     return robot.lift.status  # type: ignore
 
 
-@app.post("/start_control_loop")
-async def start_control_loop(background_tasks: BackgroundTasks) -> Dict[str, str]:
-    background_tasks.add_task(control_loop, robot)
-    return {"message": "Control loop started."}
+# @app.post("/start_control_loop")
+# async def start_control_loop(background_tasks: BackgroundTasks) -> Dict[str, str]:
+#     assert robot, "Robot is not initialized."
+#     background_tasks.add_task(control_loop, robot)
+#     return {"message": "Control loop started."}
 
 
-@app.post("/start_video_feed")
-async def start_video_feed(background_tasks: BackgroundTasks) -> Dict[str, str]:
-    background_tasks.add_task(update_video_feed)
-    return {"message": "Video feed started."}
+# @app.post("/start_video_feed")
+# async def start_video_feed(background_tasks: BackgroundTasks) -> Dict[str, str]:
+#     background_tasks.add_task(update_video_feed)
+#     return {"message": "Video feed started."}
 
 
-@app.websocket("/move_to_ws")
-async def move_to_ws(websocket: WebSocket) -> None:
-    await websocket.accept()
-    while True:
-        data = await websocket.receive_text()
-        global target_position
-        target_position = TargetPosition(**json.loads(data))
+# @app.websocket("/move_to_ws")
+# async def move_to_ws(websocket: WebSocket) -> None:
+#     await websocket.accept()
+#     while True:
+#         data = await websocket.receive_text()
+#         global target_position
+#         target_position = TargetPosition(**json.loads(data))
 
 
-async def receive_target_positition(websocket: WebSocket) -> None:
-    global target_position
-    while True:
-        data = await websocket.receive_text()
-        target_position = TargetPosition(**json.loads(data))
+# async def receive_target_positition(websocket: WebSocket) -> None:
+#     global target_position
+#     while True:
+#         data = await websocket.receive_text()
+#         target_position = TargetPosition(**json.loads(data))
 
 
-@app.websocket("/video_feed_ws")
-async def send_video_frame(websocket: WebSocket) -> None:
-    global frame
-    await websocket.accept()
-    while True:
-        if frame:
-            await websocket.send_bytes(frame)
-        else:
-            pass
-        await asyncio.sleep(1 / 30)
+# @app.websocket("/video_feed_ws")
+# async def send_video_frame(websocket: WebSocket) -> None:
+#     global frame
+#     await websocket.accept()
+#     while True:
+#         if frame:
+#             await websocket.send_bytes(frame)
+#         else:
+#             pass
+#         await asyncio.sleep(1 / 30)
 
 
-@app.get("/video")
-def video_feed() -> StreamingResponse:
-    global frame
+# @app.get("/video")
+# def video_feed() -> StreamingResponse:
+#     global frame
 
-    def generate() -> Generator[bytes, None, None]:
-        while True:
-            if frame:
-                yield (
-                    b"--frame\r\n"
-                    b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n\r\n"
-                )
-            else:
-                pass
-            time.sleep(1 / 30)
+#     def generate() -> Generator[bytes, None, None]:
+#         while True:
+#             if frame:
+#                 yield (
+#                     b"--frame\r\n"
+#                     b"Content-Type: image/jpeg\r\n\r\n" + frame + b"\r\n\r\n"
+#                 )
+#             else:
+#                 pass
+#             time.sleep(1 / 30)
 
-    return StreamingResponse(
-        generate(), media_type="multipart/x-mixed-replace; boundary=frame"
-    )
+#     return StreamingResponse(
+#         generate(), media_type="multipart/x-mixed-replace; boundary=frame"
+#     )
 
 
-def main() -> None:
-    uvicorn.run("teleop.server:app", host="0.0.0.0", port=8000, reload=False)
+# def main() -> None:
+#     uvicorn.run("teleop.server:app", host="0.0.0.0", port=8000, reload=False)
