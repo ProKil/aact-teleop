@@ -8,6 +8,7 @@ from __future__ import annotations
 from typing import Any, Callable, Coroutine, Union
 
 import construct
+from google.protobuf.message import Message as Protobuf  # pylint: disable=unused-import
 
 from open_gopro.constants import (
     ActionId,

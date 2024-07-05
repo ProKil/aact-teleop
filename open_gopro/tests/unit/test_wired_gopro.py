@@ -38,7 +38,8 @@ async def test_mdns_scan(monkeypatch):
         def get_service_info(self, *args, **kwargs):
             return MockServiceInfo()
 
-        def close(self): ...
+        def close(self):
+            ...
 
     class MockAsyncZeroConf:
         def __init__(self, *args, **kwargs) -> None:
@@ -47,19 +48,19 @@ async def test_mdns_scan(monkeypatch):
         async def __aenter__(self, *args, **kwargs):
             return self
 
-        async def __aexit__(self, *args, **kwargs): ...
+        async def __aexit__(self, *args, **kwargs):
+            ...
 
         async def async_get_service_info(*args, **kwargs):
             return MockServiceInfo()
 
     class MockServiceBrowser:
-        def __init__(
-            self, zc: MockZeroconf, service_name: str, listener: ZeroconfListener
-        ) -> None:
+        def __init__(self, zc: MockZeroconf, service_name: str, listener: ZeroconfListener) -> None:
             self.service_name = service_name
             listener.urls.put_nowait("result")
 
-        def cancel(self): ...
+        def cancel(self):
+            ...
 
     monkeypatch.setattr("zeroconf.Zeroconf", MockZeroconf)
     monkeypatch.setattr("zeroconf.asyncio.AsyncServiceBrowser", MockServiceBrowser)

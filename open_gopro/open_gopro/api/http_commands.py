@@ -61,9 +61,7 @@ class HttpCommands(HttpMessages[HttpMessage]):
             GoProResp[None]: command status
         """
 
-    @http_get_json_command(
-        endpoint="/gp/gpControl/command/storage/delete/group", arguments=["p"]
-    )
+    @http_get_json_command(endpoint="/gp/gpControl/command/storage/delete/group", arguments=["p"])
     async def delete_group(self, *, path: str) -> GoProResp[None]:
         """Delete all contents of a group. Should not be used on non-group files.
 
@@ -133,8 +131,7 @@ class HttpCommands(HttpMessages[HttpMessage]):
         """
 
     @http_get_json_command(
-        endpoint="gopro/camera/info",
-        parser=Parser(json_parser=JsonParsers.PydanticAdapter(CameraInfo)),
+        endpoint="gopro/camera/info", parser=Parser(json_parser=JsonParsers.PydanticAdapter(CameraInfo))
     )
     async def get_camera_info(self) -> GoProResp[CameraInfo]:
         """Get general information about the camera such as firmware version
@@ -191,9 +188,7 @@ class HttpCommands(HttpMessages[HttpMessage]):
 
     @http_get_json_command(
         endpoint="gopro/version",
-        parser=Parser(
-            json_parser=JsonParsers.LambdaParser(lambda data: f"{data['version']}")
-        ),
+        parser=Parser(json_parser=JsonParsers.LambdaParser(lambda data: f"{data['version']}")),
     )
     async def get_open_gopro_api_version(self) -> GoProResp[str]:
         """Get Open GoPro API version
@@ -226,9 +221,7 @@ class HttpCommands(HttpMessages[HttpMessage]):
         return {"id": preset}  # type: ignore
 
     @http_get_json_command(endpoint="gopro/camera/presets/set_group", arguments=["id"])
-    async def load_preset_group(
-        self, *, group: proto.EnumPresetGroup.ValueType
-    ) -> GoProResp[None]:
+    async def load_preset_group(self, *, group: proto.EnumPresetGroup.ValueType) -> GoProResp[None]:
         """Set the active preset group.
 
         The most recently used Preset in this group will be set.
@@ -242,14 +235,9 @@ class HttpCommands(HttpMessages[HttpMessage]):
         return {"id": group}  # type: ignore
 
     @http_get_json_command(
-        endpoint="gopro/camera/stream",
-        arguments=["port"],
-        components=["mode"],
-        identifier="Preview Stream",
+        endpoint="gopro/camera/stream", arguments=["port"], components=["mode"], identifier="Preview Stream"
     )
-    async def set_preview_stream(
-        self, *, mode: Params.Toggle, port: int | None = None
-    ) -> GoProResp[None]:
+    async def set_preview_stream(self, *, mode: Params.Toggle, port: int | None = None) -> GoProResp[None]:
         """Start or stop the preview stream
 
         Args:
@@ -259,10 +247,7 @@ class HttpCommands(HttpMessages[HttpMessage]):
         Returns:
             GoProResp: command status
         """
-        return {
-            "mode": "start" if mode is Params.Toggle.ENABLE else "stop",
-            "port": port,
-        }  # type: ignore
+        return {"mode": "start" if mode is Params.Toggle.ENABLE else "stop", "port": port}  # type: ignore
 
     @http_get_json_command(endpoint="gopro/camera/analytics/set_client_info")
     async def set_third_party_client_info(self) -> GoProResp[None]:
@@ -291,12 +276,8 @@ class HttpCommands(HttpMessages[HttpMessage]):
         """
         return {"mode": "start" if shutter is Params.Toggle.ENABLE else "stop"}  # type: ignore
 
-    @http_get_json_command(
-        endpoint="gopro/camera/control/set_ui_controller", arguments=["p"]
-    )
-    async def set_camera_control(
-        self, *, mode: Params.CameraControl
-    ) -> GoProResp[None]:
+    @http_get_json_command(endpoint="gopro/camera/control/set_ui_controller", arguments=["p"])
+    async def set_camera_control(self, *, mode: Params.CameraControl) -> GoProResp[None]:
         """Configure global behaviors by setting camera control (to i.e. Idle, External)
 
         Args:
@@ -307,10 +288,7 @@ class HttpCommands(HttpMessages[HttpMessage]):
         """
         return {"p": mode}  # type: ignore
 
-    @http_get_json_command(
-        endpoint="gopro/camera/set_date_time",
-        arguments=["date", "time", "tzone", "dst"],
-    )
+    @http_get_json_command(endpoint="gopro/camera/set_date_time", arguments=["date", "time", "tzone", "dst"])
     async def set_date_time(
         self,
         *,
@@ -487,9 +465,7 @@ class HttpCommands(HttpMessages[HttpMessage]):
         return {"p": control}  # type: ignore
 
     @http_get_binary_command(endpoint="gopro/media/gpmf", arguments=["path"])
-    async def get_gpmf_data(
-        self, *, camera_file: str, local_file: Path | None = None
-    ) -> GoProResp[Path]:
+    async def get_gpmf_data(self, *, camera_file: str, local_file: Path | None = None) -> GoProResp[Path]:
         """Get GPMF data for a file.
 
         If local_file is none, the output location will be the same name as the camera_file.
@@ -503,9 +479,7 @@ class HttpCommands(HttpMessages[HttpMessage]):
         """
 
     @http_get_binary_command(endpoint="gopro/media/screennail", arguments=["path"])
-    async def get_screennail__call__(
-        self, *, camera_file: str, local_file: Path | None = None
-    ) -> GoProResp[Path]:
+    async def get_screennail__call__(self, *, camera_file: str, local_file: Path | None = None) -> GoProResp[Path]:
         """Get screennail for a file.
 
         If local_file is none, the output location will be the same name as the camera_file.
@@ -519,9 +493,7 @@ class HttpCommands(HttpMessages[HttpMessage]):
         """
 
     @http_get_binary_command(endpoint="gopro/media/thumbnail", arguments=["path"])
-    async def get_thumbnail(
-        self, *, camera_file: str, local_file: Path | None = None
-    ) -> GoProResp[Path]:
+    async def get_thumbnail(self, *, camera_file: str, local_file: Path | None = None) -> GoProResp[Path]:
         """Get thumbnail for a file.
 
         If local_file is none, the output location will be the same name as the camera_file.
@@ -535,9 +507,7 @@ class HttpCommands(HttpMessages[HttpMessage]):
         """
 
     @http_get_binary_command(endpoint="gopro/media/telemetry", arguments=["path"])
-    async def get_telemetry(
-        self, *, camera_file: str, local_file: Path | None = None
-    ) -> GoProResp[Path]:
+    async def get_telemetry(self, *, camera_file: str, local_file: Path | None = None) -> GoProResp[Path]:
         """Download the telemetry data for a camera file and store in a local file.
 
         If local_file is none, the output location will be the same name as the camera_file.
@@ -550,12 +520,8 @@ class HttpCommands(HttpMessages[HttpMessage]):
             Path: Path to local_file that output was written to
         """
 
-    @http_get_binary_command(
-        endpoint="videos/DCIM", components=["path"], identifier="Download File"
-    )
-    async def download_file(
-        self, *, camera_file: str, local_file: Path | None = None
-    ) -> GoProResp[Path]:
+    @http_get_binary_command(endpoint="videos/DCIM", components=["path"], identifier="Download File")
+    async def download_file(self, *, camera_file: str, local_file: Path | None = None) -> GoProResp[Path]:
         """Download a video from the camera to a local file.
 
         If local_file is none, the output location will be the same name as the camera_file.
@@ -578,99 +544,91 @@ class HttpSettings(HttpMessages[HttpSetting]):
     """
 
     def __init__(self, communicator: GoProHttp):
-        self.resolution: HttpSetting[Params.Resolution] = HttpSetting[
-            Params.Resolution
-        ](communicator, SettingId.RESOLUTION)
+        self.resolution: HttpSetting[Params.Resolution] = HttpSetting[Params.Resolution](
+            communicator, SettingId.RESOLUTION
+        )
         """Resolution."""
 
-        self.fps: HttpSetting[Params.FPS] = HttpSetting[Params.FPS](
-            communicator, SettingId.FPS
-        )
+        self.fps: HttpSetting[Params.FPS] = HttpSetting[Params.FPS](communicator, SettingId.FPS)
         """Frames per second."""
 
-        self.auto_off: HttpSetting[Params.AutoOff] = HttpSetting[Params.AutoOff](
-            communicator, SettingId.AUTO_OFF
-        )
+        self.auto_off: HttpSetting[Params.AutoOff] = HttpSetting[Params.AutoOff](communicator, SettingId.AUTO_OFF)
         """Set the auto off time."""
 
-        self.video_field_of_view: HttpSetting[Params.VideoFOV] = HttpSetting[
-            Params.VideoFOV
-        ](communicator, SettingId.VIDEO_FOV)
+        self.video_field_of_view: HttpSetting[Params.VideoFOV] = HttpSetting[Params.VideoFOV](
+            communicator, SettingId.VIDEO_FOV
+        )
         """Video FOV."""
 
-        self.photo_field_of_view: HttpSetting[Params.PhotoFOV] = HttpSetting[
-            Params.PhotoFOV
-        ](communicator, SettingId.PHOTO_FOV)
+        self.photo_field_of_view: HttpSetting[Params.PhotoFOV] = HttpSetting[Params.PhotoFOV](
+            communicator, SettingId.PHOTO_FOV
+        )
         """Photo FOV."""
 
-        self.multi_shot_field_of_view: HttpSetting[Params.MultishotFOV] = HttpSetting[
-            Params.MultishotFOV
-        ](communicator, SettingId.MULTI_SHOT_FOV)
+        self.multi_shot_field_of_view: HttpSetting[Params.MultishotFOV] = HttpSetting[Params.MultishotFOV](
+            communicator, SettingId.MULTI_SHOT_FOV
+        )
         """Multi-shot FOV."""
 
-        self.max_lens_mode: HttpSetting[Params.MaxLensMode] = HttpSetting[
-            Params.MaxLensMode
-        ](communicator, SettingId.MAX_LENS_MOD)
+        self.max_lens_mode: HttpSetting[Params.MaxLensMode] = HttpSetting[Params.MaxLensMode](
+            communicator, SettingId.MAX_LENS_MOD
+        )
         """Enable / disable max lens mod."""
 
-        self.hypersmooth: HttpSetting[Params.HypersmoothMode] = HttpSetting[
-            Params.HypersmoothMode
-        ](communicator, SettingId.HYPERSMOOTH)
+        self.hypersmooth: HttpSetting[Params.HypersmoothMode] = HttpSetting[Params.HypersmoothMode](
+            communicator, SettingId.HYPERSMOOTH
+        )
         """Set / disable hypersmooth."""
 
-        self.video_performance_mode: HttpSetting[Params.PerformanceMode] = HttpSetting[
-            Params.PerformanceMode
-        ](communicator, SettingId.VIDEO_PERFORMANCE_MODE)
+        self.video_performance_mode: HttpSetting[Params.PerformanceMode] = HttpSetting[Params.PerformanceMode](
+            communicator, SettingId.VIDEO_PERFORMANCE_MODE
+        )
         """Video Performance Mode (extended battery, tripod, etc)."""
 
-        self.media_format: HttpSetting[Params.MediaFormat] = HttpSetting[
-            Params.MediaFormat
-        ](communicator, SettingId.MEDIA_FORMAT)
+        self.media_format: HttpSetting[Params.MediaFormat] = HttpSetting[Params.MediaFormat](
+            communicator, SettingId.MEDIA_FORMAT
+        )
         """Set the media format."""
 
-        self.anti_flicker: HttpSetting[Params.AntiFlicker] = HttpSetting[
-            Params.AntiFlicker
-        ](communicator, SettingId.ANTI_FLICKER)
+        self.anti_flicker: HttpSetting[Params.AntiFlicker] = HttpSetting[Params.AntiFlicker](
+            communicator, SettingId.ANTI_FLICKER
+        )
         """Anti Flicker frequency."""
 
-        self.camera_ux_mode: HttpSetting[Params.CameraUxMode] = HttpSetting[
-            Params.CameraUxMode
-        ](communicator, SettingId.CAMERA_UX_MODE)
+        self.camera_ux_mode: HttpSetting[Params.CameraUxMode] = HttpSetting[Params.CameraUxMode](
+            communicator, SettingId.CAMERA_UX_MODE
+        )
         """Camera controls configuration."""
 
-        self.video_easy_mode: HttpSetting[int] = HttpSetting[int](
-            communicator, SettingId.VIDEO_EASY_MODE
-        )
+        self.video_easy_mode: HttpSetting[int] = HttpSetting[int](communicator, SettingId.VIDEO_EASY_MODE)
         """Video easy mode speed."""
 
-        self.photo_easy_mode: HttpSetting[Params.PhotoEasyMode] = HttpSetting[
-            Params.PhotoEasyMode
-        ](communicator, SettingId.PHOTO_EASY_MODE)
+        self.photo_easy_mode: HttpSetting[Params.PhotoEasyMode] = HttpSetting[Params.PhotoEasyMode](
+            communicator, SettingId.PHOTO_EASY_MODE
+        )
         """Night Photo easy mode."""
 
-        self.wifi_band: HttpSetting[Params.WifiBand] = HttpSetting[Params.WifiBand](
-            communicator, SettingId.WIFI_BAND
-        )
+        self.wifi_band: HttpSetting[Params.WifiBand] = HttpSetting[Params.WifiBand](communicator, SettingId.WIFI_BAND)
         """Current WiFi band being used."""
 
-        self.star_trail_length: HttpSetting[Params.StarTrailLength] = HttpSetting[
-            Params.StarTrailLength
-        ](communicator, SettingId.STAR_TRAIL_LENGTH)
+        self.star_trail_length: HttpSetting[Params.StarTrailLength] = HttpSetting[Params.StarTrailLength](
+            communicator, SettingId.STAR_TRAIL_LENGTH
+        )
         """Multi shot star trail length."""
 
-        self.system_video_mode: HttpSetting[Params.SystemVideoMode] = HttpSetting[
-            Params.SystemVideoMode
-        ](communicator, SettingId.SYSTEM_VIDEO_MODE)
+        self.system_video_mode: HttpSetting[Params.SystemVideoMode] = HttpSetting[Params.SystemVideoMode](
+            communicator, SettingId.SYSTEM_VIDEO_MODE
+        )
         """System video mode."""
 
-        self.video_horizon_leveling: HttpSetting[Params.HorizonLeveling] = HttpSetting[
-            Params.HorizonLeveling
-        ](communicator, SettingId.VIDEO_HORIZON_LEVELING)
+        self.video_horizon_leveling: HttpSetting[Params.HorizonLeveling] = HttpSetting[Params.HorizonLeveling](
+            communicator, SettingId.VIDEO_HORIZON_LEVELING
+        )
         """Lock / unlock horizon leveling for video."""
 
-        self.photo_horizon_leveling: HttpSetting[Params.HorizonLeveling] = HttpSetting[
-            Params.HorizonLeveling
-        ](communicator, SettingId.PHOTO_HORIZON_LEVELING)
+        self.photo_horizon_leveling: HttpSetting[Params.HorizonLeveling] = HttpSetting[Params.HorizonLeveling](
+            communicator, SettingId.PHOTO_HORIZON_LEVELING
+        )
         """Lock / unlock horizon leveling for photo."""
 
         self.bit_rate: HttpSetting[Params.BitRate] = HttpSetting[Params.BitRate](
@@ -685,43 +643,33 @@ class HttpSettings(HttpMessages[HttpSetting]):
         )
         """System Video Bit depth."""
 
-        self.video_profile: HttpSetting[Params.VideoProfile] = HttpSetting[
-            Params.VideoProfile
-        ](
+        self.video_profile: HttpSetting[Params.VideoProfile] = HttpSetting[Params.VideoProfile](
             communicator,
             SettingId.VIDEO_PROFILE,
         )
         """Video Profile (hdr, etc.)"""
 
-        self.video_aspect_ratio: HttpSetting[Params.VideoAspectRatio] = HttpSetting[
-            Params.VideoAspectRatio
-        ](
+        self.video_aspect_ratio: HttpSetting[Params.VideoAspectRatio] = HttpSetting[Params.VideoAspectRatio](
             communicator,
             SettingId.VIDEO_ASPECT_RATIO,
         )
         """Video aspect ratio"""
 
-        self.video_easy_aspect_ratio: HttpSetting[Params.EasyAspectRatio] = HttpSetting[
-            Params.EasyAspectRatio
-        ](
+        self.video_easy_aspect_ratio: HttpSetting[Params.EasyAspectRatio] = HttpSetting[Params.EasyAspectRatio](
             communicator,
             SettingId.VIDEO_EASY_ASPECT_RATIO,
         )
         """Video easy aspect ratio"""
 
-        self.multi_shot_easy_aspect_ratio: HttpSetting[Params.EasyAspectRatio] = (
-            HttpSetting[Params.EasyAspectRatio](
-                communicator,
-                SettingId.MULTI_SHOT_EASY_ASPECT_RATIO,
-            )
+        self.multi_shot_easy_aspect_ratio: HttpSetting[Params.EasyAspectRatio] = HttpSetting[Params.EasyAspectRatio](
+            communicator,
+            SettingId.MULTI_SHOT_EASY_ASPECT_RATIO,
         )
         """Multi shot easy aspect ratio"""
 
-        self.multi_shot_nlv_aspect_ratio: HttpSetting[Params.EasyAspectRatio] = (
-            HttpSetting[Params.EasyAspectRatio](
-                communicator,
-                SettingId.MULTI_SHOT_NLV_ASPECT_RATIO,
-            )
+        self.multi_shot_nlv_aspect_ratio: HttpSetting[Params.EasyAspectRatio] = HttpSetting[Params.EasyAspectRatio](
+            communicator,
+            SettingId.MULTI_SHOT_NLV_ASPECT_RATIO,
         )
         """Multi shot NLV aspect ratio"""
 
@@ -731,17 +679,13 @@ class HttpSettings(HttpMessages[HttpSetting]):
         )
         """Video Mode (i.e. quality)"""
 
-        self.timelapse_mode: HttpSetting[Params.TimelapseMode] = HttpSetting[
-            Params.TimelapseMode
-        ](
+        self.timelapse_mode: HttpSetting[Params.TimelapseMode] = HttpSetting[Params.TimelapseMode](
             communicator,
             SettingId.TIMELAPSE_MODE,
         )
         """Timelapse Mode"""
 
-        self.maxlens_mod_type: HttpSetting[Params.MaxLensModType] = HttpSetting[
-            Params.MaxLensModType
-        ](
+        self.maxlens_mod_type: HttpSetting[Params.MaxLensModType] = HttpSetting[Params.MaxLensModType](
             communicator,
             SettingId.ADDON_MAX_LENS_MOD,
         )
@@ -771,17 +715,13 @@ class HttpSettings(HttpMessages[HttpSetting]):
         )
         """Hindsight time / disable"""
 
-        self.photo_interval: HttpSetting[Params.PhotoInterval] = HttpSetting[
-            Params.PhotoInterval
-        ](
+        self.photo_interval: HttpSetting[Params.PhotoInterval] = HttpSetting[Params.PhotoInterval](
             communicator,
             SettingId.PHOTO_INTERVAL,
         )
         """Interval between photo captures"""
 
-        self.photo_duration: HttpSetting[Params.PhotoDuration] = HttpSetting[
-            Params.PhotoDuration
-        ](
+        self.photo_duration: HttpSetting[Params.PhotoDuration] = HttpSetting[Params.PhotoDuration](
             communicator,
             SettingId.PHOTO_INTERVAL_DURATION,
         )

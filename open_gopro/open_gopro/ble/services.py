@@ -110,13 +110,9 @@ class BleUUID(uuid.UUID):
             elif bytes_le:
                 raise ValueError("byte_le not possible with 8-bit UUID")
             elif int:
-                int = uuid.UUID(
-                    hex=BLE_BASE_UUID.format(int.to_bytes(2, "big").hex())
-                ).int
+                int = uuid.UUID(hex=BLE_BASE_UUID.format(int.to_bytes(2, "big").hex())).int
 
-        object.__setattr__(
-            self, "name", name
-        )  # needed to work around immutability in base class
+        object.__setattr__(self, "name", name)  # needed to work around immutability in base class
         super().__init__(hex=hex, bytes=bytes, bytes_le=bytes_le, int=int)
 
     @property
@@ -126,11 +122,7 @@ class BleUUID(uuid.UUID):
         Returns:
             BleUUID.Format: format of UUID
         """
-        return (
-            BleUUID.Format.BIT_16
-            if len(self.hex) == BleUUID.Format.BIT_16
-            else BleUUID.Format.BIT_128
-        )
+        return BleUUID.Format.BIT_16 if len(self.hex) == BleUUID.Format.BIT_16 else BleUUID.Format.BIT_128
 
     def __str__(self) -> str:  # pylint: disable=missing-return-doc
         return self.name if self.name else self.hex
@@ -304,9 +296,7 @@ class Service:
     end_handle: int = 0xFFFF
     init_chars: InitVar[Optional[list[Characteristic]]] = None
 
-    def __post_init__(
-        self, init_characteristics: Optional[list[Characteristic]]
-    ) -> None:
+    def __post_init__(self, init_characteristics: Optional[list[Characteristic]]) -> None:
         self._characteristics: dict[BleUUID, Characteristic] = {}
         # Mypy should eventually support this: see https://github.com/python/mypy/issues/3004
         self.characteristics = init_characteristics or []  # type: ignore
@@ -371,9 +361,7 @@ class GattDB:
             return iter(self.values())
 
         def __len__(self) -> int:
-            return sum(
-                len(service.characteristics) for service in self._db.services.values()
-            )
+            return sum(len(service.characteristics) for service in self._db.services.values())
 
         @no_type_check
         def keys(self) -> Generator[BleUUID, None, None]:  # noqa: D102
@@ -496,27 +484,11 @@ class GattDB:
                 )
                 # For each characteristic in service
                 for char in service.characteristics.values():
-                    w.writerow(
-                        [
-                            char.descriptor_handle,
-                            SpecUuidNumber.CHAR_DECLARATION,
-                            "28:03",
-                            str(char.props),
-                            "",
-                        ]
-                    )
+                    w.writerow([char.descriptor_handle, SpecUuidNumber.CHAR_DECLARATION, "28:03", str(char.props), ""])
                     w.writerow([char.handle, char.name, char.uuid.hex, "", char.value])
                     # For each descriptor in characteristic
                     for descriptor in char.descriptors.values():
-                        w.writerow(
-                            [
-                                descriptor.handle,
-                                descriptor.name,
-                                descriptor.uuid.hex,
-                                "",
-                                descriptor.value,
-                            ]
-                        )
+                        w.writerow([descriptor.handle, descriptor.name, descriptor.uuid.hex, "", descriptor.value])
 
 
 class UUIDsMeta(type):
@@ -532,9 +504,7 @@ class UUIDsMeta(type):
         for db in [*[base.__dict__ for base in bases], dct]:
             for _, ble_uuid in [(k, v) for k, v in db.items() if not k.startswith("_")]:
                 if not isinstance(ble_uuid, BleUUID):
-                    raise TypeError(
-                        "This class can only be composed of BleUUID attributes"
-                    )
+                    raise TypeError("This class can only be composed of BleUUID attributes")
                 x._int2uuid[ble_uuid.int] = ble_uuid
         return x
 
@@ -629,22 +599,14 @@ class UUIDs(metaclass=UUIDsMeta):
     )
 
     # Generic Attribute Service
-    S_GENERIC_ATT = BleUUID(
-        "Generic Attribute Service", hex=BLE_BASE_UUID.format("1801")
-    )
+    S_GENERIC_ATT = BleUUID("Generic Attribute Service", hex=BLE_BASE_UUID.format("1801"))
 
     # Generic Access Service
-    S_GENERIC_ACCESS = BleUUID(
-        "Generic Access Service", hex=BLE_BASE_UUID.format("1800")
-    )
+    S_GENERIC_ACCESS = BleUUID("Generic Access Service", hex=BLE_BASE_UUID.format("1800"))
     ACC_DEVICE_NAME = BleUUID("Device Name", hex=BLE_BASE_UUID.format("2a00"))
     ACC_APPEARANCE = BleUUID("Appearance", hex=BLE_BASE_UUID.format("2a01"))
-    ACC_PREF_CONN_PARAMS = BleUUID(
-        "Preferred Connection Parameters", hex=BLE_BASE_UUID.format("2a04")
-    )
-    ACC_CENTRAL_ADDR_RES = BleUUID(
-        "Central Address Resolution", hex=BLE_BASE_UUID.format("2aa6")
-    )
+    ACC_PREF_CONN_PARAMS = BleUUID("Preferred Connection Parameters", hex=BLE_BASE_UUID.format("2a04"))
+    ACC_CENTRAL_ADDR_RES = BleUUID("Central Address Resolution", hex=BLE_BASE_UUID.format("2aa6"))
 
     # Tx Power
     S_TX_POWER = BleUUID("Tx Power Service", hex=BLE_BASE_UUID.format("1804"))

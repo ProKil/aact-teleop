@@ -6,27 +6,8 @@
 isort:skip_file
 """
 
-from open_gopro.exceptions import (
-    FailedToFindDevice,
-    ConnectFailed,
-    ConnectionTerminated,
-    ResponseTimeout,
-)
-from .services import (
-    GattDB,
-    Characteristic,
-    Descriptor,
-    Service,
-    BleUUID,
-    UUIDs,
-    CharProps,
-)
-from .controller import (
-    BleDevice,
-    BleHandle,
-    NotiHandlerType,
-    DisconnectHandlerType,
-    BLEController,
-)
+from open_gopro.exceptions import FailedToFindDevice, ConnectFailed, ConnectionTerminated, ResponseTimeout
+from .services import GattDB, Characteristic, Descriptor, Service, BleUUID, UUIDs, CharProps
+from .controller import BleDevice, BleHandle, NotiHandlerType, DisconnectHandlerType, BLEController
 from .client import BleClient
 from .adapters import BleakWrapperController

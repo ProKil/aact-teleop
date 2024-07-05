@@ -5,7 +5,6 @@
 
 They are imported here so they can be imported from open_gopro.proto
 """
-
 from open_gopro.proto.cohn_pb2 import (
     EnumCOHNNetworkState,
     EnumCOHNStatus,

@@ -22,9 +22,7 @@ async def main(args: argparse.Namespace) -> None:
     async with WirelessGoPro(args.identifier, enable_wifi=False) as gopro:
         await gopro.ble_command.set_shutter(shutter=Params.Toggle.DISABLE)
         await gopro.ble_command.register_livestream_status(
-            register=[
-                proto.EnumRegisterLiveStreamStatus.REGISTER_LIVE_STREAM_STATUS_STATUS
-            ]
+            register=[proto.EnumRegisterLiveStreamStatus.REGISTER_LIVE_STREAM_STATUS_STATUS]
         )
 
         console.print(f"[yellow]Connecting to {args.ssid}...")
@@ -33,19 +31,12 @@ async def main(args: argparse.Namespace) -> None:
         # Start livestream
         livestream_is_ready = asyncio.Event()
 
-        async def wait_for_livestream_start(
-            _: Any, update: proto.NotifyLiveStreamStatus
-        ) -> None:
-            if (
-                update.live_stream_status
-                == proto.EnumLiveStreamStatus.LIVE_STREAM_STATE_READY
-            ):
+        async def wait_for_livestream_start(_: Any, update: proto.NotifyLiveStreamStatus) -> None:
+            if update.live_stream_status == proto.EnumLiveStreamStatus.LIVE_STREAM_STATE_READY:
                 livestream_is_ready.set()
 
         console.print("[yellow]Configuring livestream...")
-        gopro.register_update(
-            wait_for_livestream_start, constants.ActionId.LIVESTREAM_STATUS_NOTIF
-        )
+        gopro.register_update(wait_for_livestream_start, constants.ActionId.LIVESTREAM_STATUS_NOTIF)
         await gopro.ble_command.set_livestream_mode(
             url=args.url,
             window_size=args.resolution,
@@ -65,9 +56,7 @@ async def main(args: argparse.Namespace) -> None:
         console.print("[yellow]Starting livestream")
         assert (await gopro.ble_command.set_shutter(shutter=Params.Toggle.ENABLE)).ok
 
-        console.print(
-            "[yellow]Livestream is now streaming and should be available for viewing."
-        )
+        console.print("[yellow]Livestream is now streaming and should be available for viewing.")
         await ainput("Press enter to stop livestreaming...\n")
 
         await gopro.ble_command.set_shutter(shutter=Params.Toggle.DISABLE)
@@ -91,10 +80,7 @@ def parse_arguments() -> argparse.Namespace:
         default=proto.EnumWindowSize.WINDOW_SIZE_720,
     )
     parser.add_argument(
-        "--fov",
-        help="Field of View.",
-        choices=list(proto.EnumLens.values()),
-        default=proto.EnumLens.LENS_LINEAR,
+        "--fov", help="Field of View.", choices=list(proto.EnumLens.values()), default=proto.EnumLens.LENS_LINEAR
     )
     return add_cli_args_and_parse(parser, wifi=False)
 

@@ -22,11 +22,7 @@ async def main(args: argparse.Namespace) -> None:
     async with WirelessGoPro(args.identifier) as gopro:
         await gopro.http_command.set_preview_stream(mode=Params.Toggle.DISABLE)
         await gopro.ble_command.set_shutter(shutter=Params.Toggle.DISABLE)
-        assert (
-            await gopro.http_command.set_preview_stream(
-                mode=Params.Toggle.ENABLE, port=args.port
-            )
-        ).ok
+        assert (await gopro.http_command.set_preview_stream(mode=Params.Toggle.ENABLE, port=args.port)).ok
 
         console.print("Displaying the preview stream...")
         display_video_blocking(f"udp://127.0.0.1:{args.port}", printer=console.print)
@@ -39,10 +35,7 @@ def parse_arguments() -> argparse.Namespace:
         description="Connect to the GoPro via BLE and Wifi, start a preview stream, then display it with CV2."
     )
     parser.add_argument(
-        "--port",
-        type=int,
-        help="Port to use for livestream. Defaults to 8554 if not set",
-        default=8554,
+        "--port", type=int, help="Port to use for livestream. Defaults to 8554 if not set", default=8554
     )
     return add_cli_args_and_parse(parser, wifi=False)
 

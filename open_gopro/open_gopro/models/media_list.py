@@ -46,9 +46,7 @@ class MediaMetadata(ABC, CustomBaseModel):
     """Base Media Metadata class"""
 
     content_type: str = Field(alias="ct")  #: Media content type
-    creation_timestamp: str = Field(
-        alias="cre"
-    )  #: Creation time in seconds since epoch
+    creation_timestamp: str = Field(alias="cre")  #: Creation time in seconds since epoch
     file_size: str = Field(alias="s")  #: File size in bytes
     gumi: str = Field(alias="gumi")  #: Globally Unique Media ID
     height: str = Field(alias="h")  #: Height of media in pixels
@@ -58,20 +56,12 @@ class MediaMetadata(ABC, CustomBaseModel):
     metadata_present: str = Field(alias="mp")  #: 1 if metadata is present, 0 otherwise
     rotate: str = Field(alias="rot")  #: Media rotation
     transcoded: str = Field(alias="tr")  #: 1 if file is transcoded, 0 otherwise
-    upload_status: str = Field(
-        alias="us"
-    )  #: Whether or not the media file has been uploaded
-    media_offload_state: Optional[list[str]] = Field(
-        alias="mos", default=None
-    )  #: List of offload states
-    parent_gumi: Optional[str] = Field(
-        alias="pgumi", default=None
-    )  #: Only present if in a clip
+    upload_status: str = Field(alias="us")  #: Whether or not the media file has been uploaded
+    media_offload_state: Optional[list[str]] = Field(alias="mos", default=None)  #: List of offload states
+    parent_gumi: Optional[str] = Field(alias="pgumi", default=None)  #: Only present if in a clip
     field_of_view: Optional[str] = Field(alias="fov", default=None)  #: Field of View
     lens_config: Optional[str] = Field(alias="lc", default=None)  #: Lens configuration
-    lens_projection: Optional[str] = Field(
-        alias="prjn", default=None
-    )  #: Lens projection
+    lens_projection: Optional[str] = Field(alias="prjn", default=None)  #: Lens projection
 
     @classmethod
     def from_json(cls, json_str: types.JsonDict) -> MediaMetadata:
@@ -97,22 +87,12 @@ class VideoMetadata(MediaMetadata):
     duration: str = Field(alias="dur")  #: Video duration in seconds
     frame_rate: str = Field(alias="fps")  # Video frame rate in frames / second
     frame_rate_divisor: str = Field(alias="fps_denom")  #: Used to modify frame rate
-    hilight_list: list[str] = Field(
-        alias="hi"
-    )  #: List of hlights in ms offset from start of video
-    lrv_file_size: str = Field(
-        alias="ls"
-    )  #: Low Resolution Video file size in bytes. -1 if there is no LRV
+    hilight_list: list[str] = Field(alias="hi")  #: List of hlights in ms offset from start of video
+    lrv_file_size: str = Field(alias="ls")  #: Low Resolution Video file size in bytes. -1 if there is no LRV
     max_auto_hilight_score: str = Field(alias="mahs")  #: Maximum auto-hilight score
-    protune_audio: str = Field(
-        alias="pta"
-    )  #: 1 if protune audio is present, 0 otherwise
-    subsample: str = Field(
-        alias="subsample"
-    )  #: 1 if subsampled from other video, 0 otherwise
-    progressive: Optional[str] = Field(
-        alias="progr", default=None
-    )  #: 1 if progressive, 0 otherwise
+    protune_audio: str = Field(alias="pta")  #: 1 if protune audio is present, 0 otherwise
+    subsample: str = Field(alias="subsample")  #: 1 if subsampled from other video, 0 otherwise
+    progressive: Optional[str] = Field(alias="progr", default=None)  #: 1 if progressive, 0 otherwise
 
 
 class PhotoMetadata(MediaMetadata):
@@ -134,21 +114,11 @@ class MediaItem(CustomBaseModel):
     """Base Media Item class"""
 
     filename: str = Field(alias="n")  #: Name of media item
-    creation_timestamp: str = Field(
-        alias="cre"
-    )  #: Creation time in seconds since epoch
-    modified_time: str = Field(
-        alias="mod"
-    )  #: Time file was last modified in seconds since epoch
-    low_res_video_size: Optional[str] = Field(
-        alias="glrv", default=None
-    )  #: Low resolution video size
-    lrv_file_size: Optional[str] = Field(
-        alias="ls", default=None
-    )  #: Low resolution file size
-    session_id: Optional[str] = Field(
-        alias="id", default=None
-    )  # Media list session identifier
+    creation_timestamp: str = Field(alias="cre")  #: Creation time in seconds since epoch
+    modified_time: str = Field(alias="mod")  #: Time file was last modified in seconds since epoch
+    low_res_video_size: Optional[str] = Field(alias="glrv", default=None)  #: Low resolution video size
+    lrv_file_size: Optional[str] = Field(alias="ls", default=None)  #: Low resolution file size
+    session_id: Optional[str] = Field(alias="id", default=None)  # Media list session identifier
 
 
 class GroupedMediaItem(MediaItem):
@@ -159,15 +129,9 @@ class GroupedMediaItem(MediaItem):
 
     group_id: str = Field(alias="g", default=None)  #: Group Identifier
     group_size: str = Field(alias="s", default=None)  # Number of files in the group
-    group_first_member_id: str = Field(
-        alias="b", default=None
-    )  # ID of first member in the group
-    group_last_member_id: str = Field(
-        alias="l", default=None
-    )  #: ID of last member in the group
-    group_missing_ids: list[str] = Field(
-        alias="m", default=None
-    )  #: File ID's that are missing or deleted
+    group_first_member_id: str = Field(alias="b", default=None)  # ID of first member in the group
+    group_last_member_id: str = Field(alias="l", default=None)  #: ID of last member in the group
+    group_missing_ids: list[str] = Field(alias="m", default=None)  #: File ID's that are missing or deleted
     """(b -> burst, c -> continuous shot, n -> night lapse, t -> time lapse)"""
     group_type: str = Field(alias="t", default=None)
 

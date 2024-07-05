@@ -48,9 +48,7 @@ async def test_ble_read_command():
 
 @pytest.mark.asyncio
 async def test_ble_write_command():
-    message = BleWriteCommand(
-        uuid=GoProUUIDs.ACC_APPEARANCE, cmd=CmdId.GET_CAMERA_CAPABILITIES
-    )
+    message = BleWriteCommand(uuid=GoProUUIDs.ACC_APPEARANCE, cmd=CmdId.GET_CAMERA_CAPABILITIES)
     d = message._as_dict(**dummy_kwargs)
     assert d.pop("id") == CmdId.GET_CAMERA_CAPABILITIES
     assert d.pop("protocol") == GoProResp.Protocol.BLE
@@ -89,35 +87,28 @@ class MockCommunicator(Generic[T]):
     async def _send_ble_message(self, message: T) -> GoProResp:
         self.message = message
         return GoProResp(
-            protocol=GoProResp.Protocol.BLE,
-            status=ErrorCode.SUCCESS,
-            data=bytes(),
-            identifier=message._identifier,
+            protocol=GoProResp.Protocol.BLE, status=ErrorCode.SUCCESS, data=bytes(), identifier=message._identifier
         )
 
     async def _get_json(self, message, **kwargs) -> GoProResp:
         self.message = message
-        return GoProResp(
-            protocol=GoProResp.Protocol.BLE,
-            status=ErrorCode.SUCCESS,
-            data=bytes(),
-            identifier="unknown",
-        )
+        return GoProResp(protocol=GoProResp.Protocol.BLE, status=ErrorCode.SUCCESS, data=bytes(), identifier="unknown")
 
-    def register_update(self, *args, **kwargs): ...
+    def register_update(self, *args, **kwargs):
+        ...
 
-    def unregister_update(self, *args, **kwargs): ...
+    def unregister_update(self, *args, **kwargs):
+        ...
 
 
 @pytest.mark.asyncio
 async def test_ble_setting():
-    class Communicator(MockCommunicator[BleSettingFacade.BleSettingMessageBase]): ...
+    class Communicator(MockCommunicator[BleSettingFacade.BleSettingMessageBase]):
+        ...
 
     communicator = Communicator()
     message = BleSettingFacade(
-        communicator=communicator,
-        identifier=SettingId.ADDON_MAX_LENS_MOD,
-        parser_builder=construct.Flag,
+        communicator=communicator, identifier=SettingId.ADDON_MAX_LENS_MOD, parser_builder=construct.Flag
     )
 
     # Set Setting Value
@@ -193,14 +184,11 @@ async def test_ble_setting():
 
 @pytest.mark.asyncio
 async def test_ble_status():
-    class Communicator(MockCommunicator[BleStatusFacade.BleStatusMessageBase]): ...
+    class Communicator(MockCommunicator[BleStatusFacade.BleStatusMessageBase]):
+        ...
 
     communicator = Communicator()
-    message = BleStatusFacade(
-        communicator=communicator,
-        identifier=StatusId.ACC_MIC_STAT,
-        parser=construct.Flag,
-    )
+    message = BleStatusFacade(communicator=communicator, identifier=StatusId.ACC_MIC_STAT, parser=construct.Flag)
 
     # Get Status Value
     await message.get_value()
@@ -246,18 +234,15 @@ async def test_http_command():
 
 @pytest.mark.asyncio
 async def test_http_setting():
-    class Communicator(MockCommunicator[HttpMessage]): ...
+    class Communicator(MockCommunicator[HttpMessage]):
+        ...
 
     communicator = Communicator()
-    message = HttpSetting(
-        communicator=communicator, identifier=SettingId.ADDON_MAX_LENS_MOD
-    )
+    message = HttpSetting(communicator=communicator, identifier=SettingId.ADDON_MAX_LENS_MOD)
     await message.set(1)
     d = communicator.message._as_dict(**dummy_kwargs)
     assert d.pop("id") == SettingId.ADDON_MAX_LENS_MOD
     assert d.pop("protocol") == GoProResp.Protocol.HTTP
-    assert (
-        d.pop("endpoint") == r"gopro/camera/setting?setting={setting}&option={option}"
-    )
+    assert d.pop("endpoint") == r"gopro/camera/setting?setting={setting}&option={option}"
     assert_kwargs(d)
     assert not d

@@ -208,15 +208,11 @@ class BleProtoCommand(BleMessage):
         self.response_action_id = response_action_id
         self.request_proto = request_proto
         self.response_proto = response_proto
-        self.additional_matching_ids: set[ActionId | CmdId] = (
-            additional_matching_ids or set()
-        )
+        self.additional_matching_ids: set[ActionId | CmdId] = additional_matching_ids or set()
         assert self._parser
         for matching_id in [*self.additional_matching_ids, response_action_id]:
             GlobalParsers.add(matching_id, self._parser)
-        GlobalParsers.add_feature_action_id_mapping(
-            self.feature_id, self.response_action_id
-        )
+        GlobalParsers.add_feature_action_id_mapping(self.feature_id, self.response_action_id)
 
     def _build_data(self, **kwargs: Any) -> bytearray:
         """Build the byte data to prepare for command sending
@@ -235,25 +231,16 @@ class BleProtoCommand(BleMessage):
             if isinstance(attr, Iterable) and not isinstance(value, (str, bytes)):
                 if isinstance(value, Iterable):
                     for element in value:
-                        attr.append(
-                            element.value if isinstance(element, enum.Enum) else element
-                        )  # type: ignore
+                        attr.append(element.value if isinstance(element, enum.Enum) else element)  # type: ignore
                 else:
                     attr.append(value.value if isinstance(value, enum.Enum) else value)  # type:ignore
             else:
                 setattr(proto, attr_name, value)
         # Prepend headers and serialize
-        return bytearray(
-            [self.feature_id.value, self.action_id.value, *proto.SerializeToString()]
-        )
+        return bytearray([self.feature_id.value, self.action_id.value, *proto.SerializeToString()])
 
     def __str__(self) -> str:
-        return (
-            self.action_id.name.lower()
-            .replace("_", " ")
-            .removeprefix("actionid")
-            .title()
-        )
+        return self.action_id.name.lower().replace("_", " ").removeprefix("actionid").title()
 
     def _as_dict(self, **kwargs: Any) -> types.JsonDict:
         """Return the attributes of the command as a dict
@@ -264,11 +251,7 @@ class BleProtoCommand(BleMessage):
         Returns:
             types.JsonDict: command as dict
         """
-        return {
-            "id": self.action_id,
-            "feature_id": self.feature_id,
-            **self._base_dict,
-        } | kwargs
+        return {"id": self.action_id, "feature_id": self.feature_id, **self._base_dict} | kwargs
 
 
 def ble_write_command(
@@ -293,12 +276,8 @@ def ble_write_command(
     message = BleWriteCommand(uuid, cmd, param_builder, parser)
 
     @wrapt.decorator
-    async def wrapper(
-        wrapped: Callable, instance: BleMessages, _: Any, kwargs: Any
-    ) -> GoProResp:
-        return await instance._communicator._send_ble_message(
-            message, rules, **(await wrapped(**kwargs) or kwargs)
-        )
+    async def wrapper(wrapped: Callable, instance: BleMessages, _: Any, kwargs: Any) -> GoProResp:
+        return await instance._communicator._send_ble_message(message, rules, **(await wrapped(**kwargs) or kwargs))
 
     return wrapper
 
@@ -316,12 +295,8 @@ def ble_read_command(uuid: BleUUID, parser: Parser) -> Callable:
     message = BleReadCommand(uuid, parser)
 
     @wrapt.decorator
-    async def wrapper(
-        wrapped: Callable, instance: BleMessages, _: Any, kwargs: Any
-    ) -> GoProResp:
-        return await instance._communicator._read_ble_characteristic(
-            message, **(await wrapped(**kwargs) or kwargs)
-        )
+    async def wrapper(wrapped: Callable, instance: BleMessages, _: Any, kwargs: Any) -> GoProResp:
+        return await instance._communicator._read_ble_characteristic(message, **(await wrapped(**kwargs) or kwargs))
 
     return wrapper
 
@@ -348,12 +323,8 @@ def ble_register_command(
     message = RegisterUnregisterAll(uuid, cmd, update_set, action, parser)
 
     @wrapt.decorator
-    async def wrapper(
-        wrapped: Callable, instance: BleMessages, _: Any, kwargs: Any
-    ) -> GoProResp:
-        return await instance._communicator._send_ble_message(
-            message, **(await wrapped(**kwargs) or kwargs)
-        )
+    async def wrapper(wrapped: Callable, instance: BleMessages, _: Any, kwargs: Any) -> GoProResp:
+        return await instance._communicator._send_ble_message(message, **(await wrapped(**kwargs) or kwargs))
 
     return wrapper
 
@@ -397,12 +368,8 @@ def ble_proto_command(
     )
 
     @wrapt.decorator
-    async def wrapper(
-        wrapped: Callable, instance: BleMessages, _: Any, kwargs: Any
-    ) -> GoProResp:
-        return await instance._communicator._send_ble_message(
-            message, **(await wrapped(**kwargs) or kwargs)
-        )
+    async def wrapper(wrapped: Callable, instance: BleMessages, _: Any, kwargs: Any) -> GoProResp:
+        return await instance._communicator._send_ble_message(message, **(await wrapped(**kwargs) or kwargs))
 
     return wrapper
 
@@ -421,12 +388,7 @@ class BleAsyncResponse:
     parser: Parser
 
     def __str__(self) -> str:
-        return (
-            self.action_id.name.lower()
-            .replace("_", " ")
-            .removeprefix("actionid")
-            .title()
-        )
+        return self.action_id.name.lower().replace("_", " ").removeprefix("actionid").title()
 
 
 class BuilderProtocol(Protocol):
@@ -459,11 +421,7 @@ class BleSettingFacade(Generic[ValueType]):
         """
 
         def __init__(
-            self,
-            uuid: BleUUID,
-            identifier: SettingId | QueryCmdId,
-            setting_id: SettingId,
-            builder: BuilderProtocol,
+            self, uuid: BleUUID, identifier: SettingId | QueryCmdId, setting_id: SettingId, builder: BuilderProtocol
         ) -> None:
             self._build = builder
             self._setting_id = setting_id
@@ -473,19 +431,10 @@ class BleSettingFacade(Generic[ValueType]):
             return self._build(**kwargs)
 
         def _as_dict(self, **kwargs: Any) -> types.JsonDict:
-            d = {
-                "id": self._identifier,
-                "setting_id": self._setting_id,
-                **self._base_dict,
-            } | kwargs
+            d = {"id": self._identifier, "setting_id": self._setting_id, **self._base_dict} | kwargs
             return d
 
-    def __init__(
-        self,
-        communicator: GoProBle,
-        identifier: SettingId,
-        parser_builder: QueryParserType,
-    ) -> None:
+    def __init__(self, communicator: GoProBle, identifier: SettingId, parser_builder: QueryParserType) -> None:
         # TODO abstract this
         parser = Parser[types.CameraState]()
         if isinstance(parser_builder, construct.Construct):
@@ -604,9 +553,7 @@ class BleSettingFacade(Generic[ValueType]):
             self._communicator.register_update(callback, self._identifier)
         return response
 
-    async def unregister_value_update(
-        self, callback: types.UpdateCb
-    ) -> GoProResp[None]:
+    async def unregister_value_update(self, callback: types.UpdateCb) -> GoProResp[None]:
         """Stop receiving notifications when a given setting ID's value updates.
 
         Args:
@@ -625,9 +572,7 @@ class BleSettingFacade(Generic[ValueType]):
             self._communicator.unregister_update(callback, self._identifier)
         return response
 
-    async def register_capability_update(
-        self, callback: types.UpdateCb
-    ) -> GoProResp[None]:
+    async def register_capability_update(self, callback: types.UpdateCb) -> GoProResp[None]:
         """Register for asynchronous notifications when a given setting ID's capabilities update.
 
         Args:
@@ -646,9 +591,7 @@ class BleSettingFacade(Generic[ValueType]):
             self._communicator.unregister_update(callback, self._identifier)
         return response
 
-    async def unregister_capability_update(
-        self, callback: types.UpdateCb
-    ) -> GoProResp[None]:
+    async def unregister_capability_update(self, callback: types.UpdateCb) -> GoProResp[None]:
         """Stop receiving notifications when a given setting ID's capabilities change.
 
         Args:
@@ -710,15 +653,9 @@ class BleStatusFacade(Generic[ValueType]):
             return self._build(self, **kwargs)
 
         def _as_dict(self, **kwargs: Any) -> types.JsonDict:
-            return {
-                "id": self._identifier,
-                "status_id": self._status_id,
-                **self._base_dict,
-            } | kwargs
+            return {"id": self._identifier, "status_id": self._status_id, **self._base_dict} | kwargs
 
-    def __init__(
-        self, communicator: GoProBle, identifier: StatusId, parser: QueryParserType
-    ) -> None:
+    def __init__(self, communicator: GoProBle, identifier: StatusId, parser: QueryParserType) -> None:
         # TODO abstract this
         parser_builder = Parser[types.CameraState]()
         # Is it a protobuf enum?
@@ -752,9 +689,7 @@ class BleStatusFacade(Generic[ValueType]):
         )
         return await self._communicator._send_ble_message(message)
 
-    async def register_value_update(
-        self, callback: types.UpdateCb
-    ) -> GoProResp[ValueType]:
+    async def register_value_update(self, callback: types.UpdateCb) -> GoProResp[ValueType]:
         """Register for asynchronous notifications when a status changes.
 
         Args:
@@ -829,20 +764,12 @@ def http_get_json_command(
         Callable: built callable to perform operation
     """
     message = HttpMessage(
-        endpoint=endpoint,
-        identifier=identifier,
-        components=components,
-        arguments=arguments,
-        parser=parser,
+        endpoint=endpoint, identifier=identifier, components=components, arguments=arguments, parser=parser
     )
 
     @wrapt.decorator
-    async def wrapper(
-        wrapped: Callable, instance: HttpMessages, _: Any, kwargs: Any
-    ) -> GoProResp:
-        return await instance._communicator._get_json(
-            message, rules=rules, **(await wrapped(**kwargs) or kwargs)
-        )
+    async def wrapper(wrapped: Callable, instance: HttpMessages, _: Any, kwargs: Any) -> GoProResp:
+        return await instance._communicator._get_json(message, rules=rules, **(await wrapped(**kwargs) or kwargs))
 
     return wrapper
 
@@ -869,23 +796,15 @@ def http_get_binary_command(
         Callable: built callable to perform operation
     """
     message = HttpMessage(
-        endpoint=endpoint,
-        identifier=identifier,
-        components=components,
-        arguments=arguments,
-        parser=parser,
+        endpoint=endpoint, identifier=identifier, components=components, arguments=arguments, parser=parser
     )
 
     @wrapt.decorator
-    async def wrapper(
-        wrapped: Callable, instance: HttpMessages, _: Any, kwargs: Any
-    ) -> GoProResp:
+    async def wrapper(wrapped: Callable, instance: HttpMessages, _: Any, kwargs: Any) -> GoProResp:
         kwargs = await wrapped(**kwargs) or kwargs
         # If no local file was passed, used the file name of the camera file
         kwargs["local_file"] = (
-            kwargs.pop("local_file")
-            if "local_file" in kwargs
-            else Path(kwargs["camera_file"].split("/")[-1])
+            kwargs.pop("local_file") if "local_file" in kwargs else Path(kwargs["camera_file"].split("/")[-1])
         )
         return await instance._communicator._get_stream(message, rules=rules, **kwargs)
 
@@ -925,12 +844,8 @@ def http_put_json_command(
     )
 
     @wrapt.decorator
-    async def wrapper(
-        wrapped: Callable, instance: HttpMessages, _: Any, kwargs: Any
-    ) -> GoProResp:
-        return await instance._communicator._put_json(
-            message, rules=rules, **(await wrapped(**kwargs) or kwargs)
-        )
+    async def wrapper(wrapped: Callable, instance: HttpMessages, _: Any, kwargs: Any) -> GoProResp:
+        return await instance._communicator._put_json(message, rules=rules, **(await wrapped(**kwargs) or kwargs))
 
     return wrapper
 
@@ -939,9 +854,7 @@ class HttpSetting(HttpMessage, Generic[ValueType]):
     """An individual camera setting that is interacted with via Wifi."""
 
     def __init__(self, communicator: GoProHttp, identifier: SettingId) -> None:
-        super().__init__(
-            "gopro/camera/setting?setting={setting}&option={option}", identifier
-        )
+        super().__init__("gopro/camera/setting?setting={setting}&option={option}", identifier)
         self._communicator = communicator
         # Note! It is assumed that BLE and HTTP settings are symmetric so we only add to the communicator's
         # parser in the BLE Setting.
@@ -958,9 +871,7 @@ class HttpSetting(HttpMessage, Generic[ValueType]):
         Returns:
             str: built URL
         """
-        return self._endpoint.format(
-            setting=int(self._identifier), option=int(kwargs["value"])
-        )
+        return self._endpoint.format(setting=int(self._identifier), option=int(kwargs["value"]))
 
     async def set(self, value: ValueType) -> GoProResp:
         """Set the value of the setting.

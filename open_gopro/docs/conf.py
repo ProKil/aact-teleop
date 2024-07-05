@@ -74,10 +74,7 @@ nitpick_ignore = [
     ("py:class", "collections.abc.Iterable"),
 ]
 nitpick_ignore_regex = [
-    (
-        r"py:class",
-        r".*proto\..+",
-    ),  # TODO how should / can we handle protobuf documenting?
+    (r"py:class", r".*proto\..+"),  # TODO how should / can we handle protobuf documenting?
     (r"py:class", r".*_pb2\..+"),
     (r"py:class", r".+Type"),
     (r"py:obj", r".+Type"),

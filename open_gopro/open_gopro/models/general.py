@@ -73,9 +73,7 @@ class CohnInfo:
     cert_path: Path = Path("cohn.crt")
 
     def __post_init__(self) -> None:
-        token = b64encode(f"{self.username}:{self.password}".encode("utf-8")).decode(
-            "ascii"
-        )
+        token = b64encode(f"{self.username}:{self.password}".encode("utf-8")).decode("ascii")
         self.auth_token = f"Basic {token}"
         with open(self.cert_path, "w") as fp:
             fp.write(self.certificate)

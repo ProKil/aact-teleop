@@ -66,9 +66,7 @@ class MessageRules:
     always_true: Analyzer = lambda **kwargs: True
 
     def __init__(
-        self,
-        fastpass_analyzer: Analyzer = always_false,
-        wait_for_encoding_analyzer: Analyzer = always_false,
+        self, fastpass_analyzer: Analyzer = always_false, wait_for_encoding_analyzer: Analyzer = always_false
     ) -> None:
         self._analyze_fastpass = fastpass_analyzer
         self._analyze_wait_for_encoding = wait_for_encoding_analyzer
@@ -105,9 +103,7 @@ class BaseGoProCommunicator(ABC):
     """Common Communicator interface"""
 
     @abstractmethod
-    def register_update(
-        self, callback: types.UpdateCb, update: types.UpdateType
-    ) -> None:
+    def register_update(self, callback: types.UpdateCb, update: types.UpdateType) -> None:
         """Register for callbacks when an update occurs
 
         Args:
@@ -117,9 +113,7 @@ class BaseGoProCommunicator(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def unregister_update(
-        self, callback: types.UpdateCb, update: types.UpdateType | None = None
-    ) -> None:
+    def unregister_update(self, callback: types.UpdateCb, update: types.UpdateType | None = None) -> None:
         """Unregister for asynchronous update(s)
 
         Args:
@@ -135,12 +129,7 @@ class GoProHttp(BaseGoProCommunicator):
 
     @abstractmethod
     async def _get_json(
-        self,
-        message: HttpMessage,
-        *,
-        timeout: int = 0,
-        rules: MessageRules | None = MessageRules(),
-        **kwargs: Any,
+        self, message: HttpMessage, *, timeout: int = 0, rules: MessageRules | None = MessageRules(), **kwargs: Any
     ) -> GoProResp:
         """Perform a GET operation that returns JSON
 
@@ -156,12 +145,7 @@ class GoProHttp(BaseGoProCommunicator):
 
     @abstractmethod
     async def _get_stream(
-        self,
-        message: HttpMessage,
-        *,
-        timeout: int = 0,
-        rules: MessageRules | None = MessageRules(),
-        **kwargs: Any,
+        self, message: HttpMessage, *, timeout: int = 0, rules: MessageRules | None = MessageRules(), **kwargs: Any
     ) -> GoProResp:
         """Perform a GET operation that returns a binary stream
 
@@ -177,12 +161,7 @@ class GoProHttp(BaseGoProCommunicator):
 
     @abstractmethod
     async def _put_json(
-        self,
-        message: HttpMessage,
-        *,
-        timeout: int = 0,
-        rules: MessageRules | None = MessageRules(),
-        **kwargs: Any,
+        self, message: HttpMessage, *, timeout: int = 0, rules: MessageRules | None = MessageRules(), **kwargs: Any
     ) -> GoProResp:
         """Perform a PUT operation that returns JSON
 
@@ -247,10 +226,7 @@ class GoProBle(BaseGoProCommunicator, Generic[BleHandle, BleDevice]):
             controller,
             disconnected_cb,
             notification_cb,
-            (
-                re.compile(r"GoPro [A-Z0-9]{4}") if target is None else target,
-                [GoProUUIDs.S_CONTROL_QUERY],
-            ),
+            (re.compile(r"GoPro [A-Z0-9]{4}") if target is None else target, [GoProUUIDs.S_CONTROL_QUERY]),
             uuids=GoProUUIDs,
         )
 
@@ -368,9 +344,7 @@ class GoProWirelessInterface(GoProBle, GoProWifi, Generic[BleDevice, BleHandle])
             target (Pattern | BleDevice): BLE device to search for
         """
         # Initialize GoPro Communication Client
-        GoProBle.__init__(
-            self, ble_controller, disconnected_cb, notification_cb, target
-        )
+        GoProBle.__init__(self, ble_controller, disconnected_cb, notification_cb, target)
         if wifi_controller:
             GoProWifi.__init__(self, wifi_controller)
 
@@ -468,13 +442,7 @@ class HttpMessage(Message):
     ) -> None:
         if not identifier:
             # Build human-readable name from endpoint
-            identifier = (
-                endpoint.lower()
-                .removeprefix("gopro/")
-                .replace("/", " ")
-                .replace("_", " ")
-                .title()
-            )
+            identifier = endpoint.lower().removeprefix("gopro/").replace("/", " ").replace("_", " ").title()
             try:
                 identifier = identifier.split("?")[0].strip("{}")
             except IndexError:
@@ -506,9 +474,7 @@ class HttpMessage(Message):
             types.JsonDict: message as dict
         """
         # If any kwargs keys were to conflict with base dict, append underscore
-        return self._base_dict | {
-            f"{'_' if k in ['id', 'protocol'] else ''}{k}": v for k, v in kwargs.items()
-        }
+        return self._base_dict | {f"{'_' if k in ['id', 'protocol'] else ''}{k}": v for k, v in kwargs.items()}
 
     def build_body(self, **kwargs: Any) -> dict[str, Any]:
         """Build JSON body from run-time body arguments
@@ -541,9 +507,7 @@ class HttpMessage(Message):
         if self._arguments and (
             arg_part := urlencode(
                 {
-                    k: kwargs[k].value
-                    if isinstance(kwargs[k], enum.Enum)
-                    else kwargs[k]
+                    k: kwargs[k].value if isinstance(kwargs[k], enum.Enum) else kwargs[k]
                     for k in self._arguments
                     if kwargs[k] is not None
                 },

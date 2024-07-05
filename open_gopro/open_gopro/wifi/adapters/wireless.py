@@ -49,9 +49,7 @@ def ensure_us_english() -> None:
 
 
 @wrapt.decorator
-def pass_through_to_driver(
-    wrapped: Callable, instance: WifiCli, args: Any, kwargs: Any
-) -> Any:
+def pass_through_to_driver(wrapped: Callable, instance: WifiCli, args: Any, kwargs: Any) -> Any:
     """Call this same method on the _driver attribute
 
     Args:
@@ -74,9 +72,7 @@ class WifiCli(WifiController):
     discover a suitable interface
     """
 
-    def __init__(
-        self, interface: Optional[str] = None, password: Optional[str] = None
-    ) -> None:
+    def __init__(self, interface: Optional[str] = None, password: Optional[str] = None) -> None:
         """Constructor
 
         Args:
@@ -124,10 +120,11 @@ class WifiCli(WifiController):
         # Try Linux options.
         # try nmcli (Ubuntu 14.04). Allow for use in Snap Package
         if which("nmcli") or which("nmcli", path="/snap/bin/"):
+
             ctrl_wifi = cmd("nmcli general permissions |grep enable-disable-wifi")
             scan_wifi = cmd("nmcli general permissions |grep scan")
 
-            if "yes" not in ctrl_wifi or "yes" not in scan_wifi:
+            if not "yes" in ctrl_wifi or not "yes" in scan_wifi:
                 self._sudo_from_stdin()
 
             version = cmd("nmcli --version").split()[-1]
@@ -165,9 +162,7 @@ class WifiCli(WifiController):
         if not self._password:
             raise RuntimeError("Can't use sudo with empty password.")
         # Validate password
-        if "VALID PASSWORD" not in cmd(
-            f'echo "{self._password}" | sudo -S echo "VALID PASSWORD"'
-        ):
+        if "VALID PASSWORD" not in cmd(f'echo "{self._password}" | sudo -S echo "VALID PASSWORD"'):
             raise RuntimeError("Invalid password")
 
         return self._password
@@ -277,9 +272,7 @@ class NmcliWireless(WifiController):
             partial (str): part of the connection name
         """
         # list matching connections
-        response = cmd(
-            f'{self.sudo} nmcli --fields BleUUID,NAME con list | grep "{partial}"'
-        )
+        response = cmd(f'{self.sudo} nmcli --fields BleUUID,NAME con list | grep "{partial}"')
 
         # delete all of the matching connections
         for line in response.splitlines():
@@ -349,9 +342,7 @@ class NmcliWireless(WifiController):
 
         # attempt to connect
         logger.info(f"Connecting to {ssid}...")
-        response = cmd(
-            f'{self.sudo} nmcli dev wifi connect "{ssid}" password "{password}" iface "{self.interface}"'
-        )
+        response = cmd(f'{self.sudo} nmcli dev wifi connect "{ssid}" password "{password}" iface "{self.interface}"')
 
         # parse response
         return not self._error_in_response(response)
@@ -442,9 +433,7 @@ class Nmcli0990Wireless(WifiController):
             partial (str): part of the connection name
         """
         # list matching connections
-        response = cmd(
-            f'{self.sudo} nmcli --fields UUID,NAME con show | grep "{partial}"'
-        )
+        response = cmd(f'{self.sudo} nmcli --fields UUID,NAME con show | grep "{partial}"')
 
         # delete all of the matching connections
         for line in response.splitlines():
@@ -510,9 +499,7 @@ class Nmcli0990Wireless(WifiController):
 
         # attempt to connect
         logger.info(f"Connecting to {ssid}...")
-        response = cmd(
-            f'{self.sudo} nmcli dev wifi connect "{ssid}" password "{password}" ifname "{self.interface}"'
-        )
+        response = cmd(f'{self.sudo} nmcli dev wifi connect "{ssid}" password "{password}" ifname "{self.interface}"')
 
         # parse response
         return not self._error_in_response(response)
@@ -738,9 +725,7 @@ class NetworksetupWireless(WifiController):
                 logger.warning("MacOS did not return a response to SSID scanning.")
                 continue
             lines = response.splitlines()
-            ssid_end_index = (
-                lines[0].index("SSID") + 4
-            )  # Find where the SSID column ends
+            ssid_end_index = lines[0].index("SSID") + 4  # Find where the SSID column ends
 
             for result in lines[1:]:  # Skip title row
                 current_ssid = result[:ssid_end_index].strip()
@@ -760,9 +745,7 @@ class NetworksetupWireless(WifiController):
 
         # Connect now that we found the ssid
         logger.info(f"Connecting to {ssid}...")
-        response = cmd(
-            f"networksetup -setairportnetwork '{self.interface}' '{ssid}' '{password}'"
-        )
+        response = cmd(f"networksetup -setairportnetwork '{self.interface}' '{ssid}' '{password}'")
 
         if "not find" in response.lower():
             return False
@@ -802,10 +785,7 @@ class NetworksetupWireless(WifiController):
         # parse response
         phrase = "Current Wi-Fi Network: "
         if phrase in response:
-            return (
-                response.replace("Current Wi-Fi Network: ", "").strip(),
-                SsidState.CONNECTED,
-            )
+            return (response.replace("Current Wi-Fi Network: ", "").strip(), SsidState.CONNECTED)
         return (None, SsidState.DISCONNECTED)
 
     def available_interfaces(self) -> list[str]:
@@ -851,9 +831,7 @@ class NetworksetupWireless(WifiController):
         Returns:
             bool: True if success, False otherwise
         """
-        cmd(
-            f"networksetup -setairportpower '{self.interface}' {'on' if power else 'off'}"
-        )
+        cmd(f"networksetup -setairportpower '{self.interface}' {'on' if power else 'off'}")
 
         return True
 
@@ -925,9 +903,7 @@ class NetshWireless(WifiController):
         self._clean(ssid)
 
         # Create new profile
-        output = NetshWireless.template.format(
-            ssid=ssid, auth="WPA2PSK", encrypt="AES", passwd=password
-        )
+        output = NetshWireless.template.format(ssid=ssid, auth="WPA2PSK", encrypt="AES", passwd=password)
         logger.debug(f"Using template {output}")
         # Need ugly low level mkstemp and os here because standard tempfile can't be accessed by a subprocess in Windows :(
         fd, filename = tempfile.mkstemp()
@@ -939,9 +915,7 @@ class NetshWireless(WifiController):
         os.remove(filename)
 
         # Try to connect
-        response = cmd(
-            f'netsh wlan connect ssid="{ssid}" name="{ssid}" interface="{self.interface}"'
-        )
+        response = cmd(f'netsh wlan connect ssid="{ssid}" name="{ssid}" interface="{self.interface}"')
         if "was completed successfully" not in response:
             raise RuntimeError(response)
         # Wait for connection to establish

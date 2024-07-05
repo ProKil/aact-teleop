@@ -39,9 +39,7 @@ def lint(session) -> None:
         "types-tzlocal",
     )
     session.run("mypy", "open_gopro")
-    session.run(
-        "pylint", "--no-docstring-rgx=__|main|parse_arguments|entrypoint", "open_gopro"
-    )
+    session.run("pylint", "--no-docstring-rgx=__|main|parse_arguments|entrypoint", "open_gopro")
 
 
 @session(python=SUPPORTED_VERSIONS)
@@ -84,11 +82,4 @@ def docs(session) -> None:
     )
     session.run("sphinx-build", "-W", "docs", "docs/build")
     # Clean up for Jekyll consumption
-    session.run(
-        "rm",
-        "-rf",
-        "docs/build/.doctrees",
-        "/docs/build/_sources",
-        "/docs/build/_static/fonts",
-        external=True,
-    )
+    session.run("rm", "-rf", "docs/build/.doctrees", "/docs/build/_sources", "/docs/build/_static/fonts", external=True)

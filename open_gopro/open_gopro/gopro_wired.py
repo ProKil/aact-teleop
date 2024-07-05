@@ -105,16 +105,12 @@ class WiredGoPro(GoProBase[WiredApi], GoProWiredInterface):
 
         await self.http_command.wired_usb_control(control=Params.Toggle.ENABLE)
         # Find and configure API version
-        if (
-            version := (await self.http_command.get_open_gopro_api_version()).data
-        ) != self.version:
+        if (version := (await self.http_command.get_open_gopro_api_version()).data) != self.version:
             raise GpException.InvalidOpenGoProVersion(version)
         logger.info(f"Using Open GoPro API version {version}")
 
         # Wait for initial ready state
-        await self._wait_for_state(
-            {StatusId.ENCODING: False, StatusId.SYSTEM_BUSY: False}
-        )
+        await self._wait_for_state({StatusId.ENCODING: False, StatusId.SYSTEM_BUSY: False})
 
         self._open = True
 
@@ -230,9 +226,7 @@ class WiredGoPro(GoProBase[WiredApi], GoProWiredInterface):
         """
         return self.is_open
 
-    def register_update(
-        self, callback: types.UpdateCb, update: types.UpdateType
-    ) -> None:
+    def register_update(self, callback: types.UpdateCb, update: types.UpdateType) -> None:
         """Register for callbacks when an update occurs
 
         Args:
@@ -244,9 +238,7 @@ class WiredGoPro(GoProBase[WiredApi], GoProWiredInterface):
         """
         raise NotImplementedError
 
-    def unregister_update(
-        self, callback: types.UpdateCb, update: types.UpdateType | None = None
-    ) -> None:
+    def unregister_update(self, callback: types.UpdateCb, update: types.UpdateType | None = None) -> None:
         """Unregister for asynchronous update(s)
 
         Args:
@@ -295,23 +287,13 @@ class WiredGoPro(GoProBase[WiredApi], GoProWiredInterface):
     ##########################################################################################################
 
     async def _enforce_message_rules(
-        self,
-        wrapped: Callable,
-        message: Message,
-        rules: MessageRules = MessageRules(),
-        **kwargs: Any,
+        self, wrapped: Callable, message: Message, rules: MessageRules = MessageRules(), **kwargs: Any
     ) -> GoProResp:
         # Acquire ready lock unless we are initializing or this is a Set Shutter Off command
-        if (
-            self._should_maintain_state
-            and self.is_open
-            and not rules.is_fastpass(**kwargs)
-        ):
+        if self._should_maintain_state and self.is_open and not rules.is_fastpass(**kwargs):
             # Wait for not encoding and not busy
             logger.trace("Waiting for camera to be ready to receive messages.")  # type: ignore
-            await self._wait_for_state(
-                {StatusId.ENCODING: False, StatusId.SYSTEM_BUSY: False}
-            )
+            await self._wait_for_state({StatusId.ENCODING: False, StatusId.SYSTEM_BUSY: False})
             logger.trace("Camera is ready to receive messages")  # type: ignore
             response = await wrapped(message, **kwargs)
         else:  # Either we're not maintaining state, we're not opened yet, or this is a fastpass message
@@ -361,6 +343,4 @@ class WiredGoPro(GoProBase[WiredApi], GoProWiredInterface):
         """
         if not self._serial:
             raise GpException.GoProNotOpened("Serial / IP has not yet been discovered")
-        return WiredGoPro._BASE_ENDPOINT.format(
-            ip=WiredGoPro._BASE_IP.format(*self._serial[-3:])
-        )
+        return WiredGoPro._BASE_ENDPOINT.format(ip=WiredGoPro._BASE_IP.format(*self._serial[-3:]))

@@ -198,15 +198,11 @@ class GlobalParsers:
     This is intended to be used as a singleton, i.e. not instantiated
     """
 
-    _feature_action_id_map: ClassVar[dict[FeatureId, list[ActionId]]] = defaultdict(
-        list
-    )
+    _feature_action_id_map: ClassVar[dict[FeatureId, list[ActionId]]] = defaultdict(list)
     _global_parsers: ClassVar[dict[types.ResponseType, Parser]] = {}
 
     @classmethod
-    def add_feature_action_id_mapping(
-        cls, feature_id: FeatureId, action_id: ActionId
-    ) -> None:
+    def add_feature_action_id_mapping(cls, feature_id: FeatureId, action_id: ActionId) -> None:
         """Add a feature id-to-action id mapping entry
 
         Args:
@@ -243,14 +239,8 @@ class GlobalParsers:
             Callable: container if found else None
         """
         try:
-            parser_builder = cast(
-                BytesParserBuilder, cls._global_parsers[identifier].byte_json_adapter
-            )
-            return (
-                lambda data,
-                parse=parser_builder.parse,
-                build=parser_builder.build: parse(build(data))
-            )
+            parser_builder = cast(BytesParserBuilder, cls._global_parsers[identifier].byte_json_adapter)
+            return lambda data, parse=parser_builder.parse, build=parser_builder.build: parse(build(data))
         except KeyError:
             return None
 

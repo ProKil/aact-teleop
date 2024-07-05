@@ -21,14 +21,10 @@ async def gopro() -> AsyncGenerator[WiredGoPro, None]:
 async def create_single_photo(gopro: WiredGoPro) -> MediaPath:
     # Set a "single" photo preset
     presets = (await gopro.http_command.get_preset_status()).data
-    photo_presets = next(
-        group for group in presets["presetGroupArray"] if "photo" in group["id"].lower()
-    )
-    single_preset_id = next(
-        preset
-        for preset in photo_presets["presetArray"]
-        if "single" in preset["mode"].lower()
-    )["id"]
+    photo_presets = next(group for group in presets["presetGroupArray"] if "photo" in group["id"].lower())
+    single_preset_id = next(preset for preset in photo_presets["presetArray"] if "single" in preset["mode"].lower())[
+        "id"
+    ]
     assert (await gopro.http_command.load_preset(preset=single_preset_id)).ok
 
     assert (await gopro.http_command.set_shutter(shutter=Params.Toggle.ENABLE)).ok
@@ -41,14 +37,8 @@ async def create_single_photo(gopro: WiredGoPro) -> MediaPath:
 async def create_burst_photo(gopro: WiredGoPro) -> MediaPath:
     # Set a "burst" photo preset
     presets = (await gopro.http_command.get_preset_status()).data
-    photo_presets = next(
-        group for group in presets["presetGroupArray"] if "photo" in group["id"].lower()
-    )
-    burst_preset_id = next(
-        preset
-        for preset in photo_presets["presetArray"]
-        if "burst" in preset["mode"].lower()
-    )["id"]
+    photo_presets = next(group for group in presets["presetGroupArray"] if "photo" in group["id"].lower())
+    burst_preset_id = next(preset for preset in photo_presets["presetArray"] if "burst" in preset["mode"].lower())["id"]
     assert (await gopro.http_command.load_preset(preset=burst_preset_id)).ok
 
     assert (await gopro.http_command.set_shutter(shutter=Params.Toggle.ENABLE)).ok
@@ -61,24 +51,12 @@ async def create_burst_photo(gopro: WiredGoPro) -> MediaPath:
 async def create_timelapse_photo(gopro: WiredGoPro) -> MediaPath:
     # Set a "timelapse" photo preset
     presets = (await gopro.http_command.get_preset_status()).data
-    timelapse_presets = next(
-        group
-        for group in presets["presetGroupArray"]
-        if "timelapse" in group["id"].lower()
-    )
-    assert (
-        await gopro.http_command.load_preset_group(
-            group=proto.EnumPresetGroup.PRESET_GROUP_ID_TIMELAPSE
-        )
-    ).ok
-    assert (
-        await gopro.http_setting.media_format.set(Params.MediaFormat.TIME_LAPSE_PHOTO)
-    ).ok
-    lapse_id = next(
-        preset
-        for preset in timelapse_presets["presetArray"]
-        if "lapse_photo" in preset["mode"].lower()
-    )["id"]
+    timelapse_presets = next(group for group in presets["presetGroupArray"] if "timelapse" in group["id"].lower())
+    assert (await gopro.http_command.load_preset_group(group=proto.EnumPresetGroup.PRESET_GROUP_ID_TIMELAPSE)).ok
+    assert (await gopro.http_setting.media_format.set(Params.MediaFormat.TIME_LAPSE_PHOTO)).ok
+    lapse_id = next(preset for preset in timelapse_presets["presetArray"] if "lapse_photo" in preset["mode"].lower())[
+        "id"
+    ]
     assert (await gopro.http_command.load_preset(preset=lapse_id)).ok
 
     # Take a timelapse
@@ -130,9 +108,7 @@ class TestOpenGoPro:
         assert burst_group not in media_list
 
     @pytest.mark.asyncio
-    async def test_delete_file_partially_deletes_timelapse_group(
-        self, gopro: WiredGoPro
-    ):
+    async def test_delete_file_partially_deletes_timelapse_group(self, gopro: WiredGoPro):
         # GIVEN
         timelapse_group = await create_timelapse_photo(gopro)
 

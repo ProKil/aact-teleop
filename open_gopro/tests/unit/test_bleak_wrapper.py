@@ -61,9 +61,7 @@ async def test_scan_success(mock_bleak_wrapper: BleakWrapperController, monkeypa
 
 
 @pytest.mark.asyncio
-async def test_scan_wrong_devices_found(
-    mock_bleak_wrapper: BleakWrapperController, monkeypatch
-):
+async def test_scan_wrong_devices_found(mock_bleak_wrapper: BleakWrapperController, monkeypatch):
     callback = asyncio.Queue()
 
     @dataclass
@@ -105,7 +103,8 @@ async def test_scan_wrong_devices_found(
 @pytest.mark.asyncio
 async def test_scan_timeout(mock_bleak_wrapper: BleakWrapperController, monkeypatch):
     class MockBleakScanner:
-        def __init__(self, *args, **kwargs) -> None: ...
+        def __init__(self, *args, **kwargs) -> None:
+            ...
 
         async def __aenter__(self, *args, **kwargs):
             return self
@@ -161,9 +160,7 @@ async def test_connect_timeout(mock_bleak_wrapper: BleakWrapperController, monke
 
 
 @pytest.mark.asyncio
-async def test_connect_fail_during_establishment(
-    mock_bleak_wrapper: BleakWrapperController, monkeypatch
-):
+async def test_connect_fail_during_establishment(mock_bleak_wrapper: BleakWrapperController, monkeypatch):
     callback = asyncio.Queue()
 
     class MockBleakClient:
@@ -200,9 +197,7 @@ async def test_discovery(mock_bleak_wrapper: BleakWrapperController):
 
     @dataclass
     class MockChar:
-        descriptors: list[MockDescriptor] = field(
-            default_factory=lambda: [MockDescriptor()]
-        )
+        descriptors: list[MockDescriptor] = field(default_factory=lambda: [MockDescriptor()])
         handle: int = 1
         uuid: BleUUID = GoProUUIDs.ACC_CENTRAL_ADDR_RES
         properties: list[str] = field(default_factory=lambda: ["broadcast", "read"])
@@ -222,9 +217,7 @@ async def test_discovery(mock_bleak_wrapper: BleakWrapperController):
         async def read_gatt_descriptor(self, *args):
             return 0
 
-    gatt_db = await mock_bleak_wrapper.discover_chars(
-        MockBleakClient(), uuids=GoProUUIDs
-    )
+    gatt_db = await mock_bleak_wrapper.discover_chars(MockBleakClient(), uuids=GoProUUIDs)
     assert len(gatt_db.services) == 1
     assert len(gatt_db.characteristics) == 1
     assert len(list(gatt_db.characteristics.values())[0].descriptors) == 1

@@ -24,9 +24,7 @@ class SsidState(IntEnum):
 class WifiController(ABC):
     """Interface definition for a Wifi driver to be used by GoPro."""
 
-    def __init__(
-        self, interface: Optional[str] = None, password: Optional[str] = None
-    ) -> None:
+    def __init__(self, interface: Optional[str] = None, password: Optional[str] = None) -> None:
         """Constructor
 
         Args:

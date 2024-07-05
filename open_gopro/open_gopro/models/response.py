@@ -261,13 +261,10 @@ class RequestsHttpRespBuilderDirector:
         parser (Parser | None): parsers to use on the requests response
     """
 
-    def __init__(
-        self, response: requests.models.Response, parser: Parser | None
-    ) -> None:
+    def __init__(self, response: requests.models.Response, parser: Parser | None) -> None:
+
         self.response = response
-        self.parser = parser or Parser(
-            json_parser=JsonParsers.LambdaParser(lambda data: data)
-        )
+        self.parser = parser or Parser(json_parser=JsonParsers.LambdaParser(lambda data: data))
 
     def __call__(self) -> GoProResp:
         """Build the response
@@ -308,9 +305,7 @@ class BleRespBuilder(RespBuilder[bytearray]):
         return isinstance(self._identifier, (ActionId, FeatureId))
 
     @classmethod
-    def get_response_identifier(
-        cls, uuid: BleUUID, packet: bytearray
-    ) -> types.ResponseType:
+    def get_response_identifier(cls, uuid: BleUUID, packet: bytearray) -> types.ResponseType:
         """Get the identifier based on what is currently known about the packet
 
         Args:
@@ -452,9 +447,7 @@ class BleRespBuilder(RespBuilder[bytearray]):
                 buf.pop(0)
 
             parsed: Any = None
-            query_type: (
-                type[StatusId] | type[SettingId] | StatusId | SettingId | None
-            ) = None
+            query_type: type[StatusId] | type[SettingId] | StatusId | SettingId | None = None
             # Need to delineate QueryCmd responses between settings and status
             if not self._is_protobuf:
                 if isinstance(self._identifier, (SettingId, StatusId)):
@@ -512,9 +505,7 @@ class BleRespBuilder(RespBuilder[bytearray]):
                         # This is the case where we receive a value that is not defined in our params.
                         # This shouldn't happen and means the documentation needs to be updated. However, it
                         # isn't functionally critical
-                        logger.warning(
-                            f"{param_id} does not contain a value {param_val}"
-                        )
+                        logger.warning(f"{param_id} does not contain a value {param_val}")
                         camera_state[param_id] = param_val
                 parsed = camera_state
 
@@ -524,18 +515,10 @@ class BleRespBuilder(RespBuilder[bytearray]):
                     self._status = ErrorCode(buf[0])
                     buf = buf[1:]
                 # Use parser if explicitly passed otherwise get global parser
-                if (
-                    not (
-                        parser := self._parser
-                        or GlobalParsers.get_parser(self._identifier)
-                    )
-                    and not is_cmd
-                ):
+                if not (parser := self._parser or GlobalParsers.get_parser(self._identifier)) and not is_cmd:
                     error_msg = f"No parser exists for {self._identifier}"
                     logger.error(error_msg)
-                    raise ResponseParseError(
-                        str(self._identifier), self._packet, msg=error_msg
-                    )
+                    raise ResponseParseError(str(self._identifier), self._packet, msg=error_msg)
                 # Parse payload if a parser was found.
                 if parser:
                     parsed = parser.parse(buf)
@@ -559,9 +542,4 @@ class BleRespBuilder(RespBuilder[bytearray]):
         # Recursively scrub away parsing artifacts
         self._state = RespBuilder._State.PARSED
 
-        return GoProResp(
-            protocol=GoProResp.Protocol.BLE,
-            status=self._status,
-            data=parsed,
-            identifier=self._identifier,
-        )
+        return GoProResp(protocol=GoProResp.Protocol.BLE, status=self._status, data=parsed, identifier=self._identifier)

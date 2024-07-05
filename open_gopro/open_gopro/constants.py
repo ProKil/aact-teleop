@@ -19,9 +19,7 @@ class GoProUUIDs(UUIDs):
     """GoPro Proprietary BleUUID's."""
 
     # GoPro Wifi Access Point Service
-    S_WIFI_ACCESS_POINT = BleUUID(
-        "Wifi Access Point Service", hex=GOPRO_BASE_UUID.format("0001")
-    )
+    S_WIFI_ACCESS_POINT = BleUUID("Wifi Access Point Service", hex=GOPRO_BASE_UUID.format("0001"))
     WAP_SSID = BleUUID("Wifi AP SSID", hex=GOPRO_BASE_UUID.format("0002"))
     WAP_PASSWORD = BleUUID("Wifi AP Password", hex=GOPRO_BASE_UUID.format("0003"))
     WAP_POWER = BleUUID("Wifi Power", hex=GOPRO_BASE_UUID.format("0004"))
@@ -29,9 +27,7 @@ class GoProUUIDs(UUIDs):
     WAP_CSI_PASSWORD = BleUUID("CSI Password", hex=GOPRO_BASE_UUID.format("0006"))
 
     # GoPro Control & Query Service
-    S_CONTROL_QUERY = BleUUID(
-        "Control and Query Service", hex="0000fea6-0000-1000-8000-00805f9b34fb"
-    )
+    S_CONTROL_QUERY = BleUUID("Control and Query Service", hex="0000fea6-0000-1000-8000-00805f9b34fb")
     CQ_COMMAND = BleUUID("Command", hex=GOPRO_BASE_UUID.format("0072"))
     CQ_COMMAND_RESP = BleUUID("Command Response", hex=GOPRO_BASE_UUID.format("0073"))
     CQ_SETTINGS = BleUUID("Settings", hex=GOPRO_BASE_UUID.format("0074"))
@@ -42,13 +38,9 @@ class GoProUUIDs(UUIDs):
     CQ_SENSOR_RESP = BleUUID("Sensor Response", hex=GOPRO_BASE_UUID.format("0079"))
 
     # GoPro Camera Management Service
-    S_CAMERA_MANAGEMENT = BleUUID(
-        "Camera Management Service", hex=GOPRO_BASE_UUID.format("0090")
-    )
+    S_CAMERA_MANAGEMENT = BleUUID("Camera Management Service", hex=GOPRO_BASE_UUID.format("0090"))
     CM_NET_MGMT_COMM = BleUUID("Camera Management", hex=GOPRO_BASE_UUID.format("0091"))
-    CN_NET_MGMT_RESP = BleUUID(
-        "Camera Management Response", hex=GOPRO_BASE_UUID.format("0092")
-    )
+    CN_NET_MGMT_RESP = BleUUID("Camera Management Response", hex=GOPRO_BASE_UUID.format("0092"))
 
     # Unknown
     S_INTERNAL = BleUUID("Unknown Service", hex=GOPRO_BASE_UUID.format("0080"))

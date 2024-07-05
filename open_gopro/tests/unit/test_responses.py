@@ -12,6 +12,7 @@ from open_gopro.api.parsers import JsonParsers
 from open_gopro.constants import (
     ActionId,
     CmdId,
+    ErrorCode,
     GoProUUIDs,
     QueryCmdId,
     SettingId,
@@ -19,13 +20,12 @@ from open_gopro.constants import (
 )
 from open_gopro.models.response import (
     BleRespBuilder,
+    HttpRespBuilder,
     RequestsHttpRespBuilderDirector,
 )
 
 # Resolution capability response with no valid capabilities
-test_push_receive_no_parameter = bytearray(
-    [0x08, 0xA2, 0x00, 0x02, 0x00, 0x03, 0x00, 0x79, 0x00]
-)
+test_push_receive_no_parameter = bytearray([0x08, 0xA2, 0x00, 0x02, 0x00, 0x03, 0x00, 0x79, 0x00])
 
 
 def test_push_response_no_parameter_values():
@@ -41,9 +41,7 @@ def test_push_response_no_parameter_values():
     assert r.data[SettingId.VIDEO_FOV] == []
 
 
-test_read_receive = bytearray(
-    [0x64, 0x62, 0x32, 0x2D, 0x73, 0x58, 0x56, 0x2D, 0x66, 0x62, 0x38]
-)
+test_read_receive = bytearray([0x64, 0x62, 0x32, 0x2D, 0x73, 0x58, 0x56, 0x2D, 0x66, 0x62, 0x38])
 
 
 def test_read_command():
@@ -474,11 +472,7 @@ def test_complex_write_command():
     builder.set_uuid(GoProUUIDs.CQ_QUERY_RESP)
     idx = 0
     while not builder.is_finished_accumulating:
-        end = (
-            len(test_complex_write_receive)
-            if idx + 20 > len(test_complex_write_receive)
-            else idx + 20
-        )
+        end = len(test_complex_write_receive) if idx + 20 > len(test_complex_write_receive) else idx + 20
         builder.accumulate(test_complex_write_receive[idx:end])
         idx = end
     assert builder.is_finished_accumulating
@@ -681,18 +675,14 @@ def test_http_response_with_extra_parsing():
     with requests_mock.Mocker() as m:
         m.get(url, json=test_json)
         response = requests.get(url)
-        director = RequestsHttpRespBuilderDirector(
-            response, JsonParsers.CameraStateParser()
-        )
+        director = RequestsHttpRespBuilderDirector(response, JsonParsers.CameraStateParser())
         r = director()
         assert "DEPRECATED" in r.data.values()
         assert r.ok
         assert len(str(r)) > 0
 
 
-receive_proto = bytes(
-    [0x0D, 0xF5, 0xFF, 0x28, 0x07, 0x30, 0x01, 0x38, 0x03, 0x40, 0x00, 0x80, 0x01, 0x01]
-)
+receive_proto = bytes([0x0D, 0xF5, 0xFF, 0x28, 0x07, 0x30, 0x01, 0x38, 0x03, 0x40, 0x00, 0x80, 0x01, 0x01])
 
 
 def test_proto():

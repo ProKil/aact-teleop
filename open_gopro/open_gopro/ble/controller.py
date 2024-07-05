@@ -51,12 +51,7 @@ class BLEController(ABC, Generic[BleDevice, BleHandle]):
         raise NotImplementedError
 
     @abstractmethod
-    async def scan(
-        self,
-        token: Pattern,
-        timeout: int = 5,
-        service_uuids: Optional[list[BleUUID]] = None,
-    ) -> BleDevice:
+    async def scan(self, token: Pattern, timeout: int = 5, service_uuids: Optional[list[BleUUID]] = None) -> BleDevice:
         """Scan BLE device with a regex in it's device name.
 
         Args:
@@ -70,9 +65,7 @@ class BLEController(ABC, Generic[BleDevice, BleHandle]):
         raise NotImplementedError
 
     @abstractmethod
-    async def connect(
-        self, disconnect_cb: DisconnectHandlerType, device: BleDevice, timeout: int = 15
-    ) -> BleHandle:
+    async def connect(self, disconnect_cb: DisconnectHandlerType, device: BleDevice, timeout: int = 15) -> BleHandle:
         """Connect to a BLE device.
 
         Args:
@@ -95,9 +88,7 @@ class BLEController(ABC, Generic[BleDevice, BleHandle]):
         raise NotImplementedError
 
     @abstractmethod
-    async def enable_notifications(
-        self, handle: BleHandle, handler: NotiHandlerType
-    ) -> None:
+    async def enable_notifications(self, handle: BleHandle, handler: NotiHandlerType) -> None:
         """Enable notifications for all notifiable characteristics.
 
         The handler is used to register for notifications. It will be called when a a notification
@@ -110,9 +101,7 @@ class BLEController(ABC, Generic[BleDevice, BleHandle]):
         raise NotImplementedError
 
     @abstractmethod
-    async def discover_chars(
-        self, handle: BleHandle, uuids: Optional[type[UUIDs]] = None
-    ) -> GattDB:
+    async def discover_chars(self, handle: BleHandle, uuids: Optional[type[UUIDs]] = None) -> GattDB:
         """Discover all characteristics for a connected handle.
 
         By default, the BLE controller only knows Spec-Defined BleUUID's so any additional BleUUID's should

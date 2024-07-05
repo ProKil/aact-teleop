@@ -32,15 +32,11 @@ async def main(args: argparse.Namespace) -> None:
                 console.print("[yellow]COHN is already provisioned")
             else:
                 if not args.ssid or not args.password:
-                    raise ValueError(
-                        "COHN needs to be provisioned but you didn't pass SSID credentials."
-                    )
+                    raise ValueError("COHN needs to be provisioned but you didn't pass SSID credentials.")
                 assert await gopro.connect_to_access_point(args.ssid, args.password)
             assert await gopro.configure_cohn()
 
-            console.print(
-                "[blue]COHN is ready for communication. Dropping the BLE connection."
-            )
+            console.print("[blue]COHN is ready for communication. Dropping the BLE connection.")
 
         # Prove we can communicate via the COHN HTTP channel without a BLE or Wifi connection
         assert (await gopro.http_command.get_camera_state()).ok

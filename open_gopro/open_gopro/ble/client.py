@@ -62,9 +62,7 @@ class BleClient(Generic[BleHandle, BleDevice]):
         self._gatt_table: Optional[GattDB] = None
         self._device: Optional[BleDevice] = None
         self._handle: Optional[BleHandle] = None
-        self._identifier: Optional[str] = (
-            None if isinstance(self._target, Pattern) else str(self._target)
-        )
+        self._identifier: Optional[str] = None if isinstance(self._target, Pattern) else str(self._target)
         self.uuids = uuids
 
     async def _find_device(self, timeout: int = 5, retries: int = 30) -> None:
@@ -81,14 +79,10 @@ class BleClient(Generic[BleHandle, BleDevice]):
         assert isinstance(self._target, Pattern)
         for retry in range(1, retries):
             try:
-                self._device = await self._controller.scan(
-                    self._target, timeout, self._service_uuids
-                )
+                self._device = await self._controller.scan(self._target, timeout, self._service_uuids)
                 return
             except FailedToFindDevice:
-                logger.warning(
-                    f"Failed to find a device in {timeout} seconds. Retrying #{retry}"
-                )
+                logger.warning(f"Failed to find a device in {timeout} seconds. Retrying #{retry}")
         raise FailedToFindDevice
 
     async def open(self, timeout: int = 10, retries: int = 5) -> None:
@@ -112,9 +106,7 @@ class BleClient(Generic[BleHandle, BleDevice]):
         logger.info("Establishing the BLE connection")
         for retry in range(1, retries):
             try:
-                self._handle = await self._controller.connect(
-                    self._disconnected_cb, self._device, timeout=timeout
-                )
+                self._handle = await self._controller.connect(self._disconnected_cb, self._device, timeout=timeout)
                 break
             except ConnectFailed as e:
                 logger.warning(f"Failed to connect. Retrying #{retry}")
@@ -125,9 +117,7 @@ class BleClient(Generic[BleHandle, BleDevice]):
         # Attempt to pair
         await self._controller.pair(self._handle)
         # Discover characteristics
-        self._gatt_table = await self._controller.discover_chars(
-            self._handle, self.uuids
-        )
+        self._gatt_table = await self._controller.discover_chars(self._handle, self.uuids)
         # Enable all GATT notifications
         await self._controller.enable_notifications(self._handle, self._notification_cb)
 
