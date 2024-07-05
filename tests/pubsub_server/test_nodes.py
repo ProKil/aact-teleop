@@ -4,16 +4,18 @@ import pytest
 from pytest_mock import MockerFixture
 import pytest_asyncio
 from pubsub_server import Node, Message
-from pydantic import BaseModel
+from pubsub_server.messages import DataModel, DataModelFactory
 import fakeredis
 from redis.asyncio import Redis
 
 
-class InputModel(BaseModel):
+@DataModelFactory.register("input")
+class InputModel(DataModel):
     data: str
 
 
-class OutputModel(BaseModel):
+@DataModelFactory.register("output")
+class OutputModel(DataModel):
     result: str
 
 

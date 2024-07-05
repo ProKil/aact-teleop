@@ -1,21 +1,23 @@
 from typing import Any, Annotated
-from .base import Message
-from pydantic import BaseModel, PlainValidator, PlainSerializer, WithJsonSchema
+
+from pubsub_server.messages.registry import DataModelFactory
+from .base import DataModel
+from pydantic import PlainValidator, PlainSerializer, WithJsonSchema
 
 
-class Zero(BaseModel):
+@DataModelFactory.register("zero")
+class Zero(DataModel):
     pass
 
 
-class Tick(BaseModel):
+@DataModelFactory.register("tick")
+class Tick(DataModel):
     tick: int
 
 
-class Float(BaseModel):
+@DataModelFactory.register("float")
+class Float(DataModel):
     value: float
-
-
-TickMessage = Message[Tick]
 
 
 def hex_bytes_validator(o: Any) -> bytes:
@@ -36,8 +38,6 @@ HexBytes = Annotated[
 ]
 
 
-class Image(BaseModel):
+@DataModelFactory.register("image")
+class Image(DataModel):
     image: HexBytes
-
-
-ImageMessage = Message[Image]

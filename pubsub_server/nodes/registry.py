@@ -1,16 +1,16 @@
 import logging
 from typing import Any, Callable, TypeVar
+
+from pubsub_server.messages.base import DataModel
 from .base import Node
 
-from pydantic import BaseModel
-
 logger = logging.getLogger(__name__)
-InputType = TypeVar("InputType", bound=BaseModel)
-OutputType = TypeVar("OutputType", bound=BaseModel)
+InputType = TypeVar("InputType", bound=DataModel)
+OutputType = TypeVar("OutputType", bound=DataModel)
 
 
 class NodeFactory:
-    registry: dict[str, type[Node[BaseModel, BaseModel]]] = {}
+    registry: dict[str, type[Node[DataModel, DataModel]]] = {}
 
     @classmethod
     def register(
@@ -29,7 +29,7 @@ class NodeFactory:
         return inner_wrapper
 
     @classmethod
-    def make(cls, name: str, **kwargs: Any) -> Node[BaseModel, BaseModel]:
+    def make(cls, name: str, **kwargs: Any) -> Node[DataModel, DataModel]:
         if name not in cls.registry:
             raise ValueError(f"Executor {name} not found in registry")
         return cls.registry[name](**kwargs)

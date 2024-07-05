@@ -16,7 +16,7 @@ from pubsub_server.messages import Float
 async def test_launch() -> None:
     # Start the subprocess in a new process group
     s = subprocess.Popen(
-        [f"pubsub run-dataflow --dataflow-toml {Path(__file__).parent / 'test.toml'}"],
+        [f"pubsub run-dataflow {Path(__file__).parent / 'test.toml'}"],
         shell=True,
         preexec_fn=os.setsid,
     )

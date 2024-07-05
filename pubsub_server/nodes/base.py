@@ -5,8 +5,10 @@ from abc import abstractmethod
 from pubsub_server.messages import Message
 from redis.asyncio import Redis
 
-InputType = TypeVar("InputType", covariant=True)
-OutputType = TypeVar("OutputType", covariant=True)
+from pubsub_server.messages.base import DataModel
+
+InputType = TypeVar("InputType", covariant=True, bound=DataModel)
+OutputType = TypeVar("OutputType", covariant=True, bound=DataModel)
 
 
 class Node(BaseModel, Generic[InputType, OutputType]):
