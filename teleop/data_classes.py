@@ -1,11 +1,14 @@
-from pydantic import BaseModel, Field, AfterValidator
+from pydantic import Field, AfterValidator
 from typing import Annotated
+
+from pubsub_server.messages import DataModel, DataModelFactory
 from .utils import _normalize_angle
 
 NormalizedAngle = Annotated[float, AfterValidator(lambda v: _normalize_angle(v))]
 
 
-class TargetPosition(BaseModel):
+@DataModelFactory.register("target_position")
+class TargetPosition(DataModel):
     x: Annotated[float, AfterValidator(lambda x: min(max(x, -3), 3))] = Field(
         default=0, description="x position."
     )

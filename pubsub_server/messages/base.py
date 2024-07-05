@@ -1,9 +1,14 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-from typing import Generic, TypeVar
+from typing import Generic, Literal, TypeVar
 
-T = TypeVar("T")
+
+class DataModel(BaseModel):
+    data_type: Literal[""] = Field("")
+
+
+T = TypeVar("T", bound=DataModel)
 
 
 class Message(BaseModel, Generic[T]):
-    data: T
+    data: T = Field(discriminator="data_type")

@@ -1,6 +1,6 @@
 from .base import Node
-from .registry import NodeFactory
 from .tick import TickNode
 from .random import RandomNode
+from .registry import NodeFactory
 
-__all__ = ["Node", "NodeFactory", "TickNode", "RandomNode"]
+__all__ = ["Node", "TickNode", "RandomNode", "NodeFactory"]

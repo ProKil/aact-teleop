@@ -1,5 +1,5 @@
-from .base import Message
+from .base import Message, DataModel
+from .commons import Zero, Tick, Image, Float
+from .registry import DataModelFactory
 
-from .commons import Zero, Tick, Image, Float, ImageMessage, TickMessage
-
-__all__ = ["Zero", "Message", "Tick", "Image", "ImageMessage", "TickMessage", "Float"]
+__all__ = ["Zero", "Message", "Tick", "Image", "Float", "DataModelFactory", "DataModel"]
