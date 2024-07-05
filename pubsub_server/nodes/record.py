@@ -1,39 +1,46 @@
 import asyncio
 from datetime import datetime
-from typing import Any, AsyncIterator, Self
+from typing import Any, AsyncIterator, Generic, Self, TypeVar
 
-from pydantic import BaseModel
-from pubsub_server import Node, NodeFactory, Message
-from pubsub_server.messages import DataModel
-from pubsub_server.messages import Zero
+from pydantic import BaseModel, Field
+from .base import Node
+from .registry import NodeFactory
+from pubsub_server.messages import DataModel, Zero, Message
 from pubsub_server.messages.registry import DataModelFactory
 
 from aiofiles import open
 from aiofiles.threadpool.text import AsyncTextIOWrapper
 
 
-class DataEntry(BaseModel):
-    timestamp: datetime = datetime.now()
+T = TypeVar("T", bound=DataModel)
+
+
+class DataEntry(BaseModel, Generic[T]):
+    timestamp: datetime = Field(default_factory=datetime.now)
     channel: str
-    data: DataModel
+    data: T
 
 
 @NodeFactory.register("record")
 class RecordNode(Node[DataModel, Zero]):
-    def __init__(self, recorded_channel_and_types: dict[str, str], json_file_path: str):
+    def __init__(
+        self, record_channel_types: dict[str, str], json_file_path: str, redis_url: str
+    ):
         input_channel_types: list[tuple[str, type[DataModel]]] = []
-        for channel, channel_type_string in recorded_channel_and_types.items():
+        for channel, channel_type_string in record_channel_types.items():
             input_channel_types.append(
                 (channel, DataModelFactory.registry[channel_type_string])
             )
+        super().__init__(
+            input_channel_types=input_channel_types,
+            output_channel_types=[],
+            redis_url=redis_url,
+        )
         self.json_file_path = json_file_path
         self.aioContextManager = open(self.json_file_path, "w")
         self.json_file: AsyncTextIOWrapper | None = None
-        self.write_queue: asyncio.Queue[DataEntry] = asyncio.Queue()
+        self.write_queue: asyncio.Queue[DataEntry[DataModel]] = asyncio.Queue()
         self.write_task: asyncio.Task[None] | None = None
-        super().__init__(
-            input_channel_types=input_channel_types, output_channel_types=[]
-        )
 
     async def __aenter__(self) -> Self:
         self.json_file = await self.aioContextManager.__aenter__()
@@ -48,7 +55,7 @@ class RecordNode(Node[DataModel, Zero]):
     async def write_to_file(self) -> None:
         while self.json_file:
             data_entry = await self.write_queue.get()
-            await self.json_file.write(data_entry.model_dump_json())
+            await self.json_file.write(data_entry.model_dump_json() + "\n")
             self.write_queue.task_done()
 
     async def event_handler(
@@ -56,7 +63,9 @@ class RecordNode(Node[DataModel, Zero]):
     ) -> AsyncIterator[tuple[str, Message[Zero]]]:
         if input_channel in self.input_channel_types:
             await self.write_queue.put(
-                DataEntry(channel=input_channel, data=input_message.data)
+                DataEntry[self.input_channel_types[input_channel]](  # type: ignore[name-defined]
+                    channel=input_channel, data=input_message.data
+                )
             )
         else:
             yield input_channel, Message[Zero](data=Zero())
