@@ -113,7 +113,7 @@ async def video_feed_2(input_channel_1: str, input_channel_2: str) -> StreamingR
                     if input_channel == input_channel_1:
                         image1 = message.data.image
                         assert isinstance(image1, bytes)
-                    elif input_channel_2 == input_channel_2:
+                    elif input_channel == input_channel_2:
                         image2 = message.data.image
                         assert isinstance(image2, bytes)
                     yield (
