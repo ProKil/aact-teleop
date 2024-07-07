@@ -1,4 +1,4 @@
-extra_modules = ["teleop.vr_controller_node"]
+extra_modules = ["teleop.vr_controller_node", "teleop.data_classes"]
 
 [[nodes]]
 node_name = "quest_controller"
@@ -7,3 +7,16 @@ node_name = "quest_controller"
 input_channel = "quest_status"
 output_channel = "quest_control"
 translation_speed = 10
+
+[[nodes]]
+node_name = "record"
+run_in_subprocess = true
+
+[nodes.node_args]
+json_file_path = "record.jsonl"
+
+[nodes.node_args.record_channel_types]
+"stretch_status" = "target_position"
+"quest_control" = "target_position"
+"head_cam" = "image"
+"wrist_cam" = "image"
