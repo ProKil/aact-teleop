@@ -4,7 +4,7 @@ extra_modules = ["teleop.vr_controller_node", "teleop.data_classes"]
 node_name = "quest_controller"
 
 [nodes.node_args]
-input_channel = "quest_status"
+input_channel = "stretch_status"
 output_channel = "quest_control"
 translation_speed = 10
 
