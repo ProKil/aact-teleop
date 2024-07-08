@@ -25,6 +25,23 @@ files = [
 pyserial = "*"
 
 [[package]]
+name = "aiostream"
+version = "0.6.1"
+description = "Generator-based operators for asynchronous iteration"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "aiostream-0.6.1-py3-none-any.whl", hash = "sha256:9894a8a622497c6340e18d85787b2f36a8ac1b37a1ffc43ec1152bbd43916a69"},
+    {file = "aiostream-0.6.1.tar.gz", hash = "sha256:7bef8046e56f69b81c2d7cc394893dd9021046c3e02295968d3be0cb9e606196"},
+]
+
+[package.dependencies]
+typing-extensions = "*"
+
+[package.extras]
+dev = ["pytest", "pytest-asyncio", "pytest-cov"]
+
+[[package]]
 name = "annotated-types"
 version = "0.7.0"
 description = "Reusable constraint types to use with typing.Annotated"
@@ -5520,4 +5537,4 @@ pyzmq = "*"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11.9"
-content-hash = "6c1fb30b3023d34037164ee8af6aa164efe51f975b02e7f2d1e69c7c95e02fcb"
+content-hash = "71f8b4ccc4916205b200512973fa455931dd3b0919c518dec35a5f51a54cb528"
