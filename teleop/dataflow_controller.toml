@@ -13,7 +13,7 @@ node_name = "record"
 run_in_subprocess = true
 
 [nodes.node_args]
-json_file_path = "record.jsonl"
+jsonl_file_path = "record.jsonl"
 
 [nodes.node_args.record_channel_types]
 "stretch_status" = "target_position"

@@ -1,8 +1,9 @@
-from typing import Any, Annotated
+from datetime import datetime
+from typing import Any, Annotated, Generic, TypeVar
 
 from pubsub_server.messages.registry import DataModelFactory
 from .base import DataModel
-from pydantic import PlainValidator, PlainSerializer, WithJsonSchema
+from pydantic import Field, PlainValidator, PlainSerializer, WithJsonSchema, BaseModel
 
 
 @DataModelFactory.register("zero")
@@ -41,3 +42,12 @@ HexBytes = Annotated[
 @DataModelFactory.register("image")
 class Image(DataModel):
     image: HexBytes
+
+
+T = TypeVar("T", bound=DataModel)
+
+
+class DataEntry(BaseModel, Generic[T]):
+    timestamp: datetime = Field(default_factory=datetime.now)
+    channel: str
+    data: T
