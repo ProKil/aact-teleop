@@ -1,7 +1,8 @@
 from typing import Any, AsyncIterator, Self
 import pyaudio
-from pubsub_server import Node, Message, NodeFactory
-from pubsub_server.messages import Audio, Zero
+from .base import Node
+from .registry import NodeFactory
+from pubsub_server.messages import Audio, Zero, Message
 
 
 @NodeFactory.register("speaker")
@@ -9,10 +10,12 @@ class SpeakerNode(Node[Audio, Zero]):
     def __init__(
         self,
         input_channel: str,
+        redis_url: str,
     ):
         super().__init__(
             input_channel_types=[(input_channel, Audio)],
             output_channel_types=[],
+            redis_url=redis_url,
         )
         self.input_channel = input_channel
         self.audio = pyaudio.PyAudio()

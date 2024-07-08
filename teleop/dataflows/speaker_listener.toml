@@ -1,0 +1,13 @@
+[[nodes]]
+node_name = "speaker"
+run_in_subprocess = true
+
+[nodes.node_args]
+input_channel = "audio_input"
+
+[[nodes]]
+node_name = "listener"
+run_in_subprocess = true
+
+[nodes.node_args]
+output_channel = "audio_input"
