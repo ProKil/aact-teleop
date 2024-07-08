@@ -14,11 +14,14 @@ import cv2
 @NodeFactory.register("gopro")
 class GoProNode(Node[Tick, Image]):
     def __init__(
-        self, output_channel: str, redis_url: str = "redis://localhost:6379/0"
+        self,
+        input_tick_channel: str,
+        output_channel: str,
+        redis_url: str = "redis://localhost:6379/0",
     ):
         super().__init__(
             input_channel_types=[
-                ("tick/millis/10", Tick),
+                (input_tick_channel, Tick),
             ],
             output_channel_types=[
                 (output_channel, Image),
@@ -124,25 +127,3 @@ class GoProNode(Node[Tick, Image]):
             )
         else:
             return
-
-
-async def _main() -> None:
-    import os
-
-    if "REDIS_URL" in os.environ:
-        redis_url = os.environ["REDIS_URL"]
-        node = GoProNode(
-            output_channel="gopro/image",
-            redis_url=redis_url,
-        )
-    else:
-        node = GoProNode(output_channel="gopro/image")
-    async with node:
-        await node.event_loop()
-
-
-if __name__ == "__main__":
-    import dotenv
-
-    dotenv.load_dotenv()
-    asyncio.run(_main())
