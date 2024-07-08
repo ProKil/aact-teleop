@@ -12,13 +12,14 @@ from pubsub_server.messages import Tick, Image
 class WebcamNode(Node[Tick, Image]):
     def __init__(
         self,
+        input_tick_channel: str,
         output_channel: str,
         webcam_id: str,
         redis_url: str = "redis://localhost:6379/0",
     ):
         super().__init__(
             input_channel_types=[
-                ("tick/millis/10", Tick),
+                (input_tick_channel, Tick),
             ],
             output_channel_types=[
                 (output_channel, Image),

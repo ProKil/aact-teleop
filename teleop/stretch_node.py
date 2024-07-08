@@ -24,19 +24,21 @@ class StretchNode(Node[TargetPosition | Tick, TargetPosition]):
     def __init__(
         self,
         input_channel: str,
+        input_tick_channel: str,
         output_channel: str,
         redis_url: str = "redis://localhost:6379/0",
     ):
         super().__init__(
             input_channel_types=[
                 (input_channel, TargetPosition),
-                ("tick/millis/10", Tick),
+                (input_tick_channel, Tick),
             ],
             output_channel_types=[
                 (output_channel, TargetPosition),
             ],
             redis_url=redis_url,
         )
+        self.input_tick_channel = input_tick_channel
         self.output_channel = output_channel
         self.robot: Robot = Robot()
         self.tasks: list[asyncio.Task[None]] = []
@@ -128,7 +130,7 @@ class StretchNode(Node[TargetPosition | Tick, TargetPosition]):
     async def event_handler(
         self, input_channel: str, input_message: Message[TargetPosition | Tick]
     ) -> AsyncIterator[tuple[str, Message[TargetPosition]]]:
-        if input_channel == "tick/millis/10":
+        if input_channel == self.input_tick_channel:
             yield (
                 self.output_channel,
                 Message[TargetPosition](data=self.current_position),
