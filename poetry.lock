@@ -4811,6 +4811,17 @@ files = [
 ]
 
 [[package]]
+name = "types-pyaudio"
+version = "0.2.16.20240516"
+description = "Typing stubs for pyaudio"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-pyaudio-0.2.16.20240516.tar.gz", hash = "sha256:f1c419ccc78b00d26c6c1ae4fcb17f7e4f08af2c2b9b73b12fcbc4a4ffa3a2c7"},
+    {file = "types_pyaudio-0.2.16.20240516-py3-none-any.whl", hash = "sha256:40063f13ae15a422cbd4a2a783653eb3e1091bdd23fc7ab8ca3abc21ad0d13f8"},
+]
+
+[[package]]
 name = "types-python-dateutil"
 version = "2.9.0.20240316"
 description = "Typing stubs for python-dateutil"
@@ -5560,4 +5571,4 @@ pyzmq = "*"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11.9"
-content-hash = "c51140e78d82dfcb8f8b674263d5c4828b8f84d436c98da81c3b6d0dce1059b6"
+content-hash = "b00f1f5774c21ae93ad007f4bc37483e9849da97d077a33486acdc2f42855776"

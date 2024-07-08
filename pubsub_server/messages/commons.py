@@ -41,3 +41,8 @@ HexBytes = Annotated[
 @DataModelFactory.register("image")
 class Image(DataModel):
     image: HexBytes
+
+
+@DataModelFactory.register("audio")
+class Audio(DataModel):
+    audio: HexBytes
