@@ -57,7 +57,7 @@ async def video_feed(input_channel: str) -> StreamingResponse:
     )
 
 
-def combine_frame(image1, image2):
+def combine_frame(image1: bytes | None, image2: bytes | None) -> bytes:
     # Decode byte streams to images using OpenCV
     if image1 is not None and image2 is not None:
         np_img1 = np.frombuffer(image1, np.uint8)
@@ -93,7 +93,7 @@ def combine_frame(image1, image2):
     elif image1 is None and image2 is not None:
         return image2
     else:
-        return None
+        raise ValueError("Both image1 and image2 are None")
 
 
 @app.get("/combined_feed")
