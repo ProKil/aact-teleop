@@ -56,6 +56,7 @@ class RecordNode(Node[DataModel, Zero]):
         while self.json_file:
             data_entry = await self.write_queue.get()
             await self.json_file.write(data_entry.model_dump_json() + "\n")
+            await self.json_file.flush()
             self.write_queue.task_done()
 
     async def event_handler(
