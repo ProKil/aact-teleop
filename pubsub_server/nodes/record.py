@@ -1,8 +1,9 @@
 import asyncio
 from datetime import datetime
-from typing import Any, AsyncIterator, Generic, Self, TypeVar
+from typing import Any, AsyncIterator, Self
 
-from pydantic import BaseModel, Field
+from pubsub_server.messages.commons import DataEntry
+
 from .base import Node
 from .registry import NodeFactory
 from pubsub_server.messages import DataModel, Zero, Message
@@ -12,32 +13,35 @@ from aiofiles import open
 from aiofiles.threadpool.text import AsyncTextIOWrapper
 
 
-T = TypeVar("T", bound=DataModel)
-
-
-class DataEntry(BaseModel, Generic[T]):
-    timestamp: datetime = Field(default_factory=datetime.now)
-    channel: str
-    data: T
-
-
 @NodeFactory.register("record")
 class RecordNode(Node[DataModel, Zero]):
     def __init__(
-        self, record_channel_types: dict[str, str], json_file_path: str, redis_url: str
+        self,
+        record_channel_types: dict[str, str],
+        jsonl_file_path: str,
+        redis_url: str,
+        add_datetime: bool = True,
     ):
         input_channel_types: list[tuple[str, type[DataModel]]] = []
         for channel, channel_type_string in record_channel_types.items():
             input_channel_types.append(
                 (channel, DataModelFactory.registry[channel_type_string])
             )
+        if add_datetime:
+            # add a datetime to jsonl_file_path before the extension. The file can have any extension.
+            jsonl_file_path = (
+                jsonl_file_path[: jsonl_file_path.rfind(".")]
+                + datetime.now().strftime("_%Y-%m-%d_%H-%M-%S")
+                + jsonl_file_path[jsonl_file_path.rfind(".") :]
+            )
+
         super().__init__(
             input_channel_types=input_channel_types,
             output_channel_types=[],
             redis_url=redis_url,
         )
-        self.json_file_path = json_file_path
-        self.aioContextManager = open(self.json_file_path, "w")
+        self.jsonl_file_path = jsonl_file_path
+        self.aioContextManager = open(self.jsonl_file_path, "w")
         self.json_file: AsyncTextIOWrapper | None = None
         self.write_queue: asyncio.Queue[DataEntry[DataModel]] = asyncio.Queue()
         self.write_task: asyncio.Task[None] | None = None
