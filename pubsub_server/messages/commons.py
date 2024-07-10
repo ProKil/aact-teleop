@@ -44,6 +44,11 @@ class Image(DataModel):
     image: HexBytes
 
 
+@DataModelFactory.register("audio")
+class Audio(DataModel):
+    audio: HexBytes
+
+
 T = TypeVar("T", bound=DataModel)
 
 
