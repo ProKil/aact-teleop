@@ -23,6 +23,13 @@ output_channel = "head_cam"
 webcam_id = 6
 
 [[nodes]]
+node_name = "listener"
+run_in_subprocess = true
+
+[nodes.node_args]
+output_channel = "audio_input"
+
+[[nodes]]
 node_name = "stretch"
 run_in_subprocess = true # stretch body uses multiprocessing, so it had to be run in a subprocess
 

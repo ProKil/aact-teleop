@@ -12,3 +12,10 @@ __pycache__/
 *.egg-info/
 .DS_Store
 .vscode/
+
+# Ignore all files under ./dataflows
+/dataflows/*
+
+# Do not ignore files under ./dataflows/examples
+!/dataflows/examples/
+!/dataflows/examples/**
