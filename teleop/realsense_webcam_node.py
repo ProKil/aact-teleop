@@ -21,19 +21,23 @@ class RealsenseWebcamNode(WebcamNode):
         webcam_id: str,
         redis_url: str = "redis://localhost:6379/0",
     ):
-        super().init(input_tick_channel, output_channel, webcam_id, redis_url)
+        super().__init__(input_tick_channel, output_channel, webcam_id, redis_url)
 
 
     async def update_video_feed(self) -> None:
         """
         Use a different process to update the video feed.
         """
+
+        self.logger.debug("Starting video feed.")
+
         #serial number first input 
         pipeline = setup_realsense_camera(None, (1280, 720), (1280, 720), 30)
 
+
         while not self.shutdown_event.is_set():            
             start_time = time.time()
-            frames = pipeline.wait_for_frames() 
+            frames = pipeline.wait_for_frames()
             color_frame = frames.get_color_frame()
             if not color_frame:
                 continue
