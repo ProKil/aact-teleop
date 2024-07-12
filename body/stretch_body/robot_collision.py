@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 
 from stretch_body.device import Device
+import numpy as np
+np.bool = np.bool_
 import urchin as urdf_loader
 import meshio
-import numpy as np
 import time
 import threading
 import chime
