@@ -60,7 +60,7 @@ class RealsenseWebcamNode(WebcamNode):
         config.enable_stream(rs.stream.depth, width, height, rs.format.z16, fps)
         config.enable_stream(rs.stream.color, width, height, rs.format.bgr8, fps)
 
-        profile = pipeline.start(config)
+        pipeline.start(config)
 
         # self.logger.debug("wrist cam pipeline set up successfully")
 
