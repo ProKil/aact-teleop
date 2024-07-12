@@ -1,17 +1,13 @@
 import asyncio
-from logging import getLogger
 import time
-from typing import Any, AsyncIterator, Self
 
 import cv2
-from pubsub_server import Node, NodeFactory, Message
-from pubsub_server.messages import Tick, Image
+from pubsub_server import NodeFactory
 from teleop.webcam_node import WebcamNode
 
 import numpy as np
 
-from stretch_body.hello_utils import setup_realsense_camera  # type: ignore
-import pyrealsense2 as rs
+import pyrealsense2 as rs  # type: ignore
 
 
 @NodeFactory.register("realsense_wrist")
@@ -25,7 +21,6 @@ class RealsenseWebcamNode(WebcamNode):
     ):
         super().__init__(input_tick_channel, output_channel, webcam_id, redis_url)
 
-
     async def update_video_feed(self) -> None:
         """
         Use a different process to update the video feed.
@@ -33,40 +28,43 @@ class RealsenseWebcamNode(WebcamNode):
 
         self.logger.debug("Starting wrist video feed.")
 
-        #get the serial number of the wrist camera
-        camera_info = [{'name': device.get_info(rs.camera_info.name),
-                    'serial_number': device.get_info(rs.camera_info.serial_number)}
-                   for device
-                   in rs.context().devices]
+        # get the serial number of the wrist camera
+        camera_info = [
+            {
+                "name": device.get_info(rs.camera_info.name),
+                "serial_number": device.get_info(rs.camera_info.serial_number),
+            }
+            for device in rs.context().devices
+        ]
         d405_info = None
 
         for info in camera_info:
-            if info['name'].endswith('D405'):
+            if info["name"].endswith("D405"):
                 d405_info = info
         if d405_info is None:
-            self.logger.debug('Error: wrist camera not found')
+            self.logger.debug("Error: wrist camera not found")
+            return
 
-        #serial number first input 
-        #pipeline = setup_realsense_camera(d405_info['serial_number'], (1280, 720), (1280, 720), 30)
-        
+        # serial number first input
+        # pipeline = setup_realsense_camera(d405_info['serial_number'], (1280, 720), (1280, 720), 30)
+
         pipeline = rs.pipeline()
         config = rs.config()
-        config.enable_device(d405_info['serial_number'])
-        
+        config.enable_device(d405_info["serial_number"])
+
         # 1280 x 720, 5 fps
         # 848 x 480, 10 fps
         # 640 x 480, 30 fps
-        
+
         width, height, fps = 640, 480, 15
         config.enable_stream(rs.stream.depth, width, height, rs.format.z16, fps)
         config.enable_stream(rs.stream.color, width, height, rs.format.bgr8, fps)
 
         profile = pipeline.start(config)
 
-        #self.logger.debug("wrist cam pipeline set up successfully")
+        # self.logger.debug("wrist cam pipeline set up successfully")
 
-
-        while not self.shutdown_event.is_set():            
+        while not self.shutdown_event.is_set():
             start_time = time.time()
             frames = pipeline.wait_for_frames()
             color_frame = frames.get_color_frame()
