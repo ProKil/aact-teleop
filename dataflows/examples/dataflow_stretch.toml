@@ -10,12 +10,9 @@ node_name = "gopro"
 input_tick_channel = "tick/millis/50"
 output_channel = "wrist_cam"
 
-#[[nodes]]
-#node_name = "webcam"
-#run_in_subprocess = true
-
-node_name = "realsense" 
-run_in_subprocess = true 
+[[nodes]]
+node_name = "webcam"
+run_in_subprocess = true
 
 [nodes.node_args]
 input_tick_channel = "tick/millis/50"
