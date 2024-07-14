@@ -131,13 +131,20 @@ def run_dataflow(
         _cleanup_subprocesses()
 
 
-@app.command()
+@app.command(help="A nice debugging feature. Draw dataflows with Mermaid.")
 def draw_dataflow(
     dataflow_toml: Annotated[
-        list[str], typer.Argument(help="Configuration dataflow toml file")
+        list[str],
+        typer.Argument(
+            help="Configuration dataflow toml files. "
+            "You can provide multiple toml files to draw multiple dataflows on one graph."
+        ),
     ],
     svg_path: Optional[str] = typer.Option(
-        None, help="Path to save the svg file of the dataflow graph."
+        None,
+        help="Path to save the svg file of the dataflow graph. "
+        "If you don't set this, the mermaid code will be printed. "
+        "If you set this, we will also render an svg picture of the dataflow graph.",
     ),
 ) -> None:
     dataflows = [
