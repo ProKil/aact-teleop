@@ -2,11 +2,11 @@ import asyncio
 import logging
 import os
 import signal
-from typing import Annotated, Any, TypeVar
+from typing import Annotated, Any, Optional, TypeVar
 from ..app import app
+from ..reader import get_dataflow_config, draw_dataflow_mermaid, NodeConfig, Config
 import typer
 
-from pydantic import BaseModel, ConfigDict, Field
 from pubsub_server import NodeFactory
 
 from multiprocessing import Pool
@@ -18,31 +18,13 @@ InputType = TypeVar("InputType")
 OutputType = TypeVar("OutputType")
 
 
-class NodeArgs(BaseModel):
-    model_config = ConfigDict(extra="allow")
-
-
-class NodeConfig(BaseModel):
-    node_name: str
-    run_in_subprocess: bool = Field(default=False)
-    node_args: NodeArgs = Field(default_factory=NodeArgs)
-
-
-class Config(BaseModel):
-    redis_url: str = Field(
-        default_factory=lambda: os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-    )
-    extra_modules: list[str] = Field(default_factory=lambda: list())
-    nodes: list[NodeConfig]
-
-
 async def _run_node(node_config: NodeConfig, redis_url: str) -> None:
     logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger(__name__)
     logger.info(f"Starting node {node_config}")
     try:
         async with NodeFactory.make(
-            node_config.node_name,
+            node_config.node_class,
             **node_config.node_args.model_dump(),
             redis_url=redis_url,
         ) as node:
@@ -147,3 +129,20 @@ def run_dataflow(
         _cleanup_subprocesses()
     finally:
         _cleanup_subprocesses()
+
+
+@app.command()
+def draw_dataflow(
+    dataflow_toml: Annotated[
+        list[str], typer.Argument(help="Configuration dataflow toml file")
+    ],
+    svg_path: Optional[str] = typer.Option(
+        None, help="Path to save the svg file of the dataflow graph."
+    ),
+) -> None:
+    dataflows = [
+        get_dataflow_config(single_dataflow_toml)
+        for single_dataflow_toml in dataflow_toml
+    ]
+
+    draw_dataflow_mermaid(dataflows, dataflow_toml, svg_path)
