@@ -1,5 +1,6 @@
 [[nodes]]
 node_name = "speaker"
+node_class = "speaker"
 run_in_subprocess = true
 
 [nodes.node_args]
@@ -7,6 +8,7 @@ input_channel = "audio_input"
 
 [[nodes]]
 node_name = "listener"
+node_class = "listener"
 run_in_subprocess = true
 
 [nodes.node_args]

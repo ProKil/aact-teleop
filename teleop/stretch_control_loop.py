@@ -16,18 +16,7 @@ from .server import (
 from .data_classes import TargetPosition
 
 
-def read_target_position(
-    file_path: str = "/dev/shm/target_position.json",
-) -> TargetPosition:
-    with open(file_path, "r") as f:
-        return TargetPosition.model_validate_json(f.read())
-
-
-def write_target_position(
-    target_position: TargetPosition, file_path: str = "/dev/shm/current_position.json"
-) -> None:
-    with open(file_path, "w") as f:
-        f.write(target_position.model_dump_json())
+from .stretch_node import read_target_position, write_target_position
 
 
 if __name__ == "__main__":
