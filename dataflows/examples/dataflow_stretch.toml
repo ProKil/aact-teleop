@@ -1,10 +1,13 @@
 extra_modules = ["teleop.gopro_node", "teleop.webcam_node", "teleop.stretch_node"]
+redis_url = "redis://localhost:6379/0"
 
 [[nodes]]
 node_name = "tick"
+node_class = "tick"
 
 [[nodes]]
 node_name = "gopro"
+node_class = "gopro"
 
 [nodes.node_args]
 input_tick_channel = "tick/millis/50"
@@ -12,7 +15,8 @@ output_channel = "wrist_cam"
 
 [[nodes]]
 node_name = "webcam"
-run_in_subprocess = true
+node_class = "webcam"
+
 
 [nodes.node_args]
 input_tick_channel = "tick/millis/50"
@@ -21,14 +25,16 @@ webcam_id = 6
 
 [[nodes]]
 node_name = "listener"
-run_in_subprocess = true
+node_class = "listener"
+
 
 [nodes.node_args]
 output_channel = "audio_input"
 
 [[nodes]]
 node_name = "stretch"
-run_in_subprocess = true # stretch body uses multiprocessing, so it had to be run in a subprocess
+node_class = "stretch"
+ # stretch body uses multiprocessing, so it had to be run in a subprocess
 
 [nodes.node_args]
 input_tick_channel = "tick/millis/50"

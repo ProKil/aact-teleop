@@ -11,6 +11,7 @@ from pubsub_server.messages.registry import DataModelFactory
 
 from aiofiles import open
 from aiofiles.threadpool.text import AsyncTextIOWrapper
+from aiofiles.base import AiofilesContextManager
 
 
 @NodeFactory.register("record")
@@ -41,18 +42,20 @@ class RecordNode(Node[DataModel, Zero]):
             redis_url=redis_url,
         )
         self.jsonl_file_path = jsonl_file_path
-        self.aioContextManager = open(self.jsonl_file_path, "w")
+        self.aioContextManager: AiofilesContextManager[AsyncTextIOWrapper] | None = None
         self.json_file: AsyncTextIOWrapper | None = None
         self.write_queue: asyncio.Queue[DataEntry[DataModel]] = asyncio.Queue()
         self.write_task: asyncio.Task[None] | None = None
 
     async def __aenter__(self) -> Self:
+        self.aioContextManager = open(self.jsonl_file_path, "w")
         self.json_file = await self.aioContextManager.__aenter__()
         self.write_task = asyncio.create_task(self.write_to_file())
         return await super().__aenter__()
 
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        await self.aioContextManager.__aexit__(exc_type, exc_value, traceback)
+        if self.aioContextManager:
+            await self.aioContextManager.__aexit__(exc_type, exc_value, traceback)
         del self.json_file
         return await super().__aexit__(exc_type, exc_value, traceback)
 

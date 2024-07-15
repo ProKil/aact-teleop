@@ -1,7 +1,9 @@
 extra_modules = ["teleop.vr_controller_node", "teleop.data_classes"]
+redis_url = "redis://localhost:6379/0"
 
 [[nodes]]
 node_name = "quest_controller"
+node_class = "quest_controller"
 
 [nodes.node_args]
 input_channel = "stretch_status"
@@ -10,7 +12,8 @@ translation_speed = 10
 
 [[nodes]]
 node_name = "record"
-run_in_subprocess = true
+node_class = "record"
+
 
 [nodes.node_args]
 jsonl_file_path = "record.jsonl"
