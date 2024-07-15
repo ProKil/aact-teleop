@@ -9,7 +9,6 @@ import typer
 
 from pubsub_server import NodeFactory
 
-from multiprocessing import Pool
 from subprocess import Popen
 
 import toml
@@ -86,41 +85,30 @@ def run_dataflow(
     try:
         # Nodes that run w/ subprocess
         for node in config.nodes:
-            if node.run_in_subprocess:
-                command = f"pubsub run-node --dataflow-toml {dataflow_toml} --node-name {node.node_name} --redis-url {config.redis_url}"
-                logger.info(f"executing {command}")
-                node_process = Popen(
-                    [command],
-                    shell=True,
-                    preexec_fn=os.setsid,  # Start the subprocess in a new process group
-                )
-                subprocesses.append(node_process)
+            command = f"pubsub run-node --dataflow-toml {dataflow_toml} --node-name {node.node_name} --redis-url {config.redis_url}"
+            logger.info(f"executing {command}")
+            node_process = Popen(
+                [command],
+                shell=True,
+                preexec_fn=os.setsid,  # Start the subprocess in a new process group
+            )
+            subprocesses.append(node_process)
 
         def _cleanup_subprocesses(
             signum: int | None = None, frame: Any | None = None
         ) -> None:
             for node_process in subprocesses:
-                os.killpg(os.getpgid(node_process.pid), signal.SIGTERM)
+                try:
+                    os.killpg(os.getpgid(node_process.pid), signal.SIGTERM)
+                    logger.info(f"Terminating process group {node_process.pid}")
+                except ProcessLookupError:
+                    logger.warning(
+                        f"Process group {node_process.pid} has been terminated."
+                    )
 
         signal.signal(signal.SIGTERM, _cleanup_subprocesses)
         signal.signal(signal.SIGINT, _cleanup_subprocesses)
 
-        # Nodes that run w/ multiprocessing
-        with Pool(
-            processes=len(config.nodes),
-            initializer=_import_extra_modules,
-            initargs=(config.extra_modules,),
-        ) as pool:
-            pool.starmap_async(
-                _sync_run_node,
-                [
-                    (node, config.redis_url)
-                    for node in config.nodes
-                    if not node.run_in_subprocess
-                ],
-            ).get()
-
-        # In case there is no nodes that are run w/ multiprocessing, wait for the subprocesses
         for node_process in subprocesses:
             node_process.wait()
 

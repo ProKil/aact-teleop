@@ -13,7 +13,7 @@ translation_speed = 10
 [[nodes]]
 node_name = "record"
 node_class = "record"
-run_in_subprocess = true
+
 
 [nodes.node_args]
 jsonl_file_path = "record.jsonl"

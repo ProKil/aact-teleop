@@ -16,7 +16,7 @@ output_channel = "wrist_cam"
 [[nodes]]
 node_name = "webcam"
 node_class = "webcam"
-run_in_subprocess = true
+
 
 [nodes.node_args]
 input_tick_channel = "tick/millis/50"
@@ -26,7 +26,7 @@ webcam_id = 6
 [[nodes]]
 node_name = "listener"
 node_class = "listener"
-run_in_subprocess = true
+
 
 [nodes.node_args]
 output_channel = "audio_input"
@@ -34,7 +34,7 @@ output_channel = "audio_input"
 [[nodes]]
 node_name = "stretch"
 node_class = "stretch"
-run_in_subprocess = true # stretch body uses multiprocessing, so it had to be run in a subprocess
+ # stretch body uses multiprocessing, so it had to be run in a subprocess
 
 [nodes.node_args]
 input_tick_channel = "tick/millis/50"

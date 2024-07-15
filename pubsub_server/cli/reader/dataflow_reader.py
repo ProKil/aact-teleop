@@ -16,7 +16,6 @@ class NodeArgs(BaseModel):
 class NodeConfig(BaseModel):
     node_name: str
     node_class: str
-    run_in_subprocess: bool = Field(default=False)
     node_args: NodeArgs = Field(default_factory=NodeArgs)
 
 
