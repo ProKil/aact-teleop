@@ -14,8 +14,6 @@ from .server import (
 )
 
 from .data_classes import TargetPosition
-
-
 from .stretch_node import read_target_position, write_target_position
 
 
