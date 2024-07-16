@@ -4,6 +4,7 @@ from .random import RandomNode
 from .record import RecordNode
 from .listener import ListenerNode
 from .speaker import SpeakerNode
+from .transcriber import TranscriberNode
 from .registry import NodeFactory
 
 __all__ = [
@@ -14,4 +15,5 @@ __all__ = [
     "RecordNode",
     "ListenerNode",
     "SpeakerNode",
+    "TranscriberNode",
 ]
