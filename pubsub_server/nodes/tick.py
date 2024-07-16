@@ -15,6 +15,7 @@ class TickNode(Node[Zero, Tick]):
             output_channel_types=[
                 ("tick/millis/10", Tick),
                 ("tick/millis/20", Tick),
+                ("tick/millis/33", Tick),
                 ("tick/millis/50", Tick),
                 ("tick/millis/100", Tick),
                 ("tick/secs/1", Tick),
@@ -41,6 +42,7 @@ class TickNode(Node[Zero, Tick]):
         await asyncio.gather(
             self.tick_at_given_interval("tick/millis/10", 0.01),
             self.tick_at_given_interval("tick/millis/20", 0.02),
+            self.tick_at_given_interval("tick/millis/33", 0.033),
             self.tick_at_given_interval("tick/millis/50", 0.05),
             self.tick_at_given_interval("tick/millis/100", 0.1),
             self.tick_at_given_interval("tick/secs/1", 1.0),

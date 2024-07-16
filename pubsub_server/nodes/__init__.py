@@ -5,6 +5,7 @@ from .record import RecordNode
 from .listener import ListenerNode
 from .speaker import SpeakerNode
 from .transcriber import TranscriberNode
+from .performance import PerformanceMeasureNode
 from .registry import NodeFactory
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "ListenerNode",
     "SpeakerNode",
     "TranscriberNode",
+    "PerformanceMeasureNode",
 ]

@@ -1,18 +1,20 @@
 import logging
-from typing import Any, Callable, Literal
+from typing import Any, Callable, Literal, TypeVar
 from pydantic import create_model
 
 from pubsub_server.messages.base import DataModel
 
 logger = logging.getLogger(__name__)
 
+T = TypeVar("T", bound=DataModel)
+
 
 class DataModelFactory:
     registry: dict[str, type[DataModel]] = {}
 
     @classmethod
-    def register(cls, name: str) -> Callable[[type[DataModel]], type[DataModel]]:
-        def inner_wrapper(wrapped_class: type[DataModel]) -> type[DataModel]:
+    def register(cls, name: str) -> Callable[[type[T]], type[T]]:
+        def inner_wrapper(wrapped_class: type[T]) -> type[T]:
             if name in cls.registry:
                 logger.warning("DataModel %s already exists. Will replace it", name)
             new_class = create_model(
