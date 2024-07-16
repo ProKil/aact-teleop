@@ -36,6 +36,8 @@ types-aiofiles = "^24.1.0.20240626"
 aiostream = "^0.6.1"
 pyaudio = "^0.2.14"
 types-pyaudio = "^0.2.16.20240516"
+google-cloud-speech = "^2.26.1"
+google-cloud-texttospeech = "^2.16.4"
 [tool.poetry.group.test.dependencies]
 mypy = "^1.8.0"
 

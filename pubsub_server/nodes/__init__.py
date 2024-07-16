@@ -6,6 +6,8 @@ from .listener import ListenerNode
 from .speaker import SpeakerNode
 from .transcriber import TranscriberNode
 from .performance import PerformanceMeasureNode
+from .print import PrintNode
+from .tts import TTSNode
 from .registry import NodeFactory
 
 __all__ = [
@@ -18,4 +20,6 @@ __all__ = [
     "SpeakerNode",
     "TranscriberNode",
     "PerformanceMeasureNode",
+    "PrintNode",
+    "TTSNode",
 ]

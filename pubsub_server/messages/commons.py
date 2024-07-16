@@ -44,6 +44,11 @@ class Image(DataModel):
     image: HexBytes
 
 
+@DataModelFactory.register("text")
+class Text(DataModel):
+    text: str
+
+
 @DataModelFactory.register("audio")
 class Audio(DataModel):
     audio: HexBytes
