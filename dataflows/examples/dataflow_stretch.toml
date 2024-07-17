@@ -5,6 +5,9 @@ redis_url = "redis://localhost:6379/0"
 node_name = "tick"
 node_class = "tick"
 
+[nodes.node_args]
+millis_intervals = [50]
+
 [[nodes]]
 node_name = "gopro"
 node_class = "gopro"

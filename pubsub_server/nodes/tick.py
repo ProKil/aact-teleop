@@ -9,19 +9,22 @@ import time
 
 @NodeFactory.register("tick")
 class TickNode(Node[Zero, Tick]):
-    def __init__(self, redis_url: str = "redis://localhost:6379/0"):
+    def __init__(
+        self,
+        millis_intervals: list[int] = [],
+        secs_intervals: list[int] = [],
+        redis_url: str = "redis://localhost:6379/0",
+    ):
         super().__init__(
             input_channel_types=[],
             output_channel_types=[
-                ("tick/millis/10", Tick),
-                ("tick/millis/20", Tick),
-                ("tick/millis/33", Tick),
-                ("tick/millis/50", Tick),
-                ("tick/millis/100", Tick),
-                ("tick/secs/1", Tick),
-            ],
+                (f"tick/millis/{interval}", Tick) for interval in millis_intervals
+            ]
+            + [(f"tick/secs/{interval}", Tick) for interval in secs_intervals],
             redis_url=redis_url,
         )
+        self.millis_intervals = millis_intervals
+        self.secs_intervals = secs_intervals
 
     async def tick_at_given_interval(self, channel: str, interval: float) -> None:
         tick_count = 0
@@ -40,12 +43,14 @@ class TickNode(Node[Zero, Tick]):
 
     async def event_loop(self) -> None:
         await asyncio.gather(
-            self.tick_at_given_interval("tick/millis/10", 0.01),
-            self.tick_at_given_interval("tick/millis/20", 0.02),
-            self.tick_at_given_interval("tick/millis/33", 0.033),
-            self.tick_at_given_interval("tick/millis/50", 0.05),
-            self.tick_at_given_interval("tick/millis/100", 0.1),
-            self.tick_at_given_interval("tick/secs/1", 1.0),
+            *(
+                self.tick_at_given_interval(f"tick/millis/{interval}", interval / 1000)
+                for interval in self.millis_intervals
+            ),
+            *(
+                self.tick_at_given_interval(f"tick/secs/{interval}", interval)
+                for interval in self.secs_intervals
+            ),
         )
 
     async def __aenter__(self) -> Self:
