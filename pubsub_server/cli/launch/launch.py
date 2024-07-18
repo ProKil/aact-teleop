@@ -18,7 +18,7 @@ OutputType = TypeVar("OutputType")
 
 
 async def _run_node(node_config: NodeConfig, redis_url: str) -> None:
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
     logger.info(f"Starting node {node_config}")
     try:

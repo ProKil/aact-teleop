@@ -38,6 +38,8 @@ pyaudio = "^0.2.14"
 types-pyaudio = "^0.2.16.20240516"
 google-cloud-speech = "^2.26.1"
 google-cloud-texttospeech = "^2.16.4"
+langchain = "^0.2.8"
+langchain-openai = "^0.1.16"
 [tool.poetry.group.test.dependencies]
 mypy = "^1.8.0"
 
