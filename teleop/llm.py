@@ -48,8 +48,8 @@ class LLMResponse(BaseModel):
     )
 
 
-@NodeFactory.register("llm")
-class LLMNode(Node[Text | Image | Tick, Text]):
+@NodeFactory.register("custom_llm")
+class CustomLLMNode(Node[Text | Image | Tick, Text]):
     def __init__(
         self,
         text_input_channel: str,
@@ -83,24 +83,25 @@ class LLMNode(Node[Text | Image | Tick, Text]):
         self.shutdown: asyncio.Event = asyncio.Event()
         self.task: asyncio.Task[None] | None = None
         self.model = ChatOpenAI(
-            model="gpt-4o",
+            model="gpt-4o-mini",
             api_key=api_key,  # type: ignore
         )
-        self.memory: str = ""
+        self.memory_buffer: list[tuple[str, str]] = []
 
     async def submit_to_llm(self, input_to_submit: tuple[Text | Image, ...]) -> None:
         if len(input_to_submit) > 0:
             messages: list[str | dict[Any, Any]] = []
+            human_text = " ".join(
+                [
+                    input_item.text
+                    for input_item in input_to_submit
+                    if isinstance(input_item, Text)
+                ]
+            )
             messages.append(
                 {
                     "type": "text",
-                    "text": "What human says: ".join(
-                        [
-                            input_item.text
-                            for input_item in input_to_submit
-                            if isinstance(input_item, Text)
-                        ]
-                    ),
+                    "text": "What human says: " + human_text,
                 }
             )
             image_count = 0
@@ -122,7 +123,7 @@ class LLMNode(Node[Text | Image | Tick, Text]):
                 response = await chain.ainvoke(
                     [
                         SystemMessage(
-                            content=f"You are currently inside a robot body. The images that you see are from the robot's camera. You are talking to a human. Your previous memory is {self.memory}."
+                            content=f"You are currently inside a robot body. The images that you see are from the robot's camera. You are talking to a human. Your previous memory is {self.memory_buffer}."
                         ),
                         HumanMessage(content=messages),
                         HumanMessage(
@@ -134,10 +135,7 @@ class LLMNode(Node[Text | Image | Tick, Text]):
                 await self.r.publish(
                     self.response_output_channel,
                     Message[Text](
-                        data=Text(
-                            text=response.response_to_human
-                            + response.action.model_dump_json()
-                        )
+                        data=Text(text=response.response_to_human)
                     ).model_dump_json(),
                 )
                 await self.r.publish(
@@ -146,8 +144,13 @@ class LLMNode(Node[Text | Image | Tick, Text]):
                         data=Text(text=response.action.model_dump_json())
                     ).model_dump_json(),
                 )
-                self.memory = response.status_summary
-                print(self.memory)
+                self.memory_buffer += [
+                    ("human", human_text),
+                    ("observation", response.observation_summary),
+                    ("robot", response.response_to_human),
+                    ("action", response.action.model_dump_json()),
+                    ("status", response.status_summary),
+                ]
 
     async def __aenter__(self) -> Self:
         return await super().__aenter__()
