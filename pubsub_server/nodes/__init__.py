@@ -8,6 +8,7 @@ from .transcriber import TranscriberNode
 from .performance import PerformanceMeasureNode
 from .print import PrintNode
 from .tts import TTSNode
+from .llm import LLMNode
 from .registry import NodeFactory
 
 __all__ = [
@@ -22,4 +23,5 @@ __all__ = [
     "PerformanceMeasureNode",
     "PrintNode",
     "TTSNode",
+    "LLMNode",
 ]
