@@ -18,7 +18,7 @@ zmq = "^0.0.0"
 numpy = "^1.26.4"
 hello-robot-stretch-body = {path = "./body", develop = true, platform="linux"}
 redis = "^5.0.7"
-open-gopro = {path = "./open_gopro", develop = true}
+open-gopro = {path = "./open_gopro", develop = true, optional = true}
 types-requests = "^2.32.0.20240622"
 requests = "^2.32.3"
 opencv-contrib-python = "^4.10.0.84"
@@ -47,6 +47,9 @@ mypy = "^1.8.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.extras]
+gopro = ["open-gopro"]
 
 [tool.mypy]
 mypy_path = "stubs"
