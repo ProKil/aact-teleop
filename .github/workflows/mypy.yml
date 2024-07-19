@@ -18,7 +18,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install system packages
+      if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get install -y portaudio19-dev
+    - name: Install system packages
+      if: matrix.os == 'macos-13'
+      run: brew install portaudio
     - name: Display Python version
       run: python -c "import sys; print(sys.version)"
     - name: Install dependencies
