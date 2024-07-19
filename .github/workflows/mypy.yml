@@ -25,9 +25,10 @@ jobs:
       run: brew install portaudio
     - name: Display Python version
       run: python -c "import sys; print(sys.version)"
+    - name: Install Poetry
+      uses: abatilo/actions-poetry@v2
     - name: Install dependencies
       run: |
-        curl -sSL https://install.python-poetry.org | python3
         poetry lock
         poetry install -E gopro
     - name: Type-checking package with mypy
