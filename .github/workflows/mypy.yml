@@ -30,7 +30,7 @@ jobs:
     - name: Install dependencies
       run: |
         poetry lock
-        poetry install -E gopro
+        poetry install -E gopro -E audio
     - name: Type-checking package with mypy
       run: |
         # Run this mypy instance against our main package.
