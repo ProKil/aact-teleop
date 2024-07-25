@@ -40,6 +40,7 @@ langchain = "^0.2.8"
 langchain-openai = "^0.1.16"
 pyaudio = {version = "^0.2.14", optional = true}
 types-pyaudio = {version = "^0.2.16.20240516", optional = true}
+vllm = {url = "https://github.com/vllm-project/vllm/releases/download/v0.5.2/vllm-0.5.2-cp311-cp311-manylinux1_x86_64.whl", extras = ["vllm"]}
 [tool.poetry.group.test.dependencies]
 mypy = "^1.8.0"
 
