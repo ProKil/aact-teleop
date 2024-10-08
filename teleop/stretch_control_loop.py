@@ -25,6 +25,7 @@ if __name__ == "__main__":
     current_time: float = 0
 
     target_position = TargetPosition()
+    write_target_position(target_position, "/dev/shm/target_position.json")
 
     while True:
         new_current_time = time.time() - start_time
