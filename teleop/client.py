@@ -73,6 +73,7 @@ class HeadsetControllerStates(BaseModel):
     )
     reset_button: bool
     record_button: bool
+    safety_button: bool
 
 
 class Client(object):

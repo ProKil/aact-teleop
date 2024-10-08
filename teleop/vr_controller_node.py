@@ -213,6 +213,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
             controller_trigger=0,
             reset_button=False,
             record_button=False,
+            safety_button=False,
             controller_thumbstick=(0, 0),
         )
 
@@ -246,6 +247,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
                 controller_trigger=float(right_controller["RightIndexTrigger"]),
                 reset_button=bool(right_controller["RightB"]),
                 record_button=bool(right_controller["RightA"]),
+                safety_button=bool(right_controller["RightHandTrigger"]),
                 controller_thumbstick=tuple(
                     map(float, right_controller["RightThumbstickAxes"].split(","))
                 ),
@@ -257,6 +259,11 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
                 0.0,
             ) and controller_states.controller_rotation == (0.0, 0.0, 0.0, 1.0):
                 self.logger.warning("Abnormal controller states detected. Skipping...")
+                continue
+
+            # safety lock
+            if not controller_states.safety_button:
+                # self.logger.warning("Safety button not pressed. Skipping...")
                 continue
 
             control_signals = self._convert_controller_states_to_control_signals(
