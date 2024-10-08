@@ -301,5 +301,6 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         return await super().__aenter__()
 
     async def __aexit__(self, _: Any, __: Any, ___: Any) -> None:
+        self.recording_file.close()
         self.quest_socket.close()
         await super().__aexit__(_, __, ___)
