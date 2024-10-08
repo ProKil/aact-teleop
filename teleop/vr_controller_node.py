@@ -256,7 +256,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
                 0.0,
                 0.0,
             ) and controller_states.controller_rotation == (0.0, 0.0, 0.0, 1.0):
-                self.logger.warning("Abnoraml controller states detected. Skipping...")
+                self.logger.warning("Abnormal controller states detected. Skipping...")
                 continue
 
             control_signals = self._convert_controller_states_to_control_signals(
