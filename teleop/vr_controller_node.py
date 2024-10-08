@@ -3,6 +3,7 @@ from logging import getLogger
 import os
 import time
 from typing import Any, AsyncIterator, Self, cast
+from datetime import datetime
 
 import numpy as np
 import zmq
@@ -45,6 +46,8 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         self.quest_controller_ip = quest_controller_ip
         self.delta_time = 0.0
         self.current_status: TargetPosition | None = None
+        self.run_name = "Default_run"
+        self.recording_file = None
 
     def _connect_quest(self) -> Socket:
         context = Context()
@@ -187,16 +190,26 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         )
 
         if controller_states.record_button:
-            with open("log.jsonl", "a") as f:
-                f.write(
-                    json.dumps(
-                        dict(
-                            controller_states=controller_states.model_dump(),
-                            target_position=target_position.model_dump(),
-                        )
-                    )
-                    + "\n"
+            if self.recording_file is None:
+                self.run_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                self.logger.info(
+                    "Recording started. File name: ", f"{self.run_name}.jsonl"
                 )
+                self.recording_file = open(f"{self.run_name}.jsonl", "w")
+            self.recording_file.write(
+                json.dumps(
+                    dict(
+                        controller_states=controller_states.model_dump(),
+                        target_position=target_position.model_dump(),
+                    )
+                )
+                + "\n"
+            )
+        else:
+            if self.recording_file is not None:
+                self.recording_file.close()
+                self.recording_file = None
+                self.logger.info("Recording stopped.")
 
         return target_position
 
