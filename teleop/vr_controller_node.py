@@ -2,7 +2,8 @@ import json
 from logging import getLogger
 import os
 import time
-from typing import Any, AsyncIterator, Self, cast
+from typing import Any, AsyncIterator, Self, cast, TextIO
+from datetime import datetime
 
 import numpy as np
 import zmq
@@ -45,6 +46,8 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         self.quest_controller_ip = quest_controller_ip
         self.delta_time = 0.0
         self.current_status: TargetPosition | None = None
+        self.run_name = "Default_run"
+        self.recording_file: TextIO | None = None
 
     def _connect_quest(self) -> Socket:
         context = Context()
@@ -187,16 +190,26 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         )
 
         if controller_states.record_button:
-            with open("log.jsonl", "a") as f:
-                f.write(
-                    json.dumps(
-                        dict(
-                            controller_states=controller_states.model_dump(),
-                            target_position=target_position.model_dump(),
-                        )
-                    )
-                    + "\n"
+            if self.recording_file is None:
+                self.run_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                self.logger.info(
+                    "Recording started. File name: ", f"{self.run_name}.jsonl"
                 )
+                self.recording_file = open(f"{self.run_name}.jsonl", "w")
+            self.recording_file.write(
+                json.dumps(
+                    dict(
+                        controller_states=controller_states.model_dump(),
+                        target_position=target_position.model_dump(),
+                    )
+                )
+                + "\n"
+            )
+        else:
+            if self.recording_file is not None:
+                self.recording_file.close()
+                self.recording_file = None
+                self.logger.info("Recording stopped.")
 
         return target_position
 
@@ -213,6 +226,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
             controller_trigger=0,
             reset_button=False,
             record_button=False,
+            safety_button=False,
             controller_thumbstick=(0, 0),
         )
 
@@ -246,6 +260,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
                 controller_trigger=float(right_controller["RightIndexTrigger"]),
                 reset_button=bool(right_controller["RightB"]),
                 record_button=bool(right_controller["RightA"]),
+                safety_button=bool(right_controller["RightHandTrigger"]),
                 controller_thumbstick=tuple(
                     map(float, right_controller["RightThumbstickAxes"].split(","))
                 ),
@@ -256,7 +271,12 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
                 0.0,
                 0.0,
             ) and controller_states.controller_rotation == (0.0, 0.0, 0.0, 1.0):
-                self.logger.warning("Abnoraml controller states detected. Skipping...")
+                self.logger.warning("Abnormal controller states detected. Skipping...")
+                continue
+
+            # safety lock
+            if not controller_states.safety_button:
+                # self.logger.warning("Safety button not pressed. Skipping...")
                 continue
 
             control_signals = self._convert_controller_states_to_control_signals(
@@ -281,5 +301,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         return await super().__aenter__()
 
     async def __aexit__(self, _: Any, __: Any, ___: Any) -> None:
+        if self.recording_file is not None:
+            self.recording_file.close()
         self.quest_socket.close()
         await super().__aexit__(_, __, ___)

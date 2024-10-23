@@ -249,7 +249,7 @@ class PIDController(object):
 # Initial PID parameters
 Kp_x, Ki_x, Kd_x = 2.0, 0.0, 0.2
 Kp_y, Ki_y, Kd_y = 4.0, 0.2, 0.0
-Kp_theta, Ki_theta, Kd_theta = 2.0, 0.0, 0.0
+Kp_theta, Ki_theta, Kd_theta = 1.0, 0.0, 0.0
 
 min_v, max_v = -2.0, 2.0
 min_omega, max_omega = -2.0, 2.0
@@ -317,7 +317,6 @@ wrist_move_to_position = EndOfArmPosition(
     wrist_yaw=0, wrist_pitch=0, wrist_roll=0, stretch_gripper=0
 )
 arm_move_to_position = ArmAndLiftPosition(arm=0.25, lift=0.6)
-
 
 target_position = TargetPosition()
 control_loop_started = False

@@ -73,6 +73,7 @@ class HeadsetControllerStates(BaseModel):
     )
     reset_button: bool
     record_button: bool
+    safety_button: bool
 
 
 class Client(object):
@@ -323,6 +324,7 @@ class Client(object):
                 controller_trigger=float(right_controller["RightIndexTrigger"]),
                 reset_button=bool(right_controller["RightB"]),
                 record_button=bool(right_controller["RightA"]),
+                safety_button=bool(right_controller["RightHandTrigger"]),
                 controller_thumbstick=tuple(
                     map(float, right_controller["RightThumbstickAxes"].split(","))
                 ),

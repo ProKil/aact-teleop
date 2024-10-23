@@ -25,6 +25,7 @@ if __name__ == "__main__":
     current_time: float = 0
 
     target_position = TargetPosition()
+    write_target_position(target_position, "/dev/shm/target_position.json")
 
     while True:
         new_current_time = time.time() - start_time
@@ -80,7 +81,7 @@ if __name__ == "__main__":
 
         try:
             robot.base.set_velocity(target_position.translation_speed, omega)
-            robot.arm.move_to(target_position.arm, v_m=2, a_m=2)
+            robot.arm.move_to(target_position.arm, v_m=0.18, a_m=1)
             robot.lift.move_to(target_position.lift, v_m=2, a_m=2)
             robot.end_of_arm.move_to("wrist_yaw", target_position.wrist_yaw)
             robot.end_of_arm.move_to("wrist_pitch", target_position.wrist_pitch)
