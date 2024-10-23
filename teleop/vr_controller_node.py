@@ -2,7 +2,7 @@ import json
 from logging import getLogger
 import os
 import time
-from typing import Any, AsyncIterator, Self, cast
+from typing import Any, AsyncIterator, Self, cast, TextIO
 from datetime import datetime
 
 import numpy as np
@@ -47,7 +47,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         self.delta_time = 0.0
         self.current_status: TargetPosition | None = None
         self.run_name = "Default_run"
-        self.recording_file = None
+        self.recording_file: TextIO | None = None
 
     def _connect_quest(self) -> Socket:
         context = Context()
@@ -301,6 +301,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         return await super().__aenter__()
 
     async def __aexit__(self, _: Any, __: Any, ___: Any) -> None:
-        self.recording_file.close()
+        if self.recording_file is not None:
+            self.recording_file.close()
         self.quest_socket.close()
         await super().__aexit__(_, __, ___)
