@@ -8,8 +8,8 @@ import os
 
 from redis.asyncio import Redis
 
-from pubsub_server import Message
-from pubsub_server.messages import Float
+from aact import Message
+from aact.messages import Float
 
 
 @pytest.mark.asyncio
