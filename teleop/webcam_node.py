@@ -38,13 +38,15 @@ class WebcamNode(Node[Tick, Image]):
         """
         Use a different process to update the video feed.
         """
-        camera = cv2.VideoCapture(self.webcam_id, cv2.CAP_ANY)
+        # camera = cv2.VideoCapture(self.webcam_id, cv2.CAP_ANY)
+        camera = cv2.VideoCapture("/dev/video6", cv2.CAP_ANY)
         self.logger.debug("Starting video feed.")
 
         while not self.shutdown_event.is_set():
             start_time = time.time()
             success, camera_frame = camera.read()
             if not success:
+                self.logger.debug("Failed to read frame")
                 continue
 
             camera_frame = cv2.rotate(camera_frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
