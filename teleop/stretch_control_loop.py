@@ -45,6 +45,7 @@ if __name__ == "__main__":
         try:
             target_position = read_target_position()
         except FileNotFoundError:
+            print("File Not Found!")
             time.sleep(1)
             continue
         except ValidationError:

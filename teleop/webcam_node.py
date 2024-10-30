@@ -50,6 +50,7 @@ class WebcamNode(Node[Tick, Image]):
                 continue
 
             camera_frame = cv2.rotate(camera_frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+            camera_frame = cv2.resize(camera_frame, (640, 360))
             ret, buffer = cv2.imencode(".jpg", camera_frame)
             self.latest_frame = buffer.tobytes()
             end_time = time.time()

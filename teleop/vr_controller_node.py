@@ -3,7 +3,6 @@ from logging import getLogger
 import os
 import time
 from typing import Any, AsyncIterator, Self, cast, TextIO
-from datetime import datetime
 
 import numpy as np
 import zmq
@@ -118,7 +117,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         )
 
         # 4.a handle reset and calibration
-        if controller_states.reset_button or self.base_rotation_offset is None:
+        if self.base_rotation_offset is None:
             if self.current_status is not None:
                 self.base_rotation_offset = (
                     desired_base_rotation_in_unity_space - self.current_status.theta
@@ -187,24 +186,30 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
             stretch_gripper=grip_status,
             head_tilt=head_tilt,
             head_pan=head_pan,
+            record_button=False,
+            stop_record_button=False,
         )
 
         if controller_states.record_button:
-            if self.recording_file is None:
-                self.run_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-                self.logger.info(
-                    "Recording started. File name: ", f"{self.run_name}.jsonl"
-                )
-                self.recording_file = open(f"{self.run_name}.jsonl", "w")
-            self.recording_file.write(
-                json.dumps(
-                    dict(
-                        controller_states=controller_states.model_dump(),
-                        target_position=target_position.model_dump(),
-                    )
-                )
-                + "\n"
-            )
+            target_position.record_button = True
+            # if self.recording_file is None:
+            #     self.run_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            #     self.logger.info(
+            #         "Recording started. File name: ", f"{self.run_name}.jsonl"
+            #     )
+            #     self.recording_file = open(f"{self.run_name}.jsonl", "w")
+            # self.recording_file.write(
+            #     json.dumps(
+            #         dict(
+            #             controller_states=controller_states.model_dump(),
+            #             target_position=target_position.model_dump(),
+            #         )
+            #     )
+            #     + "\n"
+            # )
+        elif controller_states.stop_record_button:
+            target_position.stop_record_button = True
+
         else:
             if self.recording_file is not None:
                 self.recording_file.close()
@@ -224,7 +229,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
             controller_position=(0, 0, 0),
             controller_rotation=(0, 0, 0, 0),
             controller_trigger=0,
-            reset_button=False,
+            stop_record_button=False,
             record_button=False,
             safety_button=False,
             controller_thumbstick=(0, 0),
@@ -258,7 +263,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
                     map(float, right_controller["RightLocalRotation"].split(","))
                 ),
                 controller_trigger=float(right_controller["RightIndexTrigger"]),
-                reset_button=bool(right_controller["RightB"]),
+                stop_record_button=bool(right_controller["RightB"]),
                 record_button=bool(right_controller["RightA"]),
                 safety_button=bool(right_controller["RightHandTrigger"]),
                 controller_thumbstick=tuple(

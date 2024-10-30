@@ -8,6 +8,11 @@ from pubsub_server.messages import Tick
 from .data_classes import TargetPosition
 
 
+def read_target_position_replay(target_dict) -> TargetPosition:
+    # target_position_json_str = json.dumps(target_dict)
+    return TargetPosition.model_validate_json(target_dict)
+
+
 def read_target_position(
     file_path: str = "/dev/shm/target_position.json",
 ) -> TargetPosition:
