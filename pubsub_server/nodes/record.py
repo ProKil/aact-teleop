@@ -8,6 +8,7 @@ from .base import Node
 from .registry import NodeFactory
 from pubsub_server.messages import DataModel, Zero, Message
 from pubsub_server.messages.registry import DataModelFactory
+from teleop.data_classes import TargetPosition
 
 from aiofiles import open
 from aiofiles.threadpool.text import AsyncTextIOWrapper
@@ -76,7 +77,7 @@ class RecordNode(Node[DataModel, Zero]):
             await self.json_file.flush()
             self.write_queue.task_done()
 
-    async def open_new_record(self):
+    async def open_new_record(self) -> None:
         # close existing file and write task
         if self.aioContextManager:
             await self.aioContextManager.__aexit__(None, None, None)
@@ -103,16 +104,17 @@ class RecordNode(Node[DataModel, Zero]):
         self, input_channel: str, input_message: Message[DataModel]
     ) -> AsyncIterator[tuple[str, Message[Zero]]]:
         if input_channel in self.input_channel_types:
-            # Change to use a flag to see whether the record button is on
-            # If yes, just record all the further information
+            # Use a flag to see whether the record button is on
+            # If yes, just record all the future information
             if input_channel == "quest_control":
-                if input_message.data.record_button:
+                target_position = Message[TargetPosition](data=input_message.data)
+                if target_position.data.record_button:
                     if not self.recording and self.num_recordings > 0:
                         await self.open_new_record()
 
                     self.recording = True
                     self.num_recordings += 1
-                elif input_message.data.stop_record_button:
+                elif target_position.data.stop_record_button:
                     self.recording = False
 
             if self.recording:
