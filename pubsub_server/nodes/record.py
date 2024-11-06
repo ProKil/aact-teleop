@@ -8,7 +8,6 @@ from .base import Node
 from .registry import NodeFactory
 from pubsub_server.messages import DataModel, Zero, Message
 from pubsub_server.messages.registry import DataModelFactory
-from teleop.data_classes import TargetPosition
 
 from aiofiles import open
 from aiofiles.threadpool.text import AsyncTextIOWrapper
@@ -103,6 +102,8 @@ class RecordNode(Node[DataModel, Zero]):
     async def event_handler(
         self, input_channel: str, input_message: Message[DataModel]
     ) -> AsyncIterator[tuple[str, Message[Zero]]]:
+        from teleop.data_classes import TargetPosition
+
         if input_channel in self.input_channel_types:
             # Use a flag to see whether the record button is on
             # If yes, just record all the future information
