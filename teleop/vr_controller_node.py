@@ -51,7 +51,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
     def _connect_quest(self) -> Socket:
         context = Context()
         quest_socket = context.socket(zmq.PULL)
-        # quest_socket.setsockopt(zmq.CONFLATE, 1)
+        quest_socket.setsockopt(zmq.CONFLATE, 1)
         quest_socket.connect(f"tcp://{self.quest_controller_ip}:12345")
 
         return quest_socket
