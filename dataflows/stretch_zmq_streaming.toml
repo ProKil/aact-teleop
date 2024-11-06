@@ -1,11 +1,23 @@
-extra_modules = ["teleop.webcam_node", "teleop.stretch_node", "teleop.video_streaming_node"]
-redis_url = "redis://localhost:6379/0"
-quest_controller_ip = "localhost"
+extra_modules = ["teleop.gopro_node", "teleop.webcam_node", "teleop.stretch_node", "teleop.video_streaming_node"]
+redis_url = "redis://172.26.57.91:6379/0"
+
+# GCP redis
+# redis_url = "redis://35.236.217.22:6379/0"
 
 [[nodes]]
 node_name = "tick"
 node_class = "tick"
 
+# [nodes.node_args]
+# millis_intervals = [20, 33]
+
+# [[nodes]]
+# node_name = "gopro"
+# node_class = "gopro"
+
+# [nodes.node_args]
+# input_tick_channel = "tick/millis/20"
+# output_channel = "wrist_cam"
 
 [[nodes]]
 node_name = "webcam"
@@ -17,19 +29,49 @@ output_channel = "meta_2_head_cam"
 webcam_id = 0
 
 [[nodes]]
-node_name = "stretch"
-node_class = "stretch"
-
-[nodes.node_args]
-input_tick_channel = "tick/millis/50"
-input_channel = "quest_control"
-output_channel = "stretch_status"
-
-
-[[nodes]]
-node_name = "head_video_streamer"
+node_name = "video_streaming"
 node_class = "head_video_streamer"
 
 [nodes.node_args]
 input_channel = "meta_2_head_cam"
-output_channel = "video_status"
+output_channel = "head_video_status"
+quest_controller_ip = "172.26.172.110"
+
+# [[nodes]]
+# node_name = "stretch_listener"
+# node_class = "listener"
+
+# [nodes.node_args]
+# output_channel = "audio_output"
+
+[[nodes]]
+node_name = "stretch"
+node_class = "stretch"
+
+[nodes.node_args]
+input_tick_channel = "tick/millis/20"
+input_channel = "quest_control"
+output_channel = "stretch_status"
+
+# [[nodes]]
+# node_name = "transcriber"
+# node_class = "transcriber"
+
+# [nodes.node_args]
+# input_channel = "audio_input"
+# final_output_channel = "task_output"
+# intermediate_output_channel = "mid_task_output"
+# rate = 44100
+
+
+[[nodes]]
+node_name = "record"
+node_class = "record"
+
+
+[nodes.node_args]
+jsonl_file_path = "recordtest.jsonl"
+
+[nodes.node_args.record_channel_types]
+"stretch_status" = "target_position"
+"quest_control" = "target_position"
