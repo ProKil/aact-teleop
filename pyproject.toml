@@ -18,7 +18,7 @@ zmq = "^0.0.0"
 numpy = "^1.26.4"
 hello-robot-stretch-body = {path = "./body", develop = true, platform="linux"}
 redis = "^5.0.7"
-open-gopro = {path = "./open_gopro", develop = true}
+open-gopro = {path = "./open_gopro", develop = true, optional = true}
 types-requests = "^2.32.0.20240622"
 requests = "^2.32.3"
 opencv-contrib-python = "^4.10.0.84"
@@ -34,10 +34,13 @@ dash = "^2.17.1"
 aiofiles = "^24.1.0"
 types-aiofiles = "^24.1.0.20240626"
 aiostream = "^0.6.1"
-pyaudio = "^0.2.14"
-types-pyaudio = "^0.2.16.20240516"
 google-cloud-speech = "^2.26.1"
 google-cloud-texttospeech = "^2.16.4"
+langchain = "^0.2.8"
+langchain-openai = "^0.1.16"
+pyaudio = {version = "^0.2.14", optional = true}
+types-pyaudio = {version = "^0.2.16.20240516", optional = true}
+vllm = {url = "https://github.com/vllm-project/vllm/releases/download/v0.5.2/vllm-0.5.2-cp311-cp311-manylinux1_x86_64.whl", extras = ["vllm"]}
 [tool.poetry.group.test.dependencies]
 mypy = "^1.8.0"
 
@@ -45,6 +48,10 @@ mypy = "^1.8.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.extras]
+gopro = ["open-gopro"]
+audio = ["pyaudio"]
 
 [tool.mypy]
 mypy_path = "stubs"

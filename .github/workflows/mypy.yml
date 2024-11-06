@@ -3,11 +3,13 @@ on: [push]
 
 jobs:
   Static-Type-Checking:
-    runs-on: ubuntu-latest
     strategy:
       max-parallel: 5
       matrix:
         python-version: ["3.11"]
+        os: [ubuntu-latest, macos-13]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v3
@@ -16,14 +18,19 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install system packages
+      if: matrix.os == 'ubuntu-latest'
       run: sudo apt-get install -y portaudio19-dev
+    - name: Install system packages
+      if: matrix.os == 'macos-13'
+      run: brew install portaudio
     - name: Display Python version
       run: python -c "import sys; print(sys.version)"
+    - name: Install Poetry
+      uses: abatilo/actions-poetry@v2
     - name: Install dependencies
       run: |
-        curl -sSL https://install.python-poetry.org | python3
         poetry lock
-        poetry install
+        poetry install -E gopro -E audio
     - name: Type-checking package with mypy
       run: |
         # Run this mypy instance against our main package.

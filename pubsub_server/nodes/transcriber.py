@@ -16,18 +16,23 @@ class TranscriberNode(Node[Audio, Text]):
     def __init__(
         self,
         input_channel: str,
-        output_channel: str,
+        final_output_channel: str,
+        intermediate_output_channel: str,
         rate: int,
         api_key: str,
         redis_url: str,
     ) -> None:
         super().__init__(
             input_channel_types=[(input_channel, Audio)],
-            output_channel_types=[(output_channel, Text)],
+            output_channel_types=[
+                (final_output_channel, Text),
+                (intermediate_output_channel, Text),
+            ],
             redis_url=redis_url,
         )
         self.input_channel = input_channel
-        self.output_channel = output_channel
+        self.final_output_channel = final_output_channel
+        self.intermediate_output_channel = intermediate_output_channel
         self.rate: int = rate
         self.client: speech.SpeechAsyncClient = speech.SpeechAsyncClient(
             client_options=ClientOptions(  # type: ignore[no-untyped-call]
@@ -72,7 +77,12 @@ class TranscriberNode(Node[Audio, Text]):
                 transcript = result.alternatives[0].transcript
                 if result.is_final:
                     await self.r.publish(
-                        self.output_channel,
+                        self.final_output_channel,
+                        Message[Text](data=Text(text=transcript)).model_dump_json(),
+                    )
+                else:
+                    await self.r.publish(
+                        self.intermediate_output_channel,
                         Message[Text](data=Text(text=transcript)).model_dump_json(),
                     )
         except exceptions.GoogleAPICallError as e:
