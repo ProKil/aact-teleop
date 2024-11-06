@@ -73,6 +73,7 @@ node_class = "record"
 
 [nodes.node_args]
 jsonl_file_path = "recordtest.jsonl"
+add_datetime = true
 
 [nodes.node_args.record_channel_types]
 "stretch_status" = "target_position"
