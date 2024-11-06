@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime
 from typing import Any, AsyncIterator, Self
+from logging import getLogger
 
 from pubsub_server.messages.commons import DataEntry
 
@@ -37,6 +38,7 @@ class RecordNode(Node[DataModel, Zero]):
         self.raw_jsonl_path = jsonl_file_path
         self.num_recordings = 0
         self.add_datetime = add_datetime
+        self.logger = getLogger(__name__)
 
         if add_datetime:
             # add a datetime to jsonl_file_path before the extension. The file can have any extension.
@@ -91,10 +93,11 @@ class RecordNode(Node[DataModel, Zero]):
             )
         else:
             self.jsonl_file_path = (
-                f"{self.raw_jsonl_path[:-6]}{self.num_recordings}.jsonl"
+                f"{self.raw_jsonl_path[:-6]}_{self.num_recordings}.jsonl"
             )
 
         # open new json file and write task
+        self.logger.info("Writing to json file: %s", self.jsonl_file_path)
         self.aioContextManager = open(self.jsonl_file_path, "w")
         self.json_file = await self.aioContextManager.__aenter__()
         self.write_task = asyncio.create_task(self.write_to_file())
@@ -110,13 +113,16 @@ class RecordNode(Node[DataModel, Zero]):
             if input_channel == "quest_control":
                 target_position = Message[TargetPosition](data=input_message.data)
                 if target_position.data.record_button:
-                    if not self.recording and self.num_recordings > 0:
+                    if not self.recording:
+                        self.logger.info("======Starting recording to ======")
                         await self.open_new_record()
+                        self.recording = True
+                        self.num_recordings += 1
 
-                    self.recording = True
-                    self.num_recordings += 1
                 elif target_position.data.stop_record_button:
-                    self.recording = False
+                    if self.recording:
+                        self.logger.info("======Stopping recording...======")
+                        self.recording = False
 
             if self.recording:
                 await self.write_queue.put(
