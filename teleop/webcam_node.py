@@ -14,7 +14,9 @@ class WebcamNode(Node[Tick, Image]):
         self,
         input_tick_channel: str,
         output_channel: str,
-        webcam_id: str,
+        webcam_name: str,
+        width_resize_factor: float,
+        height_resize_factor: float,
         redis_url: str = "redis://localhost:6379/0",
     ):
         super().__init__(
@@ -32,14 +34,15 @@ class WebcamNode(Node[Tick, Image]):
         self.latest_frame: bytes | None = None
         self.frame_lock: asyncio.Lock = asyncio.Lock()
         self.task: asyncio.Task[None] | None = None
-        self.webcam_id = webcam_id
+        self.webcam_name = webcam_name
+        self.width_resize_factor = width_resize_factor
+        self.height_resize_factor = height_resize_factor
 
     async def update_video_feed(self) -> None:
         """
         Use a different process to update the video feed.
         """
-        # camera = cv2.VideoCapture(self.webcam_id, cv2.CAP_ANY)
-        camera = cv2.VideoCapture("/dev/video6", cv2.CAP_ANY)
+        camera = cv2.VideoCapture(self.webcam_name, cv2.CAP_ANY)
         self.logger.debug("Starting video feed.")
 
         while not self.shutdown_event.is_set():
@@ -50,7 +53,12 @@ class WebcamNode(Node[Tick, Image]):
                 continue
 
             camera_frame = cv2.rotate(camera_frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
-            camera_frame = cv2.resize(camera_frame, (640, 360))
+            camera_frame = cv2.resize(
+                camera_frame,
+                (0, 0),
+                fx=self.width_resize_factor,
+                fy=self.height_resize_factor,
+            )
             ret, buffer = cv2.imencode(".jpg", camera_frame)
             self.latest_frame = buffer.tobytes()
             end_time = time.time()

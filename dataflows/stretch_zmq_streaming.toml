@@ -26,7 +26,9 @@ node_class = "webcam"
 [nodes.node_args]
 input_tick_channel = "tick/millis/50"
 output_channel = "meta_2_head_cam"
-webcam_id = 0
+webcam_name = "/dev/video6"
+width_resize_factor = 0.1
+height_resize_factor = 0.1
 
 [[nodes]]
 node_name = "video_streaming"
