@@ -1,0 +1,35 @@
+extra_modules = ["teleop.webcam_node", "teleop.stretch_node", "teleop.video_streaming_node"]
+redis_url = "redis://localhost:6379/0"
+quest_controller_ip = "localhost"
+
+[[nodes]]
+node_name = "tick"
+node_class = "tick"
+
+
+[[nodes]]
+node_name = "webcam"
+node_class = "webcam"
+
+[nodes.node_args]
+input_tick_channel = "tick/millis/50"
+output_channel = "meta_2_head_cam"
+webcam_id = 0
+
+[[nodes]]
+node_name = "stretch"
+node_class = "stretch"
+
+[nodes.node_args]
+input_tick_channel = "tick/millis/50"
+input_channel = "quest_control"
+output_channel = "stretch_status"
+
+
+[[nodes]]
+node_name = "head_video_streamer"
+node_class = "head_video_streamer"
+
+[nodes.node_args]
+input_channel = "meta_2_head_cam"
+output_channel = "video_status"
