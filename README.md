@@ -1,31 +1,53 @@
-# VR Teleoperation Library
+# SIAT: Stretch Control with Immersive AR Teleoperation (CoRL 2024 Demo)
+![Figure](https://lh5.googleusercontent.com/lgE8KoMa8QUOayzv2njBJfsdvj0F0bjsE_xL1xM1RamkvLTjbXhf5JlIy9EjRHG0lNhhAO6ppzY6DBbA8HqISMsNcq6D9XEVw2BJpvq9dWRlrc7w-x749L-ulJXWGiplbw=w1280)
 
-The current readme is for collaborators:
-## Installation
-### Virtual environment
-Install a virtual environment with Python=3.11
-```bash
-mamba create -n move_to_server python=3.11
-mamba activate move_to_server
+## Overview
+SIAT (Stretch control with Immersive AR Teleoperation) is a novel system that enables intuitive control of the Stretch robot with Quest. Building on top of [AAct](https://aact.dev), it is easily extensible to integrate multiple sensors, control interfaces, and robotics models. 
+
+## Demo Team
+
+Hao Zhu, Vidhi Jain, Su Li, Yonatan Bisk
+
+### Contributors
+
+Jensen (Yi-Che) Huang, Sophia Huang
+
+
+## Features
+
+* Intuitive AR interface for robot control
+* Full body control with intuitive human movements
+
+## System Requirements
+### Hardware
+
+* Hello Robot Stretch 3
+* Oculus Quest 3 / Pro
+
+### Software
+
+Python 3.10 or later
+
+# Usage
+
+Please checkout the [documentation on aact.dev](https://aact.dev/latest/applications/robot-teleoperation/).
+
+
+# Citations
+If you use this work, please cite our paper:
+
+```bibtex
+@misc{zhu2024siat,
+  title={SIAT: Stretch control with Immersive AR Teleoperation},
+  author={Zhu, Hao and Jain, Vidhi and Li, Su and Bisk, Yonatan},
+  howpublished={Demo presented at the Conference on Robot Learning (CoRL)},
+  year={2024},
+  note={Munich, Germany}
+}
 ```
 
-### Install Poetry and install dependencies via Poetry
-```bash
-mamba install poetry
-poetry install
-```
 
-### Install pre-commit
-```bash
-pre-commit install
-```
+# Contact
+For questions and support, please contact:
 
-## CI
-There are two CI checks in place:
-
-1. Static type checking: as dynamic testing for robots are hard, it is important to use static type checking to ensure everything is in place. Run `mypy --strict .` to check types and make sure you annotate types.
-2. Pre-commit: pre-commit makes sure that the code format is consistent. After `pre-commit install`, it will run automatically every time you do `git commit`. If reformatting happens, the `git commit` will fail, but it should work after you `git add` the reformatted files. In rare conditions, `ruff` will fail to reformat, but it will print out why.
-
-Make sure to keep PRs slim and only solving one problem at a time.
-
-Happy coding! Contact Hao Zhu if you encounter any problems.
+Hao Zhu (prokilchu@gmail.com)
