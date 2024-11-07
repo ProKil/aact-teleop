@@ -4,8 +4,8 @@ import time
 from typing import Any, AsyncIterator, Self
 
 import cv2
-from pubsub_server import Node, NodeFactory, Message
-from pubsub_server.messages import Tick, Image
+from aact import Node, NodeFactory, Message
+from aact.messages import Tick, Image
 
 
 @NodeFactory.register("webcam")

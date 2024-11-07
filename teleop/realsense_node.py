@@ -2,7 +2,7 @@ import asyncio
 import time
 
 import cv2
-from pubsub_server import NodeFactory
+from aact import NodeFactory
 from teleop.webcam_node import WebcamNode
 
 import numpy as np

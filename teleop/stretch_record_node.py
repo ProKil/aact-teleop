@@ -3,19 +3,19 @@ from datetime import datetime
 from typing import Any, AsyncIterator, Self
 from logging import getLogger
 
-from pubsub_server.messages.commons import DataEntry
+from aact.messages.commons import DataEntry
 
-from .base import Node
-from .registry import NodeFactory
-from pubsub_server.messages import DataModel, Zero, Message
-from pubsub_server.messages.registry import DataModelFactory
+from aact.nodes.base import Node
+from aact.nodes.registry import NodeFactory
+from aact.messages import DataModel, Zero, Message
+from aact.messages.registry import DataModelFactory
 
 from aiofiles import open
 from aiofiles.threadpool.text import AsyncTextIOWrapper
 from aiofiles.base import AiofilesContextManager
 
 
-@NodeFactory.register("record")
+@NodeFactory.register("stretch_record")
 class RecordNode(Node[DataModel, Zero]):
     def __init__(
         self,

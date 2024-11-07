@@ -2,9 +2,9 @@ from logging import getLogger
 from typing import Any, AsyncIterator, Self
 
 import zmq
-from pubsub_server import Node, NodeFactory, Message
-from pubsub_server.messages import Image
-from pubsub_server.messages.commons import Text
+from aact import Node, NodeFactory, Message
+from aact.messages import Image
+from aact.messages.commons import Text
 
 from zmq.asyncio import Context, Socket
 

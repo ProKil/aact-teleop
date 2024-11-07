@@ -1,7 +1,7 @@
 import asyncio
 from typing import Any, AsyncIterator, Self
-from pubsub_server import Node, NodeFactory
-from pubsub_server.messages import Tick, Image, Message
+from aact import Node, NodeFactory
+from aact.messages import Tick, Image, Message
 from open_gopro import WiredGoPro, Params
 from open_gopro.constants import WebcamStatus, WebcamError
 import numpy.typing as npt

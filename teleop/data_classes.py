@@ -1,7 +1,7 @@
 from pydantic import Field, AfterValidator
 from typing import Annotated
 
-from pubsub_server.messages import DataModel, DataModelFactory
+from aact.messages import DataModel, DataModelFactory
 from .utils import _normalize_angle
 
 NormalizedAngle = Annotated[float, AfterValidator(lambda v: _normalize_angle(v))]

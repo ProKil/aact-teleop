@@ -5,8 +5,8 @@ from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 import uvicorn
 
-from pubsub_server.nodes import Node
-from pubsub_server.messages import Message, Image, Zero
+from aact.nodes import Node
+from aact.messages import Message, Image, Zero
 
 from aiostream import stream
 import numpy as np
