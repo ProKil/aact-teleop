@@ -1,4 +1,4 @@
-extra_modules = ["teleop.gopro_node", "teleop.webcam_node", "teleop.stretch_node", "teleop.video_streaming_node"]
+extra_modules = ["teleop.gopro_node", "teleop.webcam_node", "teleop.stretch_node", "teleop.video_streaming_node", "teleop.stretch_record_node"]
 redis_url = "redis://172.26.121.171:6379/0"
 
 # GCP redis
@@ -67,8 +67,8 @@ output_channel = "stretch_status"
 
 
 [[nodes]]
-node_name = "record"
-node_class = "record"
+node_name = "stretch_record"
+node_class = "stretch_record"
 
 
 [nodes.node_args]
