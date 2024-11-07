@@ -3,8 +3,8 @@ from typing import AsyncIterator
 import pytest
 from pytest_mock import MockerFixture
 import pytest_asyncio
-from pubsub_server import Node, Message
-from pubsub_server.messages import DataModel, DataModelFactory
+from aact import Node, Message
+from aact.messages import DataModel, DataModelFactory
 import fakeredis
 from redis.asyncio import Redis
 
@@ -39,7 +39,7 @@ async def fake_redis() -> Redis:
 @pytest_asyncio.fixture
 async def node(mocker: MockerFixture) -> AsyncIterator[_Node]:
     redis_url = "redis://localhost:6379/0"
-    mocker.patch("pubsub_server.nodes.base.Redis", fakeredis.aioredis.FakeRedis)
+    mocker.patch("aact.nodes.base.Redis", fakeredis.aioredis.FakeRedis)
     node_instance = _Node(
         input_channel_types=[("input_channel", InputModel)],
         output_channel_types=[("output_channel", OutputModel)],

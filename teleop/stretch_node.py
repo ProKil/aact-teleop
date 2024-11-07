@@ -3,9 +3,13 @@ from typing import Any, AsyncIterator, Self
 
 from pydantic import ValidationError
 
-from pubsub_server import Node, NodeFactory, Message
-from pubsub_server.messages import Tick
+from aact import Node, NodeFactory, Message
+from aact.messages import Tick
 from .data_classes import TargetPosition
+
+
+def read_target_position_replay(target_dict: str = "") -> TargetPosition:
+    return TargetPosition.model_validate_json(target_dict)
 
 
 def read_target_position(

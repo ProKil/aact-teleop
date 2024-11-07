@@ -1,7 +1,7 @@
 from pydantic import Field, AfterValidator
 from typing import Annotated
 
-from pubsub_server.messages import DataModel, DataModelFactory
+from aact.messages import DataModel, DataModelFactory
 from .utils import _normalize_angle
 
 NormalizedAngle = Annotated[float, AfterValidator(lambda v: _normalize_angle(v))]
@@ -44,4 +44,10 @@ class TargetPosition(DataModel):
     )
     head_pan: Annotated[float, AfterValidator(lambda x: min(max(x, -1.57), 1.57))] = (
         Field(default=0, description="The head pan position.")
+    )
+    record_button: bool = Field(
+        default=False, description="Check if the record button is on"
+    )
+    stop_record_button: bool = Field(
+        default=False, description="Check if the stop record button is pressed"
     )

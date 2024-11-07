@@ -71,7 +71,7 @@ class HeadsetControllerStates(BaseModel):
     controller_thumbstick: Tuple[float, float] = Field(
         ..., description="thumbstick position. X-left/right, Y-forward/backward"
     )
-    reset_button: bool
+    stop_record_button: bool
     record_button: bool
     safety_button: bool
 
@@ -198,7 +198,7 @@ class Client(object):
         )
 
         # 4.a handle reset and calibration
-        if controller_states.reset_button or self.base_rotation_offset is None:
+        if self.base_rotation_offset is None:
             if self.stretch_ip:
                 current_base_status = requests.request(
                     "GET",
@@ -267,6 +267,8 @@ class Client(object):
             stretch_gripper=grip_status,
             head_tilt=head_tilt,
             head_pan=head_pan,
+            record_button=controller_states.record_button,
+            stop_record_button=controller_states.stop_record_button,
         )
 
         if controller_states.record_button:
@@ -308,6 +310,7 @@ class Client(object):
 
             right_controller = cast(dict[str, str], data["RightController"])
             headset = cast(dict[str, str], data["Headset"])
+
             controller_states = HeadsetControllerStates(
                 headset_position=tuple(
                     map(float, headset["HeadLocalPosition"].split(","))
@@ -322,7 +325,7 @@ class Client(object):
                     map(float, right_controller["RightLocalRotation"].split(","))
                 ),
                 controller_trigger=float(right_controller["RightIndexTrigger"]),
-                reset_button=bool(right_controller["RightB"]),
+                stop_record_button=bool(right_controller["RightB"]),
                 record_button=bool(right_controller["RightA"]),
                 safety_button=bool(right_controller["RightHandTrigger"]),
                 controller_thumbstick=tuple(

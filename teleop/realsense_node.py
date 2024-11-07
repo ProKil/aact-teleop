@@ -2,7 +2,7 @@ import asyncio
 import time
 
 import cv2
-from pubsub_server import NodeFactory
+from aact import NodeFactory
 from teleop.webcam_node import WebcamNode
 
 import numpy as np
@@ -23,7 +23,9 @@ class RealsenseWebcamNode(WebcamNode):
         frame_height: int | None = 720,
         frame_rate: int | None = 30,
     ):
-        super().__init__(input_tick_channel, output_channel, webcam_id, redis_url)
+        super().__init__(
+            input_tick_channel, output_channel, webcam_id, 1.0, 1.0, redis_url
+        )
         self.serial_no = serial_no
         self.frame_width = frame_width
         self.frame_height = frame_height
