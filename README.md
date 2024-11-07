@@ -2,7 +2,7 @@
 ![Figure](https://lh5.googleusercontent.com/lgE8KoMa8QUOayzv2njBJfsdvj0F0bjsE_xL1xM1RamkvLTjbXhf5JlIy9EjRHG0lNhhAO6ppzY6DBbA8HqISMsNcq6D9XEVw2BJpvq9dWRlrc7w-x749L-ulJXWGiplbw=w1280)
 
 ## Overview
-SIAT (Stretch control with Immersive AR Teleoperation) is a novel system that enables intuitive control of the Stretch robot with Quest. Building on top of [AAct](https://aact.dev), it is easily extensible to integrate multiple sensors, control interfaces, and robotics models. 
+SIAT (Stretch control with Immersive AR Teleoperation) is a novel system that enables intuitive control of the Stretch robot with Quest. Building on top of [AAct](https://aact.dev), it is easily extensible to integrate multiple sensors, control interfaces, and robotics models.
 
 ## Demo Team
 
