@@ -89,9 +89,6 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         )
 
         # 2. Convert the controller rotation to Euler angles
-        # if controller_states.reset_button or self.quaternion_offset is None:
-        #     self.quaternion_offset = controller_states.controller_rotation
-
         wrist_pitch, wrist_yaw, wrist_roll = get_euler(
             (
                 controller_states.controller_rotation[3],
@@ -192,21 +189,6 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
 
         if controller_states.record_button:
             target_position.record_button = True
-            # if self.recording_file is None:
-            #     self.run_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            #     self.logger.info(
-            #         "Recording started. File name: ", f"{self.run_name}.jsonl"
-            #     )
-            #     self.recording_file = open(f"{self.run_name}.jsonl", "w")
-            # self.recording_file.write(
-            #     json.dumps(
-            #         dict(
-            #             controller_states=controller_states.model_dump(),
-            #             target_position=target_position.model_dump(),
-            #         )
-            #     )
-            #     + "\n"
-            # )
         elif controller_states.stop_record_button:
             target_position.stop_record_button = True
 
