@@ -10,4 +10,4 @@ node_class = "quest_controller"
 input_channel = "stretch_status"
 output_channel = "quest_control"
 translation_speed = 20
-quest_controller_ip = "172.26.172.110"
+quest_controller_ip = "<your_quest_ip>"
