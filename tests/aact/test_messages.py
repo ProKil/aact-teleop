@@ -1,4 +1,4 @@
-from pubsub_server.messages import Image, Tick, Message
+from aact.messages import Image, Tick, Message
 
 
 def _random_image() -> bytes:

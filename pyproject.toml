@@ -7,11 +7,10 @@ license = "MIT License"
 readme = "README.md"
 packages = [
     { include = "teleop" },
-    { include = "pubsub_server" }
 ]
 
 [tool.poetry.dependencies]
-python = "~3.11.9"
+python = ">=3.11.9,<3.12"
 pydantic = "^2.7.2"
 fastapi = "^0.111.0"
 zmq = "^0.0.0"
@@ -38,6 +37,7 @@ pyaudio = "^0.2.14"
 types-pyaudio = "^0.2.16.20240516"
 google-cloud-speech = "^2.26.1"
 google-cloud-texttospeech = "^2.16.4"
+aact = {extras=["audio", "google"], version="^0.0.8"}
 [tool.poetry.group.test.dependencies]
 mypy = "^1.8.0"
 

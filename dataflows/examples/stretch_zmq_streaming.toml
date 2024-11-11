@@ -1,0 +1,52 @@
+extra_modules = ["teleop.gopro_node", "teleop.webcam_node", "teleop.stretch_node", "teleop.video_streaming_node", "teleop.stretch_record_node"]
+redis_url = "redis://<your_redis_url>:6379/0"
+
+
+[[nodes]]
+node_name = "tick"
+node_class = "tick"
+
+
+[[nodes]]
+node_name = "webcam"
+node_class = "webcam"
+
+[nodes.node_args]
+input_tick_channel = "tick/millis/50"
+output_channel = "meta_2_head_cam"
+webcam_name = "/dev/video6"
+width_resize_factor = 0.25
+height_resize_factor = 0.25
+
+[[nodes]]
+node_name = "video_streaming"
+node_class = "head_video_streamer"
+
+[nodes.node_args]
+input_channel = "meta_2_head_cam"
+output_channel = "head_video_status"
+quest_controller_ip = "<your_quest_ip>"
+
+[[nodes]]
+node_name = "stretch"
+node_class = "stretch"
+
+[nodes.node_args]
+input_tick_channel = "tick/millis/50"
+input_channel = "quest_control"
+output_channel = "stretch_status"
+
+
+[[nodes]]
+node_name = "stretch_record"
+node_class = "stretch_record"
+
+
+[nodes.node_args]
+jsonl_file_path = "recordtest.jsonl"
+add_datetime = true
+
+[nodes.node_args.record_channel_types]
+"stretch_status" = "target_position"
+"quest_control" = "target_position"
+"meta_2_head_cam" = "image"
