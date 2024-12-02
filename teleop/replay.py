@@ -15,6 +15,13 @@ parser.add_argument(
     default="/home/hello-robot/stretch_teleop_server/recordtest_2024-10-30_17-25-11.jsonl",
     help="Path to the replay file",
 )
+parser.add_argument(
+    "-t",
+    "--tick-ms",
+    type=int,
+    default=50,
+    help="Tick MS used for the recording",
+)
 
 args = parser.parse_args()
 
@@ -24,20 +31,22 @@ file_path = args.filename
 if __name__ == "__main__":
     with open(file_path, "r") as f:
         json_data = [json.loads(line) for line in f]
-        json_data = [json.dumps(x["data"]) for x in json_data]
+        json_data = [
+            json.dumps(x["data"]) for x in json_data if x["channel"] == "quest_control"
+        ]
 
     for target_position_dict in json_data:
         try:
             target_position = read_target_position_replay(target_position_dict)
             write_target_position(target_position, "/dev/shm/target_position.json")
-            time.sleep(1 / 80)
+            time.sleep(args.tick_ms / 1000)  # 50ms ticks by default
         except FileNotFoundError:
-            print("File Not Found!")
+            print("Shared memory file not found!")
             time.sleep(1)
             continue
         except ValidationError as e:
             print(e)
-            time.sleep(1 / 80)
-            continue
+            print("Exiting replay...")
+            break
         except (ThreadServiceExit, KeyboardInterrupt):
-            print("Exiting control loop.")
+            print("Exiting replay...")

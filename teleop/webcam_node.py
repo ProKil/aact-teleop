@@ -1,5 +1,5 @@
 import asyncio
-from logging import getLogger
+from logging import getLogger, basicConfig, INFO
 import time
 from typing import Any, AsyncIterator, Self
 
@@ -15,8 +15,8 @@ class WebcamNode(Node[Tick, Image]):
         input_tick_channel: str,
         output_channel: str,
         webcam_name: str,
-        width_resize_factor: float,
-        height_resize_factor: float,
+        width_resize_factor: float = 1.0,
+        height_resize_factor: float = 1.0,
         redis_url: str = "redis://localhost:6379/0",
     ):
         super().__init__(
@@ -30,6 +30,7 @@ class WebcamNode(Node[Tick, Image]):
         )
         self.output_channel = output_channel
         self.logger = getLogger(__name__)
+        basicConfig(level=INFO)
         self.shutdown_event: asyncio.Event = asyncio.Event()
         self.latest_frame: bytes | None = None
         self.frame_lock: asyncio.Lock = asyncio.Lock()
@@ -43,13 +44,17 @@ class WebcamNode(Node[Tick, Image]):
         Use a different process to update the video feed.
         """
         camera = cv2.VideoCapture(self.webcam_name, cv2.CAP_ANY)
-        self.logger.debug("Starting video feed.")
+        self.logger.info("Starting video feed.")
 
         while not self.shutdown_event.is_set():
             start_time = time.time()
             success, camera_frame = camera.read()
             if not success:
-                self.logger.debug("Failed to read frame")
+                self.logger.warning(
+                    "Failed to read frame on camera path: %s, use `v4l2-ctl --list-devices` to check if camera device path is specified correctly.",
+                    self.webcam_name,
+                )
+                time.sleep(1)
                 continue
 
             camera_frame = cv2.rotate(camera_frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
@@ -59,6 +64,7 @@ class WebcamNode(Node[Tick, Image]):
                 fx=self.width_resize_factor,
                 fy=self.height_resize_factor,
             )
+
             ret, buffer = cv2.imencode(".jpg", camera_frame)
             self.latest_frame = buffer.tobytes()
             end_time = time.time()

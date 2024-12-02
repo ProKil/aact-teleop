@@ -1,6 +1,6 @@
 import asyncio
 from typing import Any, AsyncIterator, Self
-
+from logging import getLogger, basicConfig, INFO
 from pydantic import ValidationError
 
 from aact import Node, NodeFactory, Message
@@ -50,6 +50,8 @@ class StretchNode(Node[TargetPosition | Tick, TargetPosition]):
         self.tasks: list[asyncio.Task[None]] = []
         self.target_position: TargetPosition = TargetPosition()
         self.current_position: TargetPosition = TargetPosition()
+        self.logger = getLogger(__name__)
+        basicConfig(level=INFO)
 
     async def __aenter__(self) -> Self:
         return await super().__aenter__()
@@ -66,6 +68,7 @@ class StretchNode(Node[TargetPosition | Tick, TargetPosition]):
                     "/dev/shm/current_position.json"
                 )
             except FileNotFoundError:
+                self.logger.warning("Shared memory file not found.")
                 return
             except ValidationError:
                 return

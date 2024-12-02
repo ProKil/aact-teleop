@@ -1,4 +1,4 @@
-from logging import getLogger
+from logging import getLogger, basicConfig, INFO
 from typing import Any, AsyncIterator, Self
 
 import zmq
@@ -9,13 +9,14 @@ from aact.messages.commons import Text
 from zmq.asyncio import Context, Socket
 
 
-@NodeFactory.register("head_video_streamer")
+@NodeFactory.register("video_streamer")
 class VideoStreamerNode(Node[Image, Text]):
     def __init__(
         self,
-        input_channel: str = "meta_2_head_cam",
-        output_channel: str = "head_video_stream",
-        quest_controller_ip: str = "172.26.172.110",
+        input_channel: str,
+        output_channel: str,
+        quest_controller_ip: str,
+        quest_receiving_port: int = 12346,
         redis_url: str = "redis://localhost:6379/0",
     ) -> None:
         super().__init__(
@@ -26,25 +27,28 @@ class VideoStreamerNode(Node[Image, Text]):
         self.input_channel = input_channel
         self.output_channel = output_channel
         self.quest_controller_ip = quest_controller_ip
+        self.quest_receiving_port = quest_receiving_port
         self.logger = getLogger(__name__)
-        self.logger.debug("Initialized VideoStreamerNode")
+        basicConfig(level=INFO)
 
     def _connect_quest(self) -> Socket:
         context = Context()
         quest_socket = context.socket(zmq.PUSH)
         quest_socket.setsockopt(zmq.CONFLATE, 1)
 
-        quest_socket.connect(f"tcp://{self.quest_controller_ip}:12346")
+        quest_socket.connect(
+            f"tcp://{self.quest_controller_ip}:{self.quest_receiving_port}"
+        )
 
-        self.logger.debug("Socket Connected")
+        self.logger.info("Quest socket connected")
 
         return quest_socket
 
     async def event_handler(
-        self, input_channel: str, head_image: Message[Image]
+        self, input_channel: str, image: Message[Image]
     ) -> AsyncIterator[tuple[str, Message[Text]]]:
         if input_channel == self.input_channel:
-            await self.quest_socket.send(head_image.data.image)
+            await self.quest_socket.send(image.data.image)
             yield (
                 self.output_channel,
                 Message[Text](data=Text(text="Image sent to Quest")),
