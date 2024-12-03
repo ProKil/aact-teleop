@@ -1,7 +1,8 @@
 import asyncio
+from pathlib import Path
 from datetime import datetime
 from typing import Any, AsyncIterator, Self
-from logging import getLogger
+from logging import getLogger, basicConfig, INFO
 
 from aact.messages.commons import DataEntry
 
@@ -20,8 +21,9 @@ class RecordNode(Node[DataModel, Zero]):
     def __init__(
         self,
         record_channel_types: dict[str, str],
-        jsonl_file_path: str,
-        redis_url: str,
+        recordings_folder_path: str = "./recordings/default_recordings",
+        jsonl_file_name: str = "default_recording.jsonl",
+        redis_url: str = "redis://localhost:6379/0",
         add_datetime: bool = True,
     ):
         input_channel_types: list[tuple[str, type[DataModel]]] = []
@@ -35,20 +37,22 @@ class RecordNode(Node[DataModel, Zero]):
             output_channel_types=[],
             redis_url=redis_url,
         )
-        self.raw_jsonl_path = jsonl_file_path
+        self.jsonl_file_name = jsonl_file_name
+        self.jsonl_file_path = ""
         self.num_recordings = 0
         self.add_datetime = add_datetime
+        self.recordings_folder_path = recordings_folder_path
         self.logger = getLogger(__name__)
+        basicConfig(level=INFO)
 
-        if add_datetime:
-            # add a datetime to jsonl_file_path before the extension. The file can have any extension.
-            jsonl_file_path = (
-                jsonl_file_path[: jsonl_file_path.rfind(".")]
-                + datetime.now().strftime("_%Y-%m-%d_%H-%M-%S")
-                + jsonl_file_path[jsonl_file_path.rfind(".") :]
-            )
+        # if add_datetime:
+        #     # add a datetime to jsonl_file_path before the extension. The file can have any extension.
+        #     jsonl_file_path = (
+        #         jsonl_file_path[: jsonl_file_path.rfind(".")]
+        #         + datetime.now().strftime("_%Y-%m-%d_%H-%M-%S")
+        #         + jsonl_file_path[jsonl_file_path.rfind(".") :]
+        #     )
 
-        self.jsonl_file_path = jsonl_file_path
         self.aioContextManager: AiofilesContextManager[AsyncTextIOWrapper] | None = None
         self.json_file: AsyncTextIOWrapper | None = None
         self.write_queue: asyncio.Queue[DataEntry[DataModel]] = asyncio.Queue()
@@ -57,9 +61,9 @@ class RecordNode(Node[DataModel, Zero]):
         self.recording = False
 
     async def __aenter__(self) -> Self:
-        self.aioContextManager = open(self.jsonl_file_path, "w")
-        self.json_file = await self.aioContextManager.__aenter__()
-        self.write_task = asyncio.create_task(self.write_to_file())
+        # self.aioContextManager = open(self.jsonl_file_path, "w")
+        # self.json_file = await self.aioContextManager.__aenter__()
+        # self.write_task = asyncio.create_task(self.write_to_file())
         return await super().__aenter__()
 
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
@@ -85,20 +89,21 @@ class RecordNode(Node[DataModel, Zero]):
         del self.json_file
 
         # rename the new file
+        new_filename = ""
         if self.add_datetime:
-            self.jsonl_file_path = (
-                self.raw_jsonl_path[: self.raw_jsonl_path.rfind(".")]
+            new_filename = (
+                self.jsonl_file_name[: self.jsonl_file_name.rfind(".")]
                 + datetime.now().strftime("_%Y-%m-%d_%H-%M-%S")
-                + self.raw_jsonl_path[self.raw_jsonl_path.rfind(".") :]
+                + self.jsonl_file_name[self.jsonl_file_name.rfind(".") :]
             )
         else:
-            self.jsonl_file_path = (
-                f"{self.raw_jsonl_path[:-6]}_{self.num_recordings}.jsonl"
-            )
+            new_filename = f"{self.jsonl_file_name[:-6]}_{self.num_recordings}.jsonl"
+        full_filepath = Path(self.recordings_folder_path) / new_filename
+        Path.mkdir(full_filepath.parent, parents=True, exist_ok=True)
 
         # open new json file and write task
-        self.logger.info("Writing to json file: %s", self.jsonl_file_path)
-        self.aioContextManager = open(self.jsonl_file_path, "w")
+        self.logger.info("Writing to json file: %s", full_filepath)
+        self.aioContextManager = open(full_filepath, "w")
         self.json_file = await self.aioContextManager.__aenter__()
         self.write_task = asyncio.create_task(self.write_to_file())
 
@@ -114,14 +119,14 @@ class RecordNode(Node[DataModel, Zero]):
                 target_position = Message[TargetPosition](data=input_message.data)
                 if target_position.data.record_button:
                     if not self.recording:
-                        self.logger.info("======Starting recording to ======")
+                        self.logger.info("====== Starting recording ======")
                         await self.open_new_record()
                         self.recording = True
                         self.num_recordings += 1
 
                 elif target_position.data.stop_record_button:
                     if self.recording:
-                        self.logger.info("======Stopping recording...======")
+                        self.logger.info("====== Stopping recording ======")
                         self.recording = False
 
             if self.recording:
