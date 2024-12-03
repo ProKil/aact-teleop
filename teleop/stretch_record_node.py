@@ -45,14 +45,6 @@ class RecordNode(Node[DataModel, Zero]):
         self.logger = getLogger(__name__)
         basicConfig(level=INFO)
 
-        # if add_datetime:
-        #     # add a datetime to jsonl_file_path before the extension. The file can have any extension.
-        #     jsonl_file_path = (
-        #         jsonl_file_path[: jsonl_file_path.rfind(".")]
-        #         + datetime.now().strftime("_%Y-%m-%d_%H-%M-%S")
-        #         + jsonl_file_path[jsonl_file_path.rfind(".") :]
-        #     )
-
         self.aioContextManager: AiofilesContextManager[AsyncTextIOWrapper] | None = None
         self.json_file: AsyncTextIOWrapper | None = None
         self.write_queue: asyncio.Queue[DataEntry[DataModel]] = asyncio.Queue()
@@ -61,9 +53,6 @@ class RecordNode(Node[DataModel, Zero]):
         self.recording = False
 
     async def __aenter__(self) -> Self:
-        # self.aioContextManager = open(self.jsonl_file_path, "w")
-        # self.json_file = await self.aioContextManager.__aenter__()
-        # self.write_task = asyncio.create_task(self.write_to_file())
         return await super().__aenter__()
 
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
