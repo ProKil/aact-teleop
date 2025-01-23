@@ -1,8 +1,7 @@
 import json
-from logging import getLogger
-import os
+from logging import getLogger, basicConfig, INFO
 import time
-from typing import Any, AsyncIterator, Self, cast, TextIO
+from typing import Any, AsyncIterator, Self, cast
 
 import numpy as np
 import zmq
@@ -20,9 +19,10 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         self,
         input_channel: str,
         output_channel: str,
-        quest_controller_ip: str = os.environ.get("QUEST_IP", ""),
+        quest_controller_ip: str,
         translation_speed: float = 0.5,
         gripper_length: float = 0.26,
+        arm_extension_scale: float = 1.5,
         redis_url: str = "redis://localhost:6379/0",
     ):
         super().__init__(
@@ -38,15 +38,15 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         self.output_channel = output_channel
         self.translation_speed = translation_speed
         self.gripper_length = gripper_length
+        self.arm_extension_scale = arm_extension_scale
         self.base_rotation_offset: float | None = None
         self.lift_offset: float = 0.0
         self.quaternion_offset: tuple[float, float, float, float] | None = None
         self.logger = getLogger(__name__)
+        basicConfig(level=INFO)
         self.quest_controller_ip = quest_controller_ip
         self.delta_time = 0.0
         self.current_status: TargetPosition | None = None
-        self.run_name = "Default_run"
-        self.recording_file: TextIO | None = None
 
     def _connect_quest(self) -> Socket:
         context = Context()
@@ -131,11 +131,14 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         )
 
         # 5. Calculate the desired arm length projected to the floor
-        arm_length_projected_to_floor = np.linalg.norm(
-            [
-                controller_position[0] - head_position[0],
-                controller_position[1] - head_position[1],
-            ]
+        arm_length_projected_to_floor = (
+            np.linalg.norm(
+                [
+                    controller_position[0] - head_position[0],
+                    controller_position[1] - head_position[1],
+                ]
+            )
+            * self.arm_extension_scale
         )
 
         # 6. We need to calculate the desired arm lift.
@@ -192,12 +195,6 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         elif controller_states.stop_record_button:
             target_position.stop_record_button = True
 
-        else:
-            if self.recording_file is not None:
-                self.recording_file.close()
-                self.recording_file = None
-                self.logger.info("Recording stopped.")
-
         return target_position
 
     async def event_loop(self) -> None:
@@ -225,8 +222,9 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
             try:
                 data = json.loads(message.decode())
             except json.JSONDecodeError:
-                self.logger.info(f"The last controller states were {controller_states}")
-                print("Terminating the connection...")
+                self.logger.warning(
+                    "Failed to read json from headset, terminating the connection..."
+                )
                 return
 
             right_controller = cast(dict[str, str], data["RightController"])
@@ -247,7 +245,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
                 controller_trigger=float(right_controller["RightIndexTrigger"]),
                 stop_record_button=bool(right_controller["RightB"]),
                 record_button=bool(right_controller["RightA"]),
-                safety_button=bool(right_controller["RightHandTrigger"]),
+                safety_button=bool(float(right_controller["RightHandTrigger"]) > 0.8),
                 controller_thumbstick=tuple(
                     map(float, right_controller["RightThumbstickAxes"].split(","))
                 ),
@@ -263,7 +261,6 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
 
             # safety lock
             if not controller_states.safety_button:
-                # self.logger.warning("Safety button not pressed. Skipping...")
                 continue
 
             control_signals = self._convert_controller_states_to_control_signals(
@@ -288,7 +285,5 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
         return await super().__aenter__()
 
     async def __aexit__(self, _: Any, __: Any, ___: Any) -> None:
-        if self.recording_file is not None:
-            self.recording_file.close()
         self.quest_socket.close()
         await super().__aexit__(_, __, ___)
