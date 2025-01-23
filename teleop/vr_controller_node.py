@@ -245,7 +245,7 @@ class QuestControllerNode(Node[TargetPosition, TargetPosition]):
                 controller_trigger=float(right_controller["RightIndexTrigger"]),
                 stop_record_button=bool(right_controller["RightB"]),
                 record_button=bool(right_controller["RightA"]),
-                safety_button=bool(right_controller["RightHandTrigger"] > 0.8),
+                safety_button=bool(float(right_controller["RightHandTrigger"]) > 0.8),
                 controller_thumbstick=tuple(
                     map(float, right_controller["RightThumbstickAxes"].split(","))
                 ),
